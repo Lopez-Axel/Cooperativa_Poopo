@@ -1,0 +1,284 @@
+// Importar el módulo de color de Sass
+@use 'sass:color';
+
+// Variables de colores de la Cooperativa Minera Poopó R.L.
+$color-amarillo: #F0E491;
+$color-verde-claro: #BBC863;
+$color-verde-medio: #658C58;
+$color-verde-oscuro: #31694E;
+
+// Colores adicionales
+$white: #ffffff;
+$black: #1a1a1a;
+$grey-lighter: #f5f5f5;
+$grey-light: #dbdbdb;
+$grey: #7a7a7a;
+$grey-dark: #4a4a4a;
+
+// Variables globales
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// Utilidades de colores
+.bg-primary {
+  background-color: $color-verde-oscuro !important;
+}
+
+.bg-primary-light {
+  background-color: color.adjust($color-verde-oscuro, $lightness: 50%) !important;
+}
+
+.bg-success {
+  background-color: $color-verde-claro !important;
+}
+
+.bg-warning {
+  background-color: $color-amarillo !important;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, $color-verde-oscuro 0%, $color-verde-medio 100%) !important;
+}
+
+.text-primary {
+  color: $color-verde-oscuro !important;
+}
+
+.text-success {
+  color: $color-verde-claro !important;
+}
+
+// Hero personalizado
+.hero.is-primary {
+  background: linear-gradient(135deg, $color-verde-oscuro 0%, $color-verde-medio 50%, $color-verde-claro 100%);
+}
+
+// Botones personalizados
+.button.is-primary {
+  background-color: $color-verde-oscuro;
+  border-color: $color-verde-oscuro;
+  color: $white;
+  
+  &:hover {
+    background-color: color.adjust($color-verde-oscuro, $lightness: -8%);
+    border-color: color.adjust($color-verde-oscuro, $lightness: -8%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($color-verde-oscuro, 0.4);
+    transition: all 0.3s ease;
+  }
+}
+
+.button.is-success {
+  background-color: $color-verde-claro;
+  border-color: $color-verde-claro;
+  color: $black;
+  
+  &:hover {
+    background-color: color.adjust($color-verde-claro, $lightness: -8%);
+    border-color: color.adjust($color-verde-claro, $lightness: -8%);
+  }
+}
+
+.button.is-warning {
+  background-color: $color-amarillo;
+  border-color: $color-amarillo;
+  color: $black;
+  font-weight: 600;
+  
+  &:hover {
+    background-color: color.adjust($color-amarillo, $lightness: -8%);
+    border-color: color.adjust($color-amarillo, $lightness: -8%);
+  }
+}
+
+// Cards personalizadas
+.card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Navbar
+.navbar {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  &.is-primary {
+    background-color: $color-verde-oscuro;
+  }
+}
+
+// Footer
+.footer {
+  background-color: $color-verde-oscuro;
+  color: $white;
+  
+  a {
+    color: $color-amarillo;
+    
+    &:hover {
+      color: color.adjust($color-amarillo, $lightness: 10%);
+    }
+  }
+}
+
+// Carrusel
+.carousel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  
+  .carousel-item {
+    display: none;
+    
+    &.is-active {
+      display: block;
+    }
+    
+    img {
+      width: 100%;
+      height: 500px;
+      object-fit: cover;
+    }
+  }
+  
+  .carousel-controls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 1rem;
+    
+    button {
+      background-color: rgba($color-verde-oscuro, 0.8);
+      color: $white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background-color: $color-verde-oscuro;
+        transform: scale(1.1);
+      }
+    }
+  }
+  
+  .carousel-indicators {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    
+    button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid $white;
+      background-color: transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &.is-active {
+        background-color: $color-amarillo;
+        border-color: $color-amarillo;
+      }
+    }
+  }
+}
+
+// Stats cards
+.stat-card {
+  text-align: center;
+  padding: 2rem;
+  
+  .stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: $color-verde-oscuro;
+  }
+  
+  .stat-label {
+    font-size: 1rem;
+    color: $grey;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+// Responsive
+@media screen and (max-width: 768px) {
+  .carousel .carousel-item img {
+    height: 300px;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+    
+    .stat-number {
+      font-size: 2rem;
+    }
+  }
+}
