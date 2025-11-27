@@ -6,12 +6,7 @@ dockerfilePath = "Dockerfile"
 startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-```
 
-## 5. Variables de entorno en Railway
-
-En el dashboard de Railway, configura estas variables:
-```
 PORT=8000
 DATABASE_URL=sqlite:///./cooperativa.db
 SECRET_KEY=tu-clave-secreta-aqui-muy-larga-y-segura
