@@ -1,12 +1,6 @@
 # Variables de entorno (contiene SECRET_KEY)
 .env
 
-# Base de datos SQLite
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
-
 # Python
 __pycache__/
 *.py[cod]

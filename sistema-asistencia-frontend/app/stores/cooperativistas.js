@@ -1,5 +1,7 @@
 // stores/cooperativistas.js
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth'
+import auth from '~/middleware/auth'
 
 export const useCooperativistasStore = defineStore('cooperativistas', {
   state: () => ({
@@ -141,7 +143,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         console.log('🔄 Iniciando carga de cooperativistas...')
         
         while (hasMore) {
-          const response = await $fetch(`http://localhost:8000/api/cooperativistas/`, {
+          const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${authStore.token}`
@@ -179,7 +181,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const authStore = useAuthStore()
         const config = useRuntimeConfig()
         
-        const cooperativista = await $fetch(`http://localhost:8000/api/cooperativistas/${id}`, {
+        const cooperativista = await $fetch(`${authStore.apiUrl}/api/cooperativistas/${id}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -198,7 +200,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const authStore = useAuthStore()
         const config = useRuntimeConfig()
         
-        const cooperativista = await $fetch(`http://localhost:8000/api/cooperativistas/codigo/${codigo}`, {
+        const cooperativista = await $fetch(`${authStore.apiUrl}/api/cooperativistas/codigo/${codigo}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -217,7 +219,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const authStore = useAuthStore()
         const config = useRuntimeConfig()
         
-        const nuevoCooperativista = await $fetch(`http://localhost:8000/api/cooperativistas/`, {
+        const nuevoCooperativista = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
@@ -241,7 +243,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const authStore = useAuthStore()
         const config = useRuntimeConfig()
         
-        const cooperativistaActualizado = await $fetch(`http://localhost:8000/api/cooperativistas/${id}`, {
+        const cooperativistaActualizado = await $fetch(`${authStore.apiUrl}/api/cooperativistas/${id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
@@ -268,7 +270,7 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const authStore = useAuthStore()
         const config = useRuntimeConfig()
         
-        await $fetch(`http://localhost:8000/api/cooperativistas/${id}`, {
+        await $fetch(`${authStore.apiUrl}/api/cooperativistas/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${authStore.token}`

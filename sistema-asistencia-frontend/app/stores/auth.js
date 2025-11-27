@@ -6,14 +6,14 @@ export const useAuthStore = defineStore('auth', {
     token: null,
     user: null,
     isAuthenticated: false,
-    apiUrl: 'http://localhost:8000' 
+    apiUrl: 'https://cooperativapoopo-production-450b.up.railway.app' 
   }),
   
   actions: {
     async login(username, password) {
       try {
         const config = useRuntimeConfig()
-        const response = await $fetch(`http://localhost:8000/api/auth/login`, {
+        const response = await $fetch(`${this.apiUrl}/api/auth/login`, {
           method: 'POST',
           body: { username, password }
         })
