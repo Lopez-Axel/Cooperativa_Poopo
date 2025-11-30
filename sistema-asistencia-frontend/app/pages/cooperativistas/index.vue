@@ -563,54 +563,52 @@ useHead({
 </script>
 
 <style scoped>
+/* ====================================
+   BASE
+   ==================================== */
 .cooperativistas-page {
   min-height: calc(100vh - 200px);
   padding: 2rem;
   margin: -2rem -1.5rem;
-  background: linear-gradient(135deg, #0a1a0a 0%, #0f1f0f 50%, #0a1a0a 100%);
+  background: linear-gradient(to bottom, #f8fdf8 0%, #ffffff 100%);
 }
 
+.modal-card,
+.modal-card-head,
+.modal-card-body,
+.modal-card-foot {
+  background-color: #ffffff !important;
+  color: #1a4d1a !important;
+}
+
+/* ====================================
+   HEADER
+   ==================================== */
 .page-header {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+  background: #c5e4c6;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 30px rgba(76, 175, 80, 0.2), 0 0 60px rgba(255, 215, 0, 0.1);
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700) 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.page-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
-  animation: float 20s infinite linear;
+  box-shadow: 0 4px 15px rgba(46, 125, 50, 0.1);
+  border: 2px solid #4caf50;
 }
 
 .header-content .page-title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  background: linear-gradient(135deg, #2e7d32, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 2rem;
   font-weight: 900;
   margin-bottom: 0.5rem;
-  text-shadow: 0 4px 30px rgba(255, 215, 0, 0.3);
-  letter-spacing: 0.5px;
 }
 
 .header-content .page-subtitle {
-  color: #a5d6a7;
-  font-size: 1.1rem;
+  color: #666;
+  font-size: 1rem;
   margin: 0;
   font-weight: 500;
 }
@@ -619,47 +617,45 @@ useHead({
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  position: relative;
-  z-index: 1;
 }
 
 .header-actions .quick-link {
-  background: rgba(255, 255, 255, 0.95);
-  color: #0d1b0d;
+  background: #f5f5f5;
+  color: #2e7d32;
   font-weight: 700;
-  border: none;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
 }
 
 .header-actions .quick-link:hover {
-  background: #ffd700;
+  background: #e8f5e9;
+  border-color: #4caf50;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
 }
 
 .header-actions .button.is-warning {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
-  color: #0d1b0d;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #1a4d1a;
   font-weight: 800;
   border: none;
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 .header-actions .button.is-warning:hover {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
+/* ====================================
+   FILTROS
+   ==================================== */
 .filtros-section {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
+  background: white;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  border: 2px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24) 1;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
 .filtros-grid {
@@ -670,47 +666,46 @@ useHead({
 }
 
 .field .label {
-  color: #ffd700;
+  color: #2e7d32;
   font-weight: 700;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
-  text-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
 }
 
 .control.has-icons-left .input {
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
+  background: #f5f5f5;
+  color: #333;
   transition: all 0.3s ease;
 }
 
 .control.has-icons-left .input:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: rgba(26, 46, 26, 0.9);
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25);
+  background: white;
 }
 
 .control.has-icons-left .input::placeholder {
-  color: #90a4ae;
+  color: #999;
 }
 
 .icon.is-left {
-  color: #9e9d24;
+  color: #4caf50;
 }
 
 .select.is-fullwidth select {
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
+  background: #f5f5f5;
+  color: #333;
   transition: all 0.3s ease;
 }
 
 .select.is-fullwidth select:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: rgba(26, 46, 26, 0.9);
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25);
+  background: white;
 }
 
 .filtros-actions {
@@ -723,52 +718,48 @@ useHead({
 .filtros-especiales .button {
   font-weight: 700;
   transition: all 0.3s ease;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  background: rgba(15, 31, 15, 0.7);
-  color: #a5d6a7;
+  border: 2px solid #e0e0e0;
+  background: #f5f5f5;
+  color: #666;
 }
 
 .filtros-especiales .button.is-warning {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
-  color: #0d1b0d;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #1a4d1a;
   border-color: #ffd700;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-}
-
-.filtros-especiales .button.is-warning:hover {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%);
-  border-color: #ffd700;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
 }
 
 .filtros-especiales .button:not(.is-warning):hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
-  border-color: #ffd700;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #4caf50;
 }
 
 .filtros-actions .button.is-light {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
 }
 
 .filtros-actions .button.is-light:hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
+  background: #f5f5f5;
+  color: #2e7d32;
+  border-color: #4caf50;
 }
 
+/* ====================================
+   STATS BAR
+   ==================================== */
 .stats-bar {
   display: flex;
   gap: 1.5rem;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.9), rgba(15, 31, 15, 0.9));
+  background: #c5e4c6;
   border-radius: 12px;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border: 2px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24) 1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e0e0e0;
   flex-wrap: wrap;
 }
 
@@ -779,21 +770,20 @@ useHead({
 }
 
 .stat-label {
-  color: #c8e6c9;
+  color: #666;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .stat-value {
-  background: linear-gradient(135deg, #ffd700, #ff9800);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2e7d32;
   font-weight: 900;
   font-size: 1.4rem;
-  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
 }
 
+/* ====================================
+   GRID DE COOPERATIVISTAS
+   ==================================== */
 .cooperativistas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -801,88 +791,65 @@ useHead({
 }
 
 .cooperativista-card {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
+  background: white;
   border-radius: 16px;
-  border: 2px solid rgba(255, 215, 0, 0.2);
+  border: 2px solid #c5e4c6;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   height: 100%;
-  position: relative;
 }
-
-.cooperativista-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
-  transition: left 0.6s ease;
-}
-
-.cooperativista-card:hover::before {
-  left: 100%;
-}
-
+s
 .cooperativista-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(158, 157, 36, 0.3), 0 0 60px rgba(255, 215, 0, 0.2);
-  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(46, 125, 50, 0.15);
+  border-color: #4caf50;
 }
 
-/* Estilos diferenciados por cargo */
+/* Estilos por cargo */
 .cooperativista-card.is-jefe {
   border: 3px solid #ffd700;
-  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(26, 46, 26, 0.9));
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
 }
 
 .cooperativista-card.is-sub-jefe {
   border: 3px solid #ff9800;
-  box-shadow: 0 6px 25px rgba(255, 152, 0, 0.4);
-  background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(26, 46, 26, 0.9));
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);
 }
 
 .cooperativista-card.is-tesorero {
   border: 3px solid #2196f3;
-  box-shadow: 0 6px 25px rgba(33, 150, 243, 0.4);
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(26, 46, 26, 0.9));
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
 }
 
 .cooperativista-card.is-delegado {
   border: 3px solid #9c27b0;
-  box-shadow: 0 6px 25px rgba(156, 39, 176, 0.4);
-  background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(26, 46, 26, 0.9));
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.2);
 }
 
 .card-header-custom {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+  background: #c5e4c6;
   padding: 1rem 1.25rem;
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .status-badge {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
+  background: #e0e0e0;
+  color: #666;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 800;
-  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .status-badge.active {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
-  color: #0d1b0d;
-  border-color: #ffd700;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #1a4d1a;
 }
 
 .card-body {
@@ -893,15 +860,11 @@ useHead({
 }
 
 .cooperativista-nombre {
-  background: linear-gradient(135deg, #ffd700, #ff9800);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2e7d32;
   font-size: 1.2rem;
   font-weight: 800;
   margin-bottom: 1rem;
   line-height: 1.3;
-  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
 }
 
 .cooperativista-info {
@@ -915,18 +878,17 @@ useHead({
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  color: #e0f2f1;
+  color: #333;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 .info-row i {
-  color: #9e9d24;
+  color: #4caf50;
   font-size: 1.2rem;
   width: 22px;
   text-align: center;
   flex-shrink: 0;
-  text-shadow: 0 0 8px rgba(158, 157, 36, 0.4);
 }
 
 .badges-container {
@@ -944,46 +906,39 @@ useHead({
   border-radius: 8px;
   font-weight: 800;
   font-size: 0.8rem;
-  letter-spacing: 0.3px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
 
 .badge-cargo:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.badge-cargo i {
-  font-size: 1.1rem;
 }
 
 .badge-cargo.jefe {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
-  color: #0d1b0d;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #1a4d1a;
 }
 
 .badge-cargo.sub-jefe {
-  background: linear-gradient(135deg, #ff9800 0%, #ff6f00 100%);
+  background: linear-gradient(135deg, #ff9800, #ff6f00);
   color: white;
 }
 
 .badge-cargo.tesorero {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #2196f3, #1976d2);
   color: white;
 }
 
 .badge-cargo.delegado {
-  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
   color: white;
 }
 
 .card-footer-custom {
   padding: 0.75rem 1.25rem;
-  background: rgba(15, 31, 15, 0.9);
+  background: #f5f5f5;
   display: flex;
   gap: 0.5rem;
-  border-top: 1px solid rgba(255, 215, 0, 0.2);
+  border-top: 1px solid #e0e0e0;
   margin-top: auto;
 }
 
@@ -996,45 +951,45 @@ useHead({
 }
 
 .card-footer-custom .button.is-ghost {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: white;
+  color: #666;
+  border: 1px solid #e0e0e0;
 }
 
 .card-footer-custom .button.is-ghost:hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
-  border-color: #ffd700;
-  transform: translateY(-1px);
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #4caf50;
 }
 
 .card-footer-custom .button.is-ghost.is-danger {
-  background: rgba(244, 67, 54, 0.1);
-  color: #ffcdd2;
-  border: 1px solid rgba(244, 67, 54, 0.3);
+  background: white;
+  color: #f44336;
+  border: 1px solid #ffcdd2;
 }
 
 .card-footer-custom .button.is-ghost.is-danger:hover {
-  background: rgba(244, 67, 54, 0.2);
-  color: #ff5252;
+  background: #ffebee;
   border-color: #f44336;
 }
 
+/* ====================================
+   LOADING Y EMPTY STATE
+   ==================================== */
 .loading-container {
   text-align: center;
   padding: 4rem 2rem;
-  color: #c8e6c9;
+  color: #666;
 }
 
 .loader {
-  border: 4px solid rgba(15, 31, 15, 0.7);
-  border-top: 4px solid #ffd700;
+  border: 4px solid #f5f5f5;
+  border-top: 4px solid #4caf50;
   border-radius: 50%;
   width: 50px;
   height: 50px;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 @keyframes spin {
@@ -1042,44 +997,33 @@ useHead({
   100% { transform: rotate(360deg); }
 }
 
-@keyframes float {
-  from {
-    transform: translateY(0) rotate(0deg);
-  }
-  to {
-    transform: translateY(-100px) rotate(360deg);
-  }
-}
-
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #90a4ae;
+  color: #999;
 }
 
 .empty-state i {
   font-size: 5rem;
-  color: #9e9d24;
+  color: #4caf50;
   margin-bottom: 1rem;
-  text-shadow: 0 0 20px rgba(158, 157, 36, 0.4);
 }
 
 .empty-state h3 {
-  background: linear-gradient(135deg, #ffd700, #ff9800);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2e7d32;
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
 }
 
 .empty-state p {
-  color: #a5d6a7;
+  color: #666;
   font-size: 1rem;
 }
 
-/* Modal Styles */
+/* ====================================
+   MODAL
+   ==================================== */
 .modal {
   display: none;
   position: fixed;
@@ -1091,7 +1035,6 @@ useHead({
   align-items: center;
   justify-content: center;
   padding: 20px;
-  box-sizing: border-box;
 }
 
 .modal.is-active {
@@ -1104,9 +1047,8 @@ useHead({
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 26, 10, 0.9);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(5px);
-  z-index: -1;
 }
 
 .modal-card {
@@ -1116,38 +1058,35 @@ useHead({
   max-width: 600px;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.95), rgba(15, 31, 15, 0.95));
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700) 1;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: white;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   z-index: 1001;
 }
 
 .modal-card-head {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
-  border: none;
+  background: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-shrink: 0;
 }
 
 .modal-card-title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  background: linear-gradient(135deg, #2e7d32, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 900;
-  text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
   margin: 0;
   font-size: 1.25rem;
 }
 
 .delete {
-  background: rgba(255, 215, 0, 0.3);
+  background: #e0e0e0;
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -1155,18 +1094,16 @@ useHead({
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
-  flex-shrink: 0;
 }
 
 .delete::before, .delete::after {
-  background: #ffd700;
+  background: #666;
   content: '';
   height: 2px;
   left: 25%;
   position: absolute;
   top: 50%;
   width: 50%;
-  transition: all 0.3s ease;
 }
 
 .delete::before {
@@ -1178,29 +1115,26 @@ useHead({
 }
 
 .delete:hover {
-  background: rgba(255, 215, 0, 0.5);
-  transform: scale(1.1);
+  background: #f44336;
 }
 
 .delete:hover::before, .delete:hover::after {
-  background: #ff6f00;
+  background: white;
 }
 
 .modal-card-body {
   padding: 2rem;
   overflow-y: auto;
   flex-grow: 1;
-  background: transparent;
 }
 
 .modal-card-foot {
-  background: rgba(15, 31, 15, 0.9);
-  border: none;
+  background: #f5f5f5;
+  border-top: 2px solid #e0e0e0;
   padding: 1.5rem;
   gap: 0.75rem;
   display: flex;
   justify-content: flex-end;
-  flex-shrink: 0;
 }
 
 .modal-card-foot .button {
@@ -1209,30 +1143,64 @@ useHead({
 }
 
 .modal-card-foot .button.is-danger {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background: #f44336;
   color: white;
   border: none;
-  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
 }
 
 .modal-card-foot .button.is-danger:hover {
-  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
+  background: #d32f2f;
 }
 
 .modal-card-foot .button:not(.is-danger) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
 }
 
 .modal-card-foot .button:not(.is-danger):hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
+  background: #f5f5f5;
+  border-color: #4caf50;
 }
 
-/* Responsive */
+/* ====================================
+   INPUTS DE FECHA
+   ==================================== */
+.input[type="date"] {
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  color: #333;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.input[type="date"]:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25);
+  background: white;
+  outline: none;
+}
+
+.input[type="date"]:hover {
+  border-color: #4caf50;
+  background: white;
+}
+
+.input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+}
+
+.input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background: #e8f5e9;
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
 @media screen and (max-width: 1200px) {
   .filtros-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1253,11 +1221,6 @@ useHead({
   .header-actions {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .header-actions .button {
-    flex: 1;
-    min-width: 150px;
   }
 }
 
@@ -1285,20 +1248,10 @@ useHead({
   }
   
   .modal-card {
-    max-height: calc(100vh - 20px);
     max-width: 100%;
   }
   
-  .modal-card-body {
-    padding: 1.5rem;
-  }
-  
-  .modal-card-head {
-    padding: 1.25rem;
-  }
-  
   .modal-card-foot {
-    padding: 1.25rem;
     flex-direction: column;
   }
   
@@ -1306,138 +1259,5 @@ useHead({
     width: 100%;
     justify-content: center;
   }
-}
-
-/* Animación de entrada para modales */
-.modal.is-active .modal-card {
-  animation: modal-slideIn 0.3s ease-out;
-}
-
-@keyframes modal-slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-
-/* Estilos específicos para inputs de fecha */
-.input[type="date"] {
-  background: rgba(15, 31, 15, 0.7) !important;
-  border: 2px solid rgba(255, 215, 0, 0.3) !important;
-  border-radius: 8px !important;
-  color: #e0f2f1 !important;
-  padding: 0.75rem !important;
-  font-family: inherit !important;
-  font-size: 1rem !important;
-  transition: all 0.3s ease !important;
-  position: relative !important;
-}
-
-.input[type="date"]:focus {
-  border-color: #ffd700 !important;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25) !important;
-  background: rgba(26, 46, 26, 0.9) !important;
-  outline: none !important;
-}
-
-.input[type="date"]:hover {
-  border-color: rgba(255, 215, 0, 0.5) !important;
-  background: rgba(26, 46, 26, 0.8) !important;
-}
-
-/* Estilos para el calendario nativo (Webkit/Blink) */
-.input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(10deg) !important;
-  cursor: pointer !important;
-  padding: 0.25rem !important;
-  border-radius: 4px !important;
-  background: rgba(255, 215, 0, 0.1) !important;
-}
-
-.input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  background: rgba(255, 215, 0, 0.2) !important;
-}
-
-/* Estilos para el texto del placeholder */
-.input[type="date"]::placeholder {
-  color: #90a4ae !important;
-}
-
-/* Estilos para Firefox */
-.input[type="date"]::-moz-placeholder {
-  color: #90a4ae !important;
-}
-
-/* Estilos para el texto seleccionado en el input */
-.input[type="date"]::-webkit-datetime-edit {
-  color: #e0f2f1 !important;
-}
-
-.input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  background: transparent !important;
-}
-
-.input[type="date"]::-webkit-datetime-edit-text {
-  color: #ffd700 !important;
-  padding: 0 0.2em !important;
-}
-
-.input[type="date"]::-webkit-datetime-edit-month-field,
-.input[type="date"]::-webkit-datetime-edit-day-field,
-.input[type="date"]::-webkit-datetime-edit-year-field {
-  color: #e0f2f1 !important;
-}
-
-/* Estilos para el dropdown del calendario (cuando se abre) */
-.input[type="date"]::-webkit-calendar-picker-indicator:active {
-  background: rgba(255, 215, 0, 0.3) !important;
-}
-
-/* Variante con icono personalizado si es necesario */
-.date-input-wrapper {
-  position: relative !important;
-}
-
-.date-input-wrapper::after {
-  content: '📅' !important;
-  position: absolute !important;
-  right: 0.75rem !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  color: #9e9d24 !important;
-  pointer-events: none !important;
-  font-size: 1.1rem !important;
-}
-
-/* Para inputs dentro de grupos con iconos */
-.control.has-icons-left .input[type="date"] {
-  padding-left: 2.75rem !important;
-}
-
-/* Estilos responsivos */
-@media screen and (max-width: 768px) {
-  .input[type="date"] {
-    font-size: 16px !important; /* Previene zoom en iOS */
-    padding: 0.875rem !important;
-  }
-}
-
-/* Estados de validación */
-.input[type="date"]:valid {
-  border-color: rgba(255, 215, 0, 0.5) !important;
-}
-
-.input[type="date"]:invalid {
-  border-color: rgba(244, 67, 54, 0.5) !important;
-}
-
-/* Estilos para el calendario modal (mejora la apariencia) */
-.input[type="date"]:focus::-webkit-calendar-picker-indicator {
-  background: rgba(255, 215, 0, 0.2) !important;
 }
 </style>

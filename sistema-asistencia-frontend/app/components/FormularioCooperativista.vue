@@ -352,39 +352,33 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
+/* ====================================
+   BASE
+   ==================================== */
 .formulario-cooperativista {
   padding: 1rem;
 }
 
+/* ====================================
+   SECCIONES DEL FORMULARIO
+   ==================================== */
 .form-section {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.7), rgba(15, 31, 15, 0.7));
-  border-radius: 14px;
+  background: white;
+  border-radius: 12px;
   padding: 2rem;
   margin-bottom: 1.5rem;
-  border: 2px solid transparent;
-  border-image: linear-gradient(135deg, #9e9d24, #ffd700) 1;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  position: relative;
-  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
-.form-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.05), transparent);
-  transition: left 0.6s ease;
-}
-
-.form-section:hover::before {
-  left: 100%;
+.form-section:hover {
+  border-color: #4caf50;
+  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.12);
 }
 
 .section-title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  background: linear-gradient(135deg, #2e7d32, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -392,78 +386,74 @@ const submitForm = async () => {
   font-weight: 800;
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
-  border-bottom: 3px solid #ffd700;
-  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+  border-bottom: 3px solid #4caf50;
 }
 
+/* ====================================
+   CAMPOS DEL FORMULARIO
+   ==================================== */
 .field .label {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2e7d32;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .input, .select select {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  color: #e0f2f1;
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  color: #333;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .input::placeholder {
-  color: #a5d6a7;
+  color: #999;
   opacity: 0.7;
 }
 
 .input:focus, .select select:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2));
-  transform: translateY(-2px);
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25);
+  background: white;
 }
 
 .select:not(.is-multiple):not(.is-loading)::after {
-  border-color: #ffd700;
+  border-color: #4caf50;
 }
 
+/* ====================================
+   CHECKBOX
+   ==================================== */
 .checkbox {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
   padding: 1.25rem;
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.6), rgba(15, 31, 15, 0.6));
+  background: #f5f5f5;
   border-radius: 10px;
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
 }
 
 .checkbox:hover {
-  border-color: #ffd700;
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2));
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+  border-color: #4caf50;
+  background: #e8f5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1);
 }
 
 .checkbox input[type="checkbox"] {
   width: 22px;
   height: 22px;
   cursor: pointer;
-  accent-color: #ffd700;
+  accent-color: #4caf50;
 }
 
 .checkbox-label {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2e7d32;
   font-weight: 700;
   font-size: 1rem;
 }
@@ -483,19 +473,19 @@ const submitForm = async () => {
 
 .checkbox-delegado .checkbox-label i {
   font-size: 1.5rem;
-  background: linear-gradient(135deg, #9c27b0, #ba68c8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ff9800;
 }
 
+/* ====================================
+   ACCIONES DEL FORMULARIO
+   ==================================== */
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   padding-top: 2rem;
   margin-top: 1rem;
-  border-top: 2px solid rgba(255, 215, 0, 0.2);
+  border-top: 2px solid #e0e0e0;
 }
 
 .form-actions .button {
@@ -503,35 +493,35 @@ const submitForm = async () => {
   font-weight: 700;
   padding: 0.875rem 2rem;
   border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   border: 2px solid transparent;
 }
 
 .button.is-light {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(158, 157, 36, 0.3));
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  color: #ffd700;
+  background: white;
+  border: 2px solid #e0e0e0;
+  color: #666;
 }
 
 .button.is-light:hover {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(158, 157, 36, 0.4));
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
-  border-color: #ffd700;
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #4caf50;
 }
 
 .button.is-warning {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
-  color: #0d1b0d;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  color: #1a4d1a;
   border: none;
   font-weight: 800;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 .button.is-warning:hover {
-  background: linear-gradient(135deg, #ff9800 0%, #ffd700 100%);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+  background: linear-gradient(135deg, #ff9800, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
 .button.is-warning:disabled {
@@ -541,21 +531,9 @@ const submitForm = async () => {
   box-shadow: none;
 }
 
-/* Estilos para datalist */
-datalist {
-  background: linear-gradient(135deg, #1a2e1a, #0f1f0f);
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  border-radius: 8px;
-}
-
-datalist option {
-  background: linear-gradient(135deg, #1a2e1a, #0f1f0f);
-  color: #e0f2f1;
-  padding: 0.5rem;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-}
-
-/* Responsive */
+/* ====================================
+   RESPONSIVE
+   ==================================== */
 @media screen and (max-width: 768px) {
   .formulario-cooperativista {
     padding: 0.5rem;
@@ -577,19 +555,5 @@ datalist option {
     margin-top: 0;
     height: auto;
   }
-}
-
-/* Animaciones adicionales */
-@keyframes formGlow {
-  0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); }
-  50% { box-shadow: 0 4px 30px rgba(255, 215, 0, 0.3); }
-}
-
-.form-section:nth-child(odd) {
-  animation: formGlow 4s ease-in-out infinite;
-}
-
-.form-section:nth-child(even) {
-  animation: formGlow 4s ease-in-out infinite 2s;
 }
 </style>

@@ -165,23 +165,21 @@ useHead({
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to bottom, #0a1a0a 0%, #0f1f0f 50%, #0a1a0a 100%);
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 50%, #ffffff 100%);
   padding: 2rem;
 }
 
 .login-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1100px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.9), rgba(15, 31, 15, 0.9));
+  background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(255, 215, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(46, 125, 50, 0.15);
   min-height: 600px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700, #689f38) 1;
+  border: 2px solid #4caf50;
 }
 
 .login-left {
@@ -189,6 +187,7 @@ useHead({
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: white;
 }
 
 .login-header {
@@ -205,27 +204,25 @@ useHead({
   max-height: 100px;
   border-radius: 50%;
   border: 3px solid #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(158, 157, 36, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+  transition: transform 0.3s ease;
 }
 
 .logo-image:hover {
-  transform: rotate(360deg) scale(1.1);
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(158, 157, 36, 0.5);
+  transform: scale(1.1);
 }
 
 .login-header .title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  background: linear-gradient(135deg, #2e7d32, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 0.5rem;
   font-weight: 900;
-  text-shadow: 0 4px 30px rgba(255, 215, 0, 0.3);
 }
 
 .login-header .subtitle {
-  color: #a5d6a7;
+  color: #2e7d32;
   margin: 0;
   font-weight: 500;
 }
@@ -237,16 +234,13 @@ useHead({
 .login-footer {
   text-align: center;
   margin-top: auto;
-}
-
-.login-footer p {
-  color: #90a4ae !important;
+  color: #666;
 }
 
 .login-right {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+  background: linear-gradient(135deg, #2e7d32, #1b5e20);
 }
 
 .background-image {
@@ -256,7 +250,7 @@ useHead({
   position: absolute;
   top: 0;
   left: 0;
-  filter: brightness(0.6);
+  filter: brightness(0.5);
 }
 
 .image-overlay {
@@ -266,11 +260,8 @@ useHead({
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, 
-    rgba(13, 27, 13, 0.9) 0%, 
-    rgba(26, 46, 26, 0.85) 25%,
-    rgba(30, 70, 30, 0.8) 50%,
-    rgba(26, 46, 26, 0.85) 75%,
-    rgba(13, 27, 13, 0.9) 100%);
+    rgba(46, 125, 50, 0.9) 0%, 
+    rgba(27, 94, 32, 0.85) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -283,29 +274,24 @@ useHead({
 }
 
 .overlay-content .title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 4px 30px rgba(255, 215, 0, 0.3);
+  color: white;
   margin-bottom: 1rem;
   font-weight: 900;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .overlay-content .subtitle {
-  color: #e0f2f1;
+  color: #e8f5e9;
   margin-bottom: 1.5rem;
-  opacity: 0.95;
   font-weight: 500;
 }
 
 .decorative-line {
   width: 80px;
-  height: 4px;
-  background: linear-gradient(90deg, #ffd700, #9e9d24);
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ff9800);
   margin: 0 auto;
   border-radius: 2px;
-  box-shadow: 0 0 15px rgba(158, 157, 36, 0.6);
 }
 
 .overlay-content p {
@@ -314,48 +300,46 @@ useHead({
 }
 
 .label {
-  color: #e0f2f1;
+  color: #2e7d32;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .input {
   border-radius: 8px;
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
+  border: 2px solid #e0e0e0;
+  background: #f5f5f5;
+  color: #333;
   transition: all 0.3s ease;
 }
 
 .input::placeholder {
-  color: #90a4ae;
+  color: #999;
 }
 
 .input:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: rgba(26, 46, 26, 0.9);
+  border-color: #4caf50;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25);
+  background: white;
 }
 
 .control.has-icons-left .icon {
-  color: #9e9d24;
+  color: #4caf50;
 }
 
 .button.is-primary {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
   border: none;
   border-radius: 8px;
   font-weight: 700;
   transition: all 0.3s ease;
-  color: #0d1b0d;
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 152, 0, 0.2);
-  position: relative;
-  overflow: hidden;
+  color: #1a4d1a;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 .button.is-primary:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 152, 0, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
 .button.is-primary:active:not(:disabled) {
@@ -363,17 +347,17 @@ useHead({
 }
 
 .notification.is-danger {
-  background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(211, 47, 47, 0.2));
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  color: #ffcdd2;
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  color: #c62828;
 }
 
 .notification.is-danger .delete {
-  background: rgba(244, 67, 54, 0.5);
+  background: #ef5350;
 }
 
 .notification.is-danger .delete:hover {
-  background: rgba(244, 67, 54, 0.7);
+  background: #e53935;
 }
 
 @media screen and (max-width: 1023px) {

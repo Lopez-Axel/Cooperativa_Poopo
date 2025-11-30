@@ -208,11 +208,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+
 .dashboard-navbar {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
-  box-shadow: 0 4px 30px rgba(76, 175, 80, 0.2), 0 0 40px rgba(255, 215, 0, 0.1);
-  border-bottom: 3px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700) 1;
+  background: #1a4d1a;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+  border-bottom: 3px solid #ffd700;
+  min-height: 70px;
 }
 
 /* Brand */
@@ -223,51 +224,41 @@ onBeforeUnmount(() => {
   padding: 0.5rem 1rem;
 }
 
-.brand-item:hover {
-  background-color: transparent !important;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
 .brand-title {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.1rem;
   color: white;
 }
 
 .brand-subtitle {
   font-size: 0.75rem;
-  color: #BBC863;
+  color: #a5d6a7;
   font-weight: 500;
 }
- 
+
 /* Navigation Links */
 .nav-link {
   color: white;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
+  margin: 0 0.25rem;
 }
 
 .nav-link:hover {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2)) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #ffd700 !important;
   border-bottom-color: #ffd700;
 }
 
 .nav-link.router-link-active {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(158, 157, 36, 0.3)) !important;
+  background: rgba(255, 215, 0, 0.2) !important;
   color: #ffd700 !important;
   border-bottom-color: #ffd700;
-  font-weight: 600;
 }
 
 .nav-link .icon {
-  color: white;
+  color: #a5d6a7;
 }
 
 .nav-link:hover .icon,
@@ -278,86 +269,54 @@ onBeforeUnmount(() => {
 /* User Link */
 .user-link {
   color: white;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .user-link:hover {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2)) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #ffd700 !important;
 }
 
 /* Dropdown */
 .navbar-dropdown {
   border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #e0e0e0;
   margin-top: 0.5rem;
+  background: white;
 }
 
 .user-info {
-  background-color: #fafafa;
-  color: black;
-  cursor: default;
+  background: #f8fdf8;
+  color: #2e7d32;
 }
 
-.user-info:hover {
-  background-color: #fafafa !important;
+/* Logout Button */
+.button.is-warning {
+  background: #ffd700;
+  color: #1a4d1a;
+  font-weight: 600;
+  border: none;
+  width: 100%;
 }
 
-.logout-item:hover {
-  background-color: #ffebee !important;
-  color: #c62828 !important;
+.button.is-warning:hover {
+  background: #ffc400;
 }
 
-/* Burger */
+/* Burger Menu */
 .navbar-burger {
-  color: #31694E;
+  color: white;
 }
 
 .navbar-burger:hover {
-  background-color: #F0E491;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.navbar-burger.is-active {
-  background-color: #F0E491;
-}
-
-/* Mobile Menu */
+/* Mobile */
 @media screen and (max-width: 1023px) {
   .navbar-menu {
-    background-color: #F0E491;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  }
-  
-  .nav-link {
-    color: #31694E;
-    border-bottom: none;
-    border-left: 3px solid transparent;
-  }
-  
-  .user-link{
-    color: #31694E;
-  }
-
-  .icon{
-    color: #31694E;
-  }
-
-  .nav-link:hover,
-  .nav-link.router-link-active {
-    border-left-color: #31694E;
-  }
-}
-
-/* Container fluid adjustment */
-.container.is-fluid {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-@media screen and (max-width: 768px) {
-  .container.is-fluid {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    background: #1a4d1a;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
   
   .brand-text {
