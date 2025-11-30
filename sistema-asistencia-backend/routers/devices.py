@@ -329,6 +329,50 @@ def unblock_device(device_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Dispositivo desbloqueado exitosamente"}
 
+@router.post("/{device_id}/deactivate")
+def deactivate_device(
+    device_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Desactiva un dispositivo TEMPORALMENTE (libera el API Key para reutilización)
+    
+    Diferencia con revoke:
+    - deactivate: El usuario puede volver con el MISMO API Key
+    - revoke: El API Key queda invalidado permanentemente
+    """
+    db_device = db.query(Device).filter(Device.id == device_id).first()
+    
+    if not db_device:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    
+    if not db_device.is_activated:
+        raise HTTPException(
+            status_code=400, 
+            detail="El dispositivo no está activado, no se puede desactivar"
+        )
+
+    db_device.is_activated = False
+    db_device.is_active = False
+    db_device.device_id = None
+    db_device.device_name = None
+    db_device.device_model = None
+    db_device.device_os = None
+    db_device.activated_at = None
+    db_device.last_activity = datetime.now()  
+    
+    
+    db.commit()
+    db.refresh(db_device)
+    
+    return {
+        "message": "Dispositivo desactivado exitosamente",
+        "device_id": db_device.id,
+        "cooperativista_id": db_device.cooperativista_id,
+        "can_reactivate": True,
+        "api_key_status": "válido para reactivación"
+    }
+
 @router.post("/{device_id}/revoke")
 def revoke_device(
     device_id: int,
