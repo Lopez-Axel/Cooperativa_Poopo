@@ -693,3 +693,295 @@ useHead({
   title: 'Gestión de Períodos de Asistencia'
 })
 </script>
+
+<style scoped>
+/* ====================================
+   BASE - FORZAR MODO CLARO
+   ==================================== */
+:root {
+  color-scheme: light;
+}
+
+.container {
+  background: linear-gradient(to bottom, #f8fdf8 0%, ##c5e4c6 100%) !important;
+  color: #333333 !important;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Forzar colores claros en todos los elementos */
+.container * {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* ====================================
+   COMPONENTES BULMA MODIFICADOS
+   ==================================== */
+.box {
+  background: #ffffff !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 10px rgba(46, 125, 50, 0.1) !important;
+  color: #333333 !important;
+}
+
+.title {
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+}
+
+.subtitle {
+  color: #666666 !important;
+}
+
+/* ====================================
+   BOTONES
+   ==================================== */
+.button.is-primary {
+  background: linear-gradient(135deg, #ffd700, #ff9800) !important;
+  color: #1a4d1a !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+.button.is-info {
+  background: #4caf50 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-success {
+  background: #4caf50 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-warning {
+  background: #ff9800 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-danger {
+  background: #f44336 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-light {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+}
+
+/* ====================================
+   FORMULARIOS
+   ==================================== */
+.input, .textarea, .select select {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+}
+
+.input:focus, .textarea:focus, .select select:focus {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25) !important;
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: #666666 !important;
+}
+
+.label {
+  color: #2e7d32 !important;
+  font-weight: 600 !important;
+}
+
+/* ====================================
+   TABLA
+   ==================================== */
+.table {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background: #f5f5f5 !important;
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+  border-color: #e0e0e0 !important;
+}
+
+.table tbody tr {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.table tbody tr:hover {
+  background: #f5f5f5 !important;
+}
+
+.table tbody td {
+  border-color: #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+/* ====================================
+   TAGS
+   ==================================== */
+.tag {
+  font-weight: 600 !important;
+}
+
+.tag.is-success {
+  background: #4caf50 !important;
+  color: white !important;
+}
+
+.tag.is-warning {
+  background: #ff9800 !important;
+  color: white !important;
+}
+
+.tag.is-info {
+  background: #2196f3 !important;
+  color: white !important;
+}
+
+.tag.is-primary {
+  background: #ffd700 !important;
+  color: #1a4d1a !important;
+}
+
+.tag.is-dark {
+  background: #666666 !important;
+  color: white !important;
+}
+
+.tag.is-danger {
+  background: #f44336 !important;
+  color: white !important;
+}
+
+.tag.is-light {
+  background: #f5f5f5 !important;
+  color: #666666 !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+/* ====================================
+   MODALES
+   ==================================== */
+.modal-card {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border-radius: 16px;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.modal-card-head {
+  background: #f5f5f5 !important;
+  border-bottom: 2px solid #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+.modal-card-title {
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+}
+
+.modal-card-body {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.modal-card-foot {
+  background: #f5f5f5 !important;
+  border-top: 1px solid #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+.modal-background {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ====================================
+   NOTIFICACIONES
+   ==================================== */
+.notification.is-danger {
+  background: #ffebee !important;
+  color: #c62828 !important;
+  border: 1px solid #ef5350 !important;
+}
+
+/* ====================================
+   DROPDOWN
+   ==================================== */
+.dropdown-content {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+}
+
+.dropdown-item {
+  color: #333333 !important;
+  background: #ffffff !important;
+}
+
+.dropdown-item:hover {
+  background: #e8f5e9 !important;
+  color: #2e7d32 !important;
+}
+
+/* ====================================
+   ESTADOS Y HELPERS
+   ==================================== */
+.has-text-danger {
+  color: #f44336 !important;
+}
+
+.help.is-danger {
+  color: #f44336 !important;
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .box {
+    margin-bottom: 1rem;
+  }
+  
+  .buttons.are-small .button {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* ====================================
+   ANIMACIONES
+   ==================================== */
+.button, .box, .table {
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.box:hover {
+  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.15) !important;
+  border-color: #4caf50 !important;
+}
+</style>

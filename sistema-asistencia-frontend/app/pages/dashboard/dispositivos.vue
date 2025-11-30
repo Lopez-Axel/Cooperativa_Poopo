@@ -703,28 +703,436 @@ useHead({
 </script>
 
 <style scoped>
+/* ====================================
+   BASE - FORZAR MODO CLARO
+   ==================================== */
+:root {
+  color-scheme: light;
+}
+
 .devices-page {
   padding: 2rem;
+  background: linear-gradient(to bottom, #f8fdf8 0%, #ffffff 100%) !important;
+  color: #333333 !important;
+  min-height: 100vh;
 }
 
+/* Forzar colores claros en todos los elementos */
+.devices-page * {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* ====================================
+   HEADER Y TÍTULOS
+   ==================================== */
+.title {
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+}
+
+.subtitle {
+  color: #666666 !important;
+}
+
+/* ====================================
+   BOXES Y TARJETAS
+   ==================================== */
 .box {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 10px rgba(46, 125, 50, 0.1) !important;
+  color: #333333 !important;
 }
 
-code {
-  background-color: #f5f5f5;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+/* Cards de estadísticas con fondos claros */
+.box.has-background-primary-light {
+  background: linear-gradient(135deg, #e8f5e9, #ffffff) !important;
+  border-color: #4caf50 !important;
 }
 
+.box.has-background-success-light {
+  background: linear-gradient(135deg, #e8f5e9, #ffffff) !important;
+  border-color: #4caf50 !important;
+}
+
+.box.has-background-warning-light {
+  background: linear-gradient(135deg, #fff3e0, #ffffff) !important;
+  border-color: #ff9800 !important;
+}
+
+.box.has-background-info-light {
+  background: linear-gradient(135deg, #e3f2fd, #ffffff) !important;
+  border-color: #2196f3 !important;
+}
+
+/* ====================================
+   BOTONES
+   ==================================== */
+.button.is-primary {
+  background: linear-gradient(135deg, #ffd700, #ff9800) !important;
+  color: #1a4d1a !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+.button.is-info {
+  background: #4caf50 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-success {
+  background: #4caf50 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-warning {
+  background: #ff9800 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-danger {
+  background: #f44336 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.button.is-light {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.button.is-ghost {
+  background: transparent !important;
+  border: none !important;
+  color: #666666 !important;
+}
+
+/* ====================================
+   FORMULARIOS Y FILTROS
+   ==================================== */
+.input, .textarea, .select select {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+}
+
+.input:focus, .textarea:focus, .select select:focus {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 0.125em rgba(76, 175, 80, 0.25) !important;
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.label {
+  color: #2e7d32 !important;
+  font-weight: 600 !important;
+}
+
+.help {
+  color: #666666 !important;
+}
+
+.checkbox input[type="checkbox"] {
+  accent-color: #4caf50 !important;
+}
+
+/* ====================================
+   TABLAS
+   ==================================== */
+.table {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background: #f5f5f5 !important;
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+  border-color: #e0e0e0 !important;
+}
+
+.table tbody tr {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.table tbody tr:hover {
+  background: #f5f5f5 !important;
+}
+
+.table tbody td {
+  border-color: #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+.table.is-striped tbody tr:nth-child(even) {
+  background: #fafafa !important;
+}
+
+.table.is-striped tbody tr:nth-child(even):hover {
+  background: #f0f0f0 !important;
+}
+
+/* ====================================
+   TAGS
+   ==================================== */
+.tag {
+  font-weight: 600 !important;
+}
+
+.tag.is-success {
+  background: #4caf50 !important;
+  color: white !important;
+}
+
+.tag.is-warning {
+  background: #ff9800 !important;
+  color: white !important;
+}
+
+.tag.is-danger {
+  background: #f44336 !important;
+  color: white !important;
+}
+
+.tag.is-info {
+  background: #2196f3 !important;
+  color: white !important;
+}
+
+/* ====================================
+   PROGRESS BARS
+   ==================================== */
 .progress {
-  height: 0.5rem;
+  background: #f5f5f5 !important;
+  border: 1px solid #e0e0e0 !important;
 }
 
+.progress::-webkit-progress-bar {
+  background: #f5f5f5 !important;
+}
+
+.progress::-webkit-progress-value {
+  background: #4caf50 !important;
+}
+
+.progress.is-success::-webkit-progress-value {
+  background: #4caf50 !important;
+}
+
+.progress.is-warning::-webkit-progress-value {
+  background: #ff9800 !important;
+}
+
+.progress.is-danger::-webkit-progress-value {
+  background: #f44336 !important;
+}
+
+/* ====================================
+   MODALES
+   ==================================== */
+.modal-card {
+  background: #ffffff !important;
+  color: #333333 !important;
+  border-radius: 16px;
+  border: 2px solid #e0e0e0 !important;
+}
+
+.modal-card-head {
+  background: #f5f5f5 !important;
+  border-bottom: 2px solid #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+.modal-card-title {
+  color: #2e7d32 !important;
+  font-weight: 800 !important;
+}
+
+.modal-card-body {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+.modal-card-foot {
+  background: #f5f5f5 !important;
+  border-top: 1px solid #e0e0e0 !important;
+  color: #333333 !important;
+}
+
+.modal-background {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ====================================
+   NOTIFICACIONES
+   ==================================== */
+.notification {
+  border: 1px solid !important;
+}
+
+.notification.is-success {
+  background: #e8f5e9 !important;
+  color: #2e7d32 !important;
+  border-color: #4caf50 !important;
+}
+
+.notification.is-warning {
+  background: #fff3e0 !important;
+  color: #e65100 !important;
+  border-color: #ff9800 !important;
+}
+
+.notification.is-info {
+  background: #e3f2fd !important;
+  color: #1565c0 !important;
+  border-color: #2196f3 !important;
+}
+
+.notification.is-danger {
+  background: #ffebee !important;
+  color: #c62828 !important;
+  border-color: #f44336 !important;
+}
+
+/* ====================================
+   CÓDIGO Y TEXTO ESPECIAL
+   ==================================== */
+code {
+  background: #f5f5f5 !important;
+  color: #d32f2f !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+  border: 1px solid #e0e0e0 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+.has-text-grey {
+  color: #666666 !important;
+}
+
+.has-text-grey-light {
+  color: #999999 !important;
+}
+
+.has-text-danger {
+  color: #f44336 !important;
+}
+
+.has-text-success {
+  color: #4caf50 !important;
+}
+
+.has-text-warning {
+  color: #ff9800 !important;
+}
+
+.has-text-info {
+  color: #2196f3 !important;
+}
+
+/* ====================================
+   ICONOS
+   ==================================== */
+.icon.has-text-primary {
+  color: #2e7d32 !important;
+}
+
+.icon.has-text-success {
+  color: #4caf50 !important;
+}
+
+.icon.has-text-warning {
+  color: #ff9800 !important;
+}
+
+.icon.has-text-info {
+  color: #2196f3 !important;
+}
+
+.icon.has-text-danger {
+  color: #f44336 !important;
+}
+
+.icon.has-text-grey-light {
+  color: #999999 !important;
+}
+
+/* ====================================
+   ANIMACIONES Y TRANSICIONES
+   ==================================== */
+.button, .box, .table {
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.box:hover {
+  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.15) !important;
+  border-color: #4caf50 !important;
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+@media screen and (max-width: 768px) {
+  .devices-page {
+    padding: 1rem;
+  }
+  
+  .box {
+    margin-bottom: 1rem;
+  }
+  
+  .buttons .button {
+    margin-bottom: 0.25rem;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+}
+
+/* ====================================
+   ESTILOS DE IMPRESIÓN
+   ==================================== */
 @media print {
   .modal-card-head,
   .modal-card-foot {
-    display: none;
+    display: none !important;
   }
+  
+  .modal-card {
+    box-shadow: none !important;
+    border: 2px solid #333 !important;
+  }
+  
+  .button {
+    display: none !important;
+  }
+}
+
+/* ====================================
+   ESTADOS DE CARGA
+   ==================================== */
+.mdi-loading.mdi-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

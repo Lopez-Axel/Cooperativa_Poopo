@@ -8,7 +8,7 @@
           <img src="/logo.jfif" alt="Cooperativa Minera Poopó R.L." style="max-height: 60px; border-radius: 50%;">
           <div class="brand-text">
             <span class="brand-title">Cooperativa Poopó</span>
-            <span class="brand-subtitle">Sistema de Gestión</span>
+            <span class="brand-subtitle"> Sistema de Gestión</span>
           </div>
         </NuxtLink>
         
