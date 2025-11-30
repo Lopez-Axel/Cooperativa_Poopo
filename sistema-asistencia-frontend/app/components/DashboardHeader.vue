@@ -46,7 +46,7 @@
             <span>Cooperativistas</span>
           </NuxtLink>
           
-          <NuxtLink to="/dashboard/asistencias" class="navbar-item nav-link">
+          <NuxtLink to="/asistencias" class="navbar-item nav-link">
             <span class="icon">
               <i class="mdi mdi-clipboard-check"></i>
             </span>
@@ -64,7 +64,7 @@
           <ClientOnly>
             <NuxtLink 
               v-if="authStore.isSuperuser" 
-              to="/dashboard/users" 
+              to="/users" 
               class="navbar-item nav-link"
             >
               <span class="icon">

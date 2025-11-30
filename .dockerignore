@@ -1,0 +1,33 @@
+# Ignorar frontend y archivos innecesarios
+node_modules/
+.nuxt/
+.output/
+dist/
+frontend/
+nuxt-app/
+client/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Otros
+*.log
+.env.local
+.DS_Store

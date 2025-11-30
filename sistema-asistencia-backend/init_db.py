@@ -1,15 +1,11 @@
 from database import engine, Base, SessionLocal
-from models import User, Ubicacion, Config, Cooperativista
+from models import User, Config, Cooperativista
 from passlib.context import CryptContext
 import pandas as pd
 from datetime import datetime
 import re
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def generar_codigo_unico(nro):
-    """Generar código único basado en el número"""
-    return f"COOP{nro:06d}"
 
 def limpiar_ci(ci_str):
     """Limpiar y extraer CI"""
@@ -73,21 +69,12 @@ def cargar_cooperativistas_excel():
                         print(f"Fila {index + 2}: NRO. faltante, omitiendo")
                         cooperativistas_error += 1
                         continue
-                    
-                    # Verificar si ya existe el cooperativista
-                    codigo_unico = generar_codigo_unico(nro)
-                    existing = db.query(Cooperativista).filter(
-                        Cooperativista.codigo_unico == codigo_unico
-                    ).first()
-                    if existing:
-                        continue
-                    
+                
                     # Procesar CI
                     ci, ci_expedido = limpiar_ci(row.get('CI'))
                     
                     # Crear cooperativista
                     cooperativista = Cooperativista(
-                        codigo_unico=codigo_unico,
                         nro=nro,
                         seccion=str(row.get('SECCION')) if pd.notna(row.get('SECCION')) else None,
                         cuadrilla=str(row.get('CUADRILLA', '')).strip() if pd.notna(row.get('CUADRILLA')) else None,
@@ -156,20 +143,6 @@ def init_db():
             )
             db.add(admin_user)
             print("Usuario admin creado (username: admin, password: admin123)")
-        
-        # Verificar si ya existe la ubicación por defecto
-        existing_ubicacion = db.query(Ubicacion).first()
-        if not existing_ubicacion:
-            print("Creando ubicación por defecto...")
-            ubicacion_default = Ubicacion(
-                nombre="Cooperativa - Ubicación Principal",
-                latitud=-16.5000,
-                longitud=-68.1500,
-                radio_metros=50,
-                is_active=True
-            )
-            db.add(ubicacion_default)
-            print("Ubicación por defecto creada")
         
         # Verificar configuraciones
         existing_config = db.query(Config).first()

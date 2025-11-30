@@ -1,5 +1,6 @@
 // stores/users.js
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth'
 
 export const useUsersStore = defineStore('users', {
   state: () => ({
@@ -42,7 +43,7 @@ export const useUsersStore = defineStore('users', {
           params.append('is_superuser', this.filters.is_superuser.toString())
         }
         
-        const response = await $fetch(`http://localhost:8000/api/users?${params}`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users?${params}`, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
@@ -62,7 +63,7 @@ export const useUsersStore = defineStore('users', {
         const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
-        const response = await $fetch(`http://localhost:8000/api/users/`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users/`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${authStore.token}`
@@ -85,7 +86,7 @@ export const useUsersStore = defineStore('users', {
         const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
-        const response = await $fetch(`http://localhost:8000/api/users/${userId}`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${authStore.token}`
@@ -108,7 +109,7 @@ export const useUsersStore = defineStore('users', {
         const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
-        await $fetch(`http://localhost:8000/api/users/${userId}`, {
+        await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${authStore.token}`

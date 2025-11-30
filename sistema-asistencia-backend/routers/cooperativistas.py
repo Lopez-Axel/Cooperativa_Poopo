@@ -10,17 +10,10 @@ import string
 
 router = APIRouter(prefix="/cooperativistas", tags=["cooperativistas"])
 
-def generar_codigo_unico(db: Session):
-    while True:
-        codigo = f"COOP-{''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(5))}"
-        existe = db.query(Cooperativista).filter(Cooperativista.codigo_unico == codigo).first()
-        if not existe:
-            return codigo
-
 @router.get("/", response_model=List[CooperativistaResponse])
 def get_cooperativistas(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    skip: int = Query(0, alias="offset", ge=0),  # ← CAMBIO 1: Agregar alias="offset"
+    limit: int = Query(100, ge=1, le=1000),      # ← CAMBIO 2: Aumentar máximo a 1000
     is_active: Optional[bool] = None,
     cuadrilla: Optional[str] = None,
     seccion: Optional[int] = None,
@@ -40,8 +33,7 @@ def get_cooperativistas(
             (Cooperativista.nombres.ilike(f"%{search}%")) |
             (Cooperativista.apellido_paterno.ilike(f"%{search}%")) |
             (Cooperativista.apellido_materno.ilike(f"%{search}%")) |
-            (Cooperativista.ci.ilike(f"%{search}%")) |
-            (Cooperativista.codigo_unico.ilike(f"%{search}%"))
+            (Cooperativista.ci.ilike(f"%{search}%")) 
         )
     
     return query.offset(skip).limit(limit).all()
@@ -53,18 +45,8 @@ def get_cooperativista(cooperativista_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     return coop
 
-@router.get("/codigo/{codigo_unico}", response_model=CooperativistaResponse)
-def get_cooperativista_by_codigo(codigo_unico: str, db: Session = Depends(get_db)):
-    coop = db.query(Cooperativista).filter(Cooperativista.codigo_unico == codigo_unico).first()
-    if not coop:
-        raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
-    return coop
-
 @router.post("/", response_model=CooperativistaResponse, status_code=status.HTTP_201_CREATED)
-def create_cooperativista(cooperativista: CooperativistaCreate, db: Session = Depends(get_db)):
-    if db.query(Cooperativista).filter(Cooperativista.codigo_unico == cooperativista.codigo_unico).first():
-        raise HTTPException(status_code=400, detail="El código único ya existe")
-    
+def create_cooperativista(cooperativista: CooperativistaCreate, db: Session = Depends(get_db)):    
     if cooperativista.ci:
         existe_ci = db.query(Cooperativista).filter(Cooperativista.ci == cooperativista.ci).first()
         if existe_ci:
@@ -87,14 +69,6 @@ def update_cooperativista(
         raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     
     update_data = cooperativista.model_dump(exclude_unset=True)
-    
-    if "codigo_unico" in update_data and update_data["codigo_unico"] != db_coop.codigo_unico:
-        existe = db.query(Cooperativista).filter(
-            Cooperativista.codigo_unico == update_data["codigo_unico"],
-            Cooperativista.id != cooperativista_id
-        ).first()
-        if existe:
-            raise HTTPException(status_code=400, detail="El código único ya existe")
     
     if "ci" in update_data and update_data["ci"]:
         existe_ci = db.query(Cooperativista).filter(

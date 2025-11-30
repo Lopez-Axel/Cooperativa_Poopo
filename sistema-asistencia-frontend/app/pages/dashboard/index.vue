@@ -5,7 +5,7 @@
     <div class="index_home-welcome-section">
       <div class="index_home-welcome-content">
         <div class="index_home-welcome-text">
-          <h1 class="index_home-title is-1">
+          <h1 class="index_home-title is-size-2">
             Bienvenido, {{ userName }}
           </h1>
           <p class="index_home-subtitle is-4">Sistema de Gestión - Cooperativa Minera Poopó R.L.</p>
@@ -382,10 +382,6 @@ useHead({
   
   .index_home-welcome-section {
     padding: 1.5rem;
-  }
-  
-  .index_home-welcome-text .index_home-title {
-    font-size: 1.75rem;
   }
   
   .index_home-secondary-stats {

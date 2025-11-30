@@ -2,10 +2,10 @@
 .env
 
 # Base de datos SQLite
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
+#*.db
+#*.db-journal
+#*.sqlite
+#*.sqlite3
 
 # Python
 __pycache__/
@@ -63,3 +63,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+
+lista_cooperativistas_agosto.xlsx
+init_db.py
+limpieza.py

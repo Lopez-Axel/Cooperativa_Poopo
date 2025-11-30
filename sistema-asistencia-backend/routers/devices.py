@@ -1,11 +1,20 @@
 # routers/devices.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import Integer
+from sqlalchemy import and_, or_
 from typing import List, Optional
 from datetime import datetime
+import secrets
+import string
 from database import get_db
 from models.device import Device
-from schemas.device import DeviceCreate, DeviceUpdate, DeviceResponse
+from models.cooperativista import Cooperativista
+from schemas.device import (
+    DeviceCreate, DeviceUpdate, DeviceResponse, 
+    DeviceBatchGenerate, DeviceActivate, DeviceBatchResponse,
+    DeviceExportData
+)
 from passlib.context import CryptContext
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -18,12 +27,24 @@ def hash_api_key(api_key: str) -> str:
 def verify_api_key(plain_key: str, hashed_key: str) -> bool:
     return pwd_context.verify(plain_key, hashed_key)
 
+def generate_api_key(length: int = 32) -> str:
+    """Genera una API key segura y legible"""
+    characters = string.ascii_uppercase + string.digits
+    # Evitamos caracteres confusos: 0, O, I, 1
+    characters = characters.replace('0', '').replace('O', '').replace('I', '').replace('1', '')
+    api_key = ''.join(secrets.choice(characters) for _ in range(length))
+    # Formato: XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX
+    formatted = '-'.join([api_key[i:i+4] for i in range(0, len(api_key), 4)])
+    return formatted
+
 @router.get("/", response_model=List[DeviceResponse])
 def get_devices(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     cooperativista_id: Optional[int] = None,
+    cuadrilla: Optional[str] = None,
     is_active: Optional[bool] = None,
+    is_activated: Optional[bool] = None,
     is_blocked: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
@@ -31,8 +52,16 @@ def get_devices(
     
     if cooperativista_id:
         query = query.filter(Device.cooperativista_id == cooperativista_id)
+    
+    if cuadrilla:
+        query = query.join(Cooperativista).filter(Cooperativista.cuadrilla == cuadrilla)
+    
     if is_active is not None:
         query = query.filter(Device.is_active == is_active)
+    
+    if is_activated is not None:
+        query = query.filter(Device.is_activated == is_activated)
+    
     if is_blocked is not None:
         query = query.filter(Device.is_blocked == is_blocked)
     
@@ -45,85 +74,228 @@ def get_device(device_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
     return device
 
-@router.get("/device-id/{device_identifier}", response_model=DeviceResponse)
-def get_device_by_identifier(device_identifier: str, db: Session = Depends(get_db)):
-    device = db.query(Device).filter(Device.device_id == device_identifier).first()
-    if not device:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    return device
-
-@router.get("/cooperativista/{cooperativista_id}/devices", response_model=List[DeviceResponse])
-def get_cooperativista_devices(cooperativista_id: int, db: Session = Depends(get_db)):
-    from models.cooperativista import Cooperativista
+@router.post("/generate-batch", response_model=DeviceBatchResponse)
+def generate_batch_api_keys(
+    batch: DeviceBatchGenerate,
+    registered_by: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Genera API keys masivas por cuadrilla, sección o lista de IDs
+    """
+    query = db.query(Cooperativista).filter(Cooperativista.is_active == True)
     
-    cooperativista = db.query(Cooperativista).filter(
-        Cooperativista.id == cooperativista_id
+    # Filtrar por criterios
+    if batch.cuadrilla:
+        query = query.filter(Cooperativista.cuadrilla == batch.cuadrilla)
+    
+    if batch.seccion:
+        query = query.filter(Cooperativista.seccion == batch.seccion)
+    
+    if batch.cooperativista_ids:
+        query = query.filter(Cooperativista.id.in_(batch.cooperativista_ids))
+    
+
+    cooperativistas = query.all()
+    
+    if not cooperativistas:
+        raise HTTPException(status_code=404, detail="No se encontraron cooperativistas con los criterios especificados")
+    
+    created_devices = []
+    skipped = []
+    
+    for coop in cooperativistas:
+        # Verificar si ya tiene un dispositivo
+        existing_device = db.query(Device).filter(
+            Device.cooperativista_id == coop.id
+        ).first()
+        
+        if existing_device and not batch.regenerate:
+            skipped.append({
+                "cooperativista_id": coop.id,
+                "codigo_unico": coop.codigo_unico,
+                "nombre": f"{coop.nombres} {coop.apellido_paterno}",
+                "reason": "Ya tiene dispositivo registrado"
+            })
+            continue
+        
+        if existing_device and batch.regenerate:
+            # Revocar el anterior
+            existing_device.is_active = False
+            existing_device.revoked_at = datetime.now()
+            existing_device.revoked_by = registered_by
+        
+        # Generar nueva API key
+        api_key = generate_api_key()
+        
+        # Crear dispositivo
+        new_device = Device(
+            cooperativista_id=coop.id,
+            api_key_plain=api_key,
+            api_key_hash=hash_api_key(api_key),
+            auth_method="api_key",
+            is_active=False,
+            is_activated=False,
+            registered_by=registered_by,
+            registered_at=datetime.now()
+        )
+        
+        db.add(new_device)
+        created_devices.append({
+            "device_id": None,  # Se asignará después del commit
+            "cooperativista_id": coop.id,
+            "codigo_unico": coop.codigo_unico,
+            "nombre_completo": f"{coop.nombres} {coop.apellido_paterno} {coop.apellido_materno or ''}".strip(),
+            "cuadrilla": coop.cuadrilla,
+            "api_key": api_key
+        })
+    
+    db.commit()
+    
+    # Actualizar IDs después del commit
+    for idx, coop in enumerate([c for c in cooperativistas if c.id not in [s["cooperativista_id"] for s in skipped]]):
+        device = db.query(Device).filter(
+            Device.cooperativista_id == coop.id,
+            Device.is_activated == False
+        ).order_by(Device.registered_at.desc()).first()
+        
+        if device:
+            created_devices[idx]["device_id"] = device.id
+    
+    return {
+        "total_created": len(created_devices),
+        "total_skipped": len(skipped),
+        "devices": created_devices,
+        "skipped": skipped
+    }
+
+@router.post("/activate", response_model=DeviceResponse)
+def activate_device(
+    activation: DeviceActivate,
+    db: Session = Depends(get_db)
+):
+    """
+    Activa un dispositivo vinculándolo con el device_id real del móvil
+    """
+    # Buscar dispositivo por API key
+    device = db.query(Device).filter(
+        Device.api_key_plain == activation.api_key
     ).first()
-    if not cooperativista:
-        raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     
-    devices = db.query(Device).filter(
-        Device.cooperativista_id == cooperativista_id
-    ).all()
-    return devices
-
-@router.post("/", response_model=DeviceResponse, status_code=status.HTTP_201_CREATED)
-def create_device(device: DeviceCreate, registered_by: Optional[int] = None, db: Session = Depends(get_db)):
-    from models.cooperativista import Cooperativista
+    if not device:
+        raise HTTPException(status_code=404, detail="API Key inválida")
     
+    if device.is_blocked:
+        raise HTTPException(status_code=403, detail="Dispositivo bloqueado")
+    
+    if device.is_activated:
+        raise HTTPException(status_code=400, detail="Este dispositivo ya fue activado")
+    
+    # Verificar que el cooperativista esté activo
     cooperativista = db.query(Cooperativista).filter(
         Cooperativista.id == device.cooperativista_id
     ).first()
-    if not cooperativista:
-        raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     
-    if not cooperativista.is_active:
+    if not cooperativista or not cooperativista.is_active:
         raise HTTPException(status_code=400, detail="Cooperativista inactivo")
     
-    existing_device = db.query(Device).filter(Device.device_id == device.device_id).first()
-    if existing_device:
-        raise HTTPException(status_code=400, detail="El device_id ya está registrado")
+    # Verificar que el device_id no esté usado por otro
+    existing = db.query(Device).filter(
+        Device.device_id == activation.device_id,
+        Device.id != device.id
+    ).first()
     
-    active_devices = db.query(Device).filter(
-        Device.cooperativista_id == device.cooperativista_id,
-        Device.is_active == True
-    ).count()
+    if existing:
+        raise HTTPException(status_code=400, detail="Este dispositivo ya está registrado por otro cooperativista")
     
-    max_devices = 1  # Obtener de config si es necesario
-    if active_devices >= max_devices:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"El cooperativista ya tiene el máximo de dispositivos permitidos ({max_devices})"
-        )
+    # Actualizar dispositivo
+    device.device_id = activation.device_id
+    device.device_name = activation.device_name
+    device.device_model = activation.device_model
+    device.device_os = activation.device_os
+    device.is_active = True
+    device.is_activated = True
+    device.activated_at = datetime.now()
+    device.last_seen = datetime.now()
+    device.last_activity = datetime.now()
     
-    device_data = device.model_dump(exclude={"api_key"})
-    device_data["api_key_hash"] = hash_api_key(device.api_key)
-    device_data["registered_by"] = registered_by
-    
-    db_device = Device(**device_data)
-    db.add(db_device)
     db.commit()
-    db.refresh(db_device)
-    return db_device
+    db.refresh(device)
+    
+    return device
 
-@router.put("/{device_id}", response_model=DeviceResponse)
-def update_device(
-    device_id: int,
-    device: DeviceUpdate,
+@router.get("/export/cuadrilla/{cuadrilla}")
+def export_cuadrilla_devices(
+    cuadrilla: str,
     db: Session = Depends(get_db)
 ):
-    db_device = db.query(Device).filter(Device.id == device_id).first()
-    if not db_device:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    """
+    Exporta dispositivos de una cuadrilla para distribución
+    """
+    devices = db.query(Device).join(Cooperativista).filter(
+        Cooperativista.cuadrilla == cuadrilla,
+        Device.is_activated == False
+    ).all()
     
-    update_data = device.model_dump(exclude_unset=True)
+    if not devices:
+        raise HTTPException(status_code=404, detail="No hay dispositivos pendientes de activación para esta cuadrilla")
     
-    for key, value in update_data.items():
-        setattr(db_device, key, value)
+    export_data = []
+    for device in devices:
+        coop = device.cooperativista
+        export_data.append({
+            "codigo_unico": coop.codigo_unico,
+            "nombre_completo": f"{coop.nombres} {coop.apellido_paterno} {coop.apellido_materno or ''}".strip(),
+            "ci": coop.ci or "SIN CI",
+            "cuadrilla": coop.cuadrilla,
+            "api_key": device.api_key_plain,
+            "estado": "Pendiente de Activación"
+        })
     
-    db.commit()
-    db.refresh(db_device)
-    return db_device
+    return {
+        "cuadrilla": cuadrilla,
+        "total": len(export_data),
+        "devices": export_data
+    }
+
+@router.get("/stats/activation")
+def get_activation_stats(db: Session = Depends(get_db)):
+    """
+    Estadísticas de activación de dispositivos
+    """
+    total_generated = db.query(Device).count()
+    total_activated = db.query(Device).filter(Device.is_activated == True).count()
+    total_pending = db.query(Device).filter(Device.is_activated == False).count()
+    total_blocked = db.query(Device).filter(Device.is_blocked == True).count()
+    
+    # Por cuadrilla
+    from sqlalchemy import func as sql_func
+    by_cuadrilla = db.query(
+        Cooperativista.cuadrilla,
+        sql_func.count(Device.id).label("total"),
+        sql_func.sum(sql_func.cast(Device.is_activated, Integer)).label("activated"),
+        sql_func.sum(sql_func.cast(~Device.is_activated, Integer)).label("pending")
+    ).join(Cooperativista).group_by(Cooperativista.cuadrilla).all()
+    
+    cuadrilla_stats = [
+        {
+            "cuadrilla": c.cuadrilla,
+            "total": c.total,
+            "activated": c.activated or 0,
+            "pending": c.pending or 0,
+            "percentage": round((c.activated or 0) / c.total * 100, 2) if c.total > 0 else 0
+        }
+        for c in by_cuadrilla
+    ]
+    
+    return {
+        "total_generated": total_generated,
+        "total_activated": total_activated,
+        "total_pending": total_pending,
+        "total_blocked": total_blocked,
+        "activation_percentage": round(total_activated / total_generated * 100, 2) if total_generated > 0 else 0,
+        "by_cuadrilla": cuadrilla_stats
+    }
 
 @router.post("/{device_id}/block")
 def block_device(
@@ -151,10 +323,55 @@ def unblock_device(device_id: int, db: Session = Depends(get_db)):
     
     db_device.is_blocked = False
     db_device.block_reason = None
-    db_device.is_active = True
+    if db_device.is_activated:
+        db_device.is_active = True
     
     db.commit()
     return {"message": "Dispositivo desbloqueado exitosamente"}
+
+@router.post("/{device_id}/deactivate")
+def deactivate_device(
+    device_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Desactiva un dispositivo TEMPORALMENTE (libera el API Key para reutilización)
+    
+    Diferencia con revoke:
+    - deactivate: El usuario puede volver con el MISMO API Key
+    - revoke: El API Key queda invalidado permanentemente
+    """
+    db_device = db.query(Device).filter(Device.id == device_id).first()
+    
+    if not db_device:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    
+    if not db_device.is_activated:
+        raise HTTPException(
+            status_code=400, 
+            detail="El dispositivo no está activado, no se puede desactivar"
+        )
+
+    db_device.is_activated = False
+    db_device.is_active = False
+    db_device.device_id = None
+    db_device.device_name = None
+    db_device.device_model = None
+    db_device.device_os = None
+    db_device.activated_at = None
+    db_device.last_activity = datetime.now()  
+    
+    
+    db.commit()
+    db.refresh(db_device)
+    
+    return {
+        "message": "Dispositivo desactivado exitosamente",
+        "device_id": db_device.id,
+        "cooperativista_id": db_device.cooperativista_id,
+        "can_reactivate": True,
+        "api_key_status": "válido para reactivación"
+    }
 
 @router.post("/{device_id}/revoke")
 def revoke_device(
@@ -172,18 +389,6 @@ def revoke_device(
     
     db.commit()
     return {"message": "Dispositivo revocado exitosamente"}
-
-@router.post("/{device_id}/update-activity")
-def update_device_activity(device_id: int, db: Session = Depends(get_db)):
-    db_device = db.query(Device).filter(Device.id == device_id).first()
-    if not db_device:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    
-    db_device.last_seen = datetime.now()
-    db_device.last_activity = datetime.now()
-    
-    db.commit()
-    return {"message": "Actividad actualizada"}
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_device(device_id: int, db: Session = Depends(get_db)):
