@@ -268,19 +268,23 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
     async eliminarCooperativista(id) {
       try {
         const authStore = useAuthStore()
-        const config = useRuntimeConfig()
         
-        await $fetch(`${authStore.apiUrl}/api/cooperativistas/${id}`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
         
-        // Eliminar de la lista local
-        this.cooperativistas = this.cooperativistas.filter(c => c.id !== id)
+        // Actualizar el cooperativista en la lista local (marcarlo como inactivo)
+        const index = this.cooperativistas.findIndex(c => c.id === id)
+        if (index !== -1) {
+          this.cooperativistas[index].is_active = false
+        }
+        
+        return response
       } catch (error) {
-        console.error('Error eliminando cooperativista:', error)
+        console.error('Error desactivando cooperativista:', error)
         throw error
       }
     },

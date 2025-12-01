@@ -1,22 +1,21 @@
 # routers/cooperativistas.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
 from models.cooperativista import Cooperativista
 from schemas.cooperativista import CooperativistaCreate, CooperativistaUpdate, CooperativistaResponse
-import secrets
-import string
+from routers.upload import upload_ci_foto, upload_documento_abc
 
 router = APIRouter(prefix="/cooperativistas", tags=["cooperativistas"])
 
 @router.get("/", response_model=List[CooperativistaResponse])
 def get_cooperativistas(
-    skip: int = Query(0, alias="offset", ge=0),  # ← CAMBIO 1: Agregar alias="offset"
-    limit: int = Query(100, ge=1, le=1000),      # ← CAMBIO 2: Aumentar máximo a 1000
+    skip: int = Query(0, alias="offset", ge=0),
+    limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = None,
     cuadrilla: Optional[str] = None,
-    seccion: Optional[int] = None,
+    seccion: Optional[str] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
@@ -85,11 +84,44 @@ def update_cooperativista(
     db.refresh(db_coop)
     return db_coop
 
-@router.delete("/{cooperativista_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{cooperativista_id}", status_code=status.HTTP_200_OK)
 def delete_cooperativista(cooperativista_id: int, db: Session = Depends(get_db)):
     db_coop = db.query(Cooperativista).filter(Cooperativista.id == cooperativista_id).first()
     if not db_coop:
         raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     
-    db.delete(db_coop)
+    # Eliminación lógica en lugar de física
+    db_coop.is_active = False
+    from datetime import date
+    db_coop.fecha_baja = date.today()
+    if not db_coop.motivo_baja:
+        db_coop.motivo_baja = "Eliminado desde sistema administrativo"
+    
     db.commit()
+    return {"message": "Cooperativista desactivado correctamente"}
+
+@router.post("/{cooperativista_id}/ci-foto")
+async def subir_ci_foto(
+    cooperativista_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    return await upload_ci_foto(cooperativista_id, file, db)
+
+@router.post("/{cooperativista_id}/documento-abc")
+async def subir_documento_abc(
+    cooperativista_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    return await upload_documento_abc(cooperativista_id, file, db)
+
+@router.delete("/{cooperativista_id}/ci-foto")
+def eliminar_ci_foto(cooperativista_id: int, db: Session = Depends(get_db)):
+    from routers.upload import delete_ci_foto
+    return delete_ci_foto(cooperativista_id, db)
+
+@router.delete("/{cooperativista_id}/documento-abc")
+def eliminar_documento_abc(cooperativista_id: int, db: Session = Depends(get_db)):
+    from routers.upload import delete_documento_abc
+    return delete_documento_abc(cooperativista_id, db)
