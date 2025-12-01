@@ -52,6 +52,9 @@ async def upload_ci_foto(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al subir imagen: {str(e)}")
+    
+from cloudinary.uploader import upload as cloudinary_upload
+from cloudinary.utils import cloudinary_url
 
 @router.post("/cooperativistas/{cooperativista_id}/documento-abc")
 async def upload_documento_abc(
@@ -69,24 +72,56 @@ async def upload_documento_abc(
     contents = await file.read()
     if len(contents) > MAX_DOC_SIZE:
         raise HTTPException(status_code=400, detail="Archivo muy pesado (máx 20MB)")
-    
+
+    # Conserva el nombre original (útil para descarga)
+    original_filename = file.filename or f"doc_abc_{cooperativista_id}"
+    # Extraer extensión (por si la quieres usar)
+    ext = original_filename.split(".")[-1].lower() if "." in original_filename else None
+
     try:
-        resource_type = "image" if file.content_type.startswith("image/") else "raw"
-        
-        result = uploader.upload(
-            contents,
+        # Para imágenes sigue siendo resource_type="image", para PDF/Otros -> "raw"
+        is_image = file.content_type.startswith("image/")
+        resource_type = "image" if is_image else "raw"
+
+        # Si es raw (pdf), usamos el file.file (file-like) y forzamos format si es pdf
+        upload_args = dict(
             folder="cooperativa/documentos_abc",
-            public_id=f"doc_abc_{cooperativista_id}.pdf",
+            public_id=f"doc_abc_{cooperativista_id}",
             overwrite=True,
-            resource_type=resource_type
+            resource_type=resource_type,
+            use_filename=True,        # intenta mantener el nombre original
+            unique_filename=False     # evita que Cloudinary agregue sufijos extra
         )
-        
-        coop.documento_abc_url = result['secure_url']
+
+        # Si sabemos que es PDF, fuerza el formato pdf (esto hace que Cloudinary guarde el formato)
+        if not is_image and (file.content_type == "application/pdf" or ext == "pdf"):
+            upload_args["format"] = "pdf"
+
+        result = cloudinary_upload(contents, **upload_args)
+
+        # result habitualmente trae 'public_id' y 'format' (ej: 'pdf')
+        public_id = result.get("public_id")
+        saved_format = result.get("format") or ext or "bin"
+
+        # Generar una URL de descarga que forzará el nombre y extensión con la transformación `attachment`
+        download_name = f"{original_filename}" if original_filename.lower().endswith(saved_format) else f"{original_filename}.{saved_format}"
+        download_url, _ = cloudinary_url(
+            public_id,
+            resource_type=resource_type,
+            format=saved_format,
+            attachment=download_name,  # fuerza Content-Disposition: attachment; filename="..."
+            secure=True
+        )
+
+        # Guarda URL de descarga (contendrá los parámetros para forzar descarga con nombre)
+        coop.documento_abc_url = download_url
         db.commit()
         
         return {
             "message": "Documento ABC subido exitosamente",
-            "url": result['secure_url']
+            "url": download_url,
+            "public_id": public_id,
+            "format": saved_format
         }
     
     except Exception as e:
