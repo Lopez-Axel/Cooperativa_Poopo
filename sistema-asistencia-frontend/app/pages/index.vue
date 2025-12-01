@@ -107,7 +107,6 @@
       <div class="index_public_container_content">
         <h2 class="index_public_section_title index_public_fade_in">
           <span class="icon-text">
-            <span class="icon index_public_title_icon"><i class="mdi mdi-history mdi-36px"></i></span>
             <span>Nuestra Historia</span>
           </span>
         </h2>
@@ -1979,13 +1978,6 @@ useHead({
 .icon {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-}
-
-.icon-text {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   justify-content: center;
 }
 

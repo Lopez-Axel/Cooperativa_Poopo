@@ -3,7 +3,6 @@ from typing import Optional
 from datetime import date, datetime
 
 class CooperativistaBase(BaseModel):
-    nro: int
     seccion: Optional[str] = None
     cuadrilla: Optional[str] = None
     jefe_cuadrilla: Optional[str] = None
@@ -28,7 +27,6 @@ class CooperativistaCreate(CooperativistaBase):
     pass
 
 class CooperativistaUpdate(BaseModel):
-    nro: Optional[int] = None
     seccion: Optional[str] = None
     cuadrilla: Optional[str] = None
     jefe_cuadrilla: Optional[str] = None

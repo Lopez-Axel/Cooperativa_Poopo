@@ -179,7 +179,6 @@ const handleLogout = async () => {
   closeUserMenu()
   // asumo que authStore.logout() existe y limpia el estado
   await authStore.logout()
-  navigateTo('/login')
 }
 
 // Listener global para clicks fuera — usa refs si están presentes

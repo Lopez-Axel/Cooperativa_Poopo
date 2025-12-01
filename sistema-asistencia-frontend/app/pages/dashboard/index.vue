@@ -31,43 +31,6 @@
         </div>
       </div>
       
-      <div class="index_home-stat-box">
-        <div class="index_home-stat-icon">
-          <i class="mdi mdi-calendar-check"></i>
-        </div>
-        <div class="index_home-stat-info">
-          <div class="index_home-stat-number">{{ stats.asistenciasMes }}</div>
-          <div class="index_home-stat-title">Asistencias del Mes</div>
-          <div class="index_home-stat-footer">{{ currentMonth }}</div>
-        </div>
-      </div>
-      
-      <div class="index_home-stat-box">
-        <div class="index_home-stat-icon">
-          <i class="mdi mdi-cellphone-link"></i>
-        </div>
-        <div class="index_home-stat-info">
-          <div class="index_home-stat-number">{{ stats.dispositivosActivos }}</div>
-          <div class="index_home-stat-title">Dispositivos Activos</div>
-          <div class="index_home-stat-footer">Registrados y verificados</div>
-        </div>
-      </div>
-      
-    </div>
-    
-    <!-- Secondary Stats Grid -->
-    <div class="index_home-secondary-stats">
-      
-      <div class="index_home-info-card">
-        <div class="index_home-info-icon">
-          <i class="mdi mdi-account-check"></i>
-        </div>
-        <div class="index_home-info-content">
-          <div class="index_home-info-value">{{ stats.pendientes }}</div>
-          <div class="index_home-info-label">Pendientes de Marcar</div>
-        </div>
-      </div>
-      
       <div class="index_home-info-card">
         <div class="index_home-info-icon">
           <i class="mdi mdi-shield-check"></i>
@@ -83,30 +46,34 @@
           <i class="mdi mdi-chart-line"></i>
         </div>
         <div class="index_home-info-content">
-          <div class="index_home-info-value">{{ stats.cobertura }}%</div>
-          <div class="index_home-info-label">Cobertura del Mes</div>
+          <div class="index_home-info-value">{{ stats.cuadrillasActivas }}</div>
+          <div class="index_home-info-label">Cuadrillas Activas</div>
         </div>
       </div>
+
       
     </div>
+    
   </div>
 </template>
 
 <script setup>
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: 'auth'
 })
 
 const authStore = useAuthStore()
+const cooperativistasStore = useCooperativistasStore()
 const userName = computed(() => authStore.fullName || authStore.username || 'Usuario')
 
 const stats = ref({
-  cooperativistas: 895,
+  cooperativistas: cooperativistasStore.listaCooperativistas.length || 0,
   asistenciasMes: 0,
   dispositivosActivos: 0,
   pendientes: 0,
-  seccionesActivas: 30,
-  cobertura: 0
+  seccionesActivas: cooperativistasStore.secciones.length || 0,
+  cuadrillasActivas: cooperativistasStore.cuadrillas.length || 0,
 })
 
 const currentTime = ref('')

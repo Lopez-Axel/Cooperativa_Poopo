@@ -1,5 +1,7 @@
 // plugins/auth.client.js
 export default defineNuxtPlugin(() => {
   const authStore = useAuthStore()
-  authStore.checkAuth()
+  
+  // Inicializar desde localStorage cuando carga la app
+  authStore.initFromLocalStorage()
 })

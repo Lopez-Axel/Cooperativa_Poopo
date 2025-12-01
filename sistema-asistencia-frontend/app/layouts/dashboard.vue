@@ -10,13 +10,6 @@
   </div>
 </template>
 
-<script setup>
-// Layout protegido por autenticación
-definePageMeta({
-  middleware: 'auth'
-})
-</script>
-
 <style scoped>
 .dashboard-layout {
   display: flex;

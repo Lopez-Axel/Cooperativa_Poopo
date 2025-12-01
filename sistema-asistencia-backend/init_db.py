@@ -63,19 +63,12 @@ def cargar_cooperativistas_excel():
             
             for index, row in df.iterrows():
                 try:
-                    # Extraer datos del Excel
-                    nro = int(row.get('NRO.', 0)) if pd.notna(row.get('NRO.')) else None
-                    if not nro:
-                        print(f"Fila {index + 2}: NRO. faltante, omitiendo")
-                        cooperativistas_error += 1
-                        continue
                 
                     # Procesar CI
                     ci, ci_expedido = limpiar_ci(row.get('CI'))
                     
                     # Crear cooperativista
                     cooperativista = Cooperativista(
-                        nro=nro,
                         seccion=str(row.get('SECCION')) if pd.notna(row.get('SECCION')) else None,
                         cuadrilla=str(row.get('CUADRILLA', '')).strip() if pd.notna(row.get('CUADRILLA')) else None,
                         jefe_cuadrilla=str(row.get('JEFE DE CUADRILLA', '')).strip() if pd.notna(row.get('JEFE DE CUADRILLA')) else None,

@@ -7,10 +7,6 @@ class Cooperativista(Base):
     __tablename__ = "cooperativistas"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    
-    # ❌ ELIMINADO: codigo_unico
-    
-    nro = Column(Integer, unique=True, nullable=False, index=True)  # ← Ahora único
     seccion = Column(String(150))
     cuadrilla = Column(String(150), index=True)
     jefe_cuadrilla = Column(String(150))

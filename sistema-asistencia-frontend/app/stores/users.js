@@ -25,7 +25,6 @@ export const useUsersStore = defineStore('users', {
       this.error = null
       
       try {
-        const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
         const params = new URLSearchParams({
@@ -43,7 +42,8 @@ export const useUsersStore = defineStore('users', {
           params.append('is_superuser', this.filters.is_superuser.toString())
         }
         
-        const response = await $fetch(`${authStore.apiUrl}/api/users?${params}`, {
+        // ✅ AGREGADO TRAILING SLASH
+        const response = await $fetch(`${authStore.apiUrl}/api/users/?${params}`, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
@@ -60,7 +60,6 @@ export const useUsersStore = defineStore('users', {
     
     async createUser(userData) {
       try {
-        const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
         const response = await $fetch(`${authStore.apiUrl}/api/users/`, {
@@ -83,10 +82,10 @@ export const useUsersStore = defineStore('users', {
     
     async updateUser(userId, userData) {
       try {
-        const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
-        const response = await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
+        // ✅ AGREGADO TRAILING SLASH
+        const response = await $fetch(`${authStore.apiUrl}/api/users/${userId}/`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${authStore.token}`
@@ -106,10 +105,10 @@ export const useUsersStore = defineStore('users', {
     
     async deleteUser(userId) {
       try {
-        const config = useRuntimeConfig()
         const authStore = useAuthStore()
         
-        await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
+        // ✅ AGREGADO TRAILING SLASH
+        await $fetch(`${authStore.apiUrl}/api/users/${userId}/`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${authStore.token}`

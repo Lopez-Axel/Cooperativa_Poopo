@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   
   modules: [
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@vueuse/nuxt'
   ],
 
   runtimeConfig: {

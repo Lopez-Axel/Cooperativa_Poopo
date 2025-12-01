@@ -12,7 +12,6 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       try {
-        const config = useRuntimeConfig()
         const response = await $fetch(`${this.apiUrl}/api/auth/login`, {
           method: 'POST',
           body: { username, password }
@@ -22,8 +21,11 @@ export const useAuthStore = defineStore('auth', {
         this.user = response.user
         this.isAuthenticated = true
         
-        localStorage.setItem('token', response.access_token)
-        localStorage.setItem('user', JSON.stringify(response.user))
+        // CRÍTICO: Guardar solo en el cliente
+        if (process.client) {
+          localStorage.setItem('token', response.access_token)
+          localStorage.setItem('user', JSON.stringify(response.user))
+        }
         
         return { success: true }
       } catch (error) {
@@ -39,13 +41,19 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.isAuthenticated = false
       
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      if (process.client) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
       
+      console.log('Valores guardados en localStorage:');
+      console.log('token:', localStorage.getItem('token'));
+      console.log('user:', localStorage.getItem('user'));
       navigateTo('/login')
     },
     
-    checkAuth() {
+    // CRÍTICO: Inicializar desde localStorage
+    initFromLocalStorage() {
       if (process.client) {
         const token = localStorage.getItem('token')
         const user = localStorage.getItem('user')

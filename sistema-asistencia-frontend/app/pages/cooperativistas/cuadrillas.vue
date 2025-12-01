@@ -182,7 +182,8 @@
 
 <script setup>
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: 'auth'
 })
 
 const store = useCooperativistasStore()
