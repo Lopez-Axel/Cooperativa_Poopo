@@ -26,6 +26,8 @@ class Cooperativista(Base):
 
     codigo_asegurado = Column(String(100))
     cua = Column(String(50))
+    username = Column(String(150))
+    password = Column(String(150))
     ocupacion = Column(String(150))
     estado_asegurado = Column(String(50))
     

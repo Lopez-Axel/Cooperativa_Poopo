@@ -1,5 +1,5 @@
 from database import engine, Base, SessionLocal
-from models import User, Config, Cooperativista
+from models import User, Cooperativista
 from passlib.context import CryptContext
 import pandas as pd
 from datetime import datetime
@@ -136,28 +136,7 @@ def init_db():
             )
             db.add(admin_user)
             print("Usuario admin creado (username: admin, password: admin123)")
-        
-        # Verificar configuraciones
-        existing_config = db.query(Config).first()
-        if not existing_config:
-            print("Creando configuraciones iniciales...")
-            configs = [
-                Config(key="timezone", value="America/La_Paz", 
-                       description="Zona horaria del sistema", data_type="string"),
-                Config(key="max_devices_per_cooperativista", value="1", 
-                       description="Máximo de dispositivos por cooperativista", data_type="integer"),
-                Config(key="require_gps", value="true", 
-                       description="Requerir ubicación GPS en asistencia", data_type="boolean"),
-                Config(key="gps_radius_meters", value="50", 
-                       description="Radio GPS permitido en metros", data_type="integer"),
-                Config(key="sistema_nombre", value="Sistema de Asistencia - Cooperativa", 
-                       description="Nombre del sistema", data_type="string"),
-                Config(key="sistema_version", value="1.0.0", 
-                       description="Versión del sistema", data_type="string"),
-            ]
-            for config in configs:
-                db.add(config)
-            print("Configuraciones creadas")
+    
         
         db.commit()
         print("\n✅ Base de datos inicializada correctamente!")

@@ -18,6 +18,8 @@ class CooperativistaBase(BaseModel):
     fecha_nacimiento: Optional[date] = None
     codigo_asegurado: Optional[str] = None
     cua: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
     email: Optional[EmailStr] = None
@@ -42,6 +44,8 @@ class CooperativistaUpdate(BaseModel):
     fecha_nacimiento: Optional[date] = None
     codigo_asegurado: Optional[str] = None
     cua: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
     email: Optional[EmailStr] = None
