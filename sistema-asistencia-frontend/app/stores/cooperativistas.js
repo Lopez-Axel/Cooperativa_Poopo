@@ -1,7 +1,6 @@
 // stores/cooperativistas.js
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
-import auth from '~/middleware/auth'
 
 export const useCooperativistasStore = defineStore('cooperativistas', {
   state: () => ({
