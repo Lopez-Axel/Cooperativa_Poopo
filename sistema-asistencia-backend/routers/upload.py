@@ -4,6 +4,7 @@ from database import get_db
 from models.cooperativista import Cooperativista
 from cloudinary import uploader
 import os
+import mimetypes
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -66,32 +67,58 @@ async def upload_documento_abc(
     if file.content_type not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=400, detail="Solo se permiten PDF o imágenes")
     
+    # tamaño: usa seek/tell si trabajas con file.file, o ya con .read() como antes
     contents = await file.read()
     if len(contents) > MAX_DOC_SIZE:
         raise HTTPException(status_code=400, detail="Archivo muy pesado (máx 20MB)")
-    
+    # rewind file if we want to pass file.file to uploader
     try:
-        resource_type = "image" if file.content_type.startswith("image/") else "raw"
+        # determinar extensión segura (preferir filename si existe)
+        filename = getattr(file, "filename", None) or "file"
+        ext = filename.split(".")[-1].lower() if "." in filename else None
+        if not ext:
+            # mapear desde content_type
+            ext = mimetypes.guess_extension(file.content_type) or ""
+            ext = ext.lstrip(".")
         
-        result = uploader.upload(
-            contents,
-            folder="cooperativa/documentos_abc",
-            public_id=f"doc_abc_{cooperativista_id}",
-            overwrite=True,
-            resource_type=resource_type
-        )
+        # elegir resource_type
+        if file.content_type.startswith("image/"):
+            resource_type = "image"
+            upload_kwargs = {
+                "folder": "cooperativa/documentos_abc",
+                "public_id": f"doc_abc_{cooperativista_id}",
+                "overwrite": True,
+                "resource_type": resource_type,
+            }
+            result = uploader.upload(contents, **upload_kwargs)
+        else:
+            resource_type = "raw"
+            upload_kwargs = {
+                "folder": "cooperativa/documentos_abc",
+                "public_id": f"doc_abc_{cooperativista_id}",
+                "overwrite": True,
+                "resource_type": resource_type,
+                "format": ext if ext else "pdf",
+            }
+
+            result = uploader.upload(contents, **upload_kwargs)
         
-        coop.documento_abc_url = result['secure_url']
+        coop.documento_abc_url = result.get('secure_url') or result.get('url')
+        coop.documento_abc_public_id = result.get('public_id')  # opcional: guarda public_id
         db.commit()
         
         return {
             "message": "Documento ABC subido exitosamente",
-            "url": result['secure_url']
+            "url": coop.documento_abc_url,
+            "result": {
+                "format": result.get("format"),
+                "resource_type": result.get("resource_type"),
+                "public_id": result.get("public_id"),
+            }
         }
-    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al subir documento: {str(e)}")
-
+    
 @router.delete("/cooperativistas/{cooperativista_id}/ci-foto")
 def delete_ci_foto(cooperativista_id: int, db: Session = Depends(get_db)):
     coop = db.query(Cooperativista).filter(Cooperativista.id == cooperativista_id).first()

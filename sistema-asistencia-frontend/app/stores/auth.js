@@ -46,9 +46,6 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('user')
       }
       
-      console.log('Valores guardados en localStorage:');
-      console.log('token:', localStorage.getItem('token'));
-      console.log('user:', localStorage.getItem('user'));
       navigateTo('/login')
     },
     

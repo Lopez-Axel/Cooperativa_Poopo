@@ -16,6 +16,8 @@
     "@vueuse/nuxt": "^14.1.0",
     "bulma": "^1.0.4",
     "dayjs": "^1.11.19",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "nuxt": "^4.2.1",
     "pinia": "^3.0.4",
     "qrcode-vue3": "^1.7.1",

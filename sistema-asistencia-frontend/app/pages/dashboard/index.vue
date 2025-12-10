@@ -98,9 +98,17 @@ const updateTime = () => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   updateTime()
   const interval = setInterval(updateTime, 60000)
+  
+  if (cooperativistasStore.cooperativistas.length === 0) {
+    await cooperativistasStore.cargarCooperativistas().then(() => {
+      stats.value.cooperativistas = cooperativistasStore.listaCooperativistas.length
+      stats.value.seccionesActivas = cooperativistasStore.secciones.length
+      stats.value.cuadrillasActivas = cooperativistasStore.cuadrillas.length
+    })
+  }
   
   onUnmounted(() => {
     clearInterval(interval)

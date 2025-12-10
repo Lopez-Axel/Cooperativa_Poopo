@@ -85,7 +85,7 @@ export const useUsersStore = defineStore('users', {
         const authStore = useAuthStore()
         
         // ✅ AGREGADO TRAILING SLASH
-        const response = await $fetch(`${authStore.apiUrl}/api/users/${userId}/`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${authStore.token}`

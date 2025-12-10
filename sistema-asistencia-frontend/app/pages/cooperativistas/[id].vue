@@ -159,6 +159,53 @@
           </div>
         </div>
 
+        <!-- Credenciales Sistema Externo -->
+        <div class="seccion-datos" v-if="cooperativista.username || cooperativista.password">
+          <h3 class="seccion-titulo">
+            <i class="mdi mdi-key"></i>
+            Credenciales Sistema Externo
+          </h3>
+          <div v-if="!credencialesDesbloqueadas">
+            <div class="campo-bloqueado">
+              <i class="mdi mdi-lock"></i>
+              <p>Para ver las credenciales, ingrese su contraseña actual</p>
+              <div class="field has-addons">
+                <div class="control is-expanded">
+                  <input
+                    v-model="passwordVerificacion"
+                    class="input"
+                    type="password"
+                    placeholder="Ingrese su contraseña"
+                    @keyup.enter="verificarPassword"
+                  />
+                </div>
+                <div class="control">
+                  <button class="button is-success" @click="verificarPassword" :disabled="!passwordVerificacion">
+                    <span>Desbloquear</span>
+                  </button>
+                </div>
+              </div>
+              <p v-if="errorVerificacion" class="help is-danger">{{ errorVerificacion }}</p>
+            </div>
+          </div>
+          <div v-else class="datos-grid">
+            <div class="dato-item" v-if="cooperativista.username">
+              <span class="dato-label">Usuario:</span>
+              <span class="dato-valor">{{ cooperativista.username }}</span>
+            </div>
+            <div class="dato-item" v-if="cooperativista.password">
+              <span class="dato-label">Contraseña:</span>
+              <span class="dato-valor">
+                <span v-if="!mostrarPassword">••••••••</span>
+                <span v-else>{{ cooperativista.password }}</span>
+                <button class="button is-small is-ghost ml-2" @click="mostrarPassword = !mostrarPassword">
+                  <i class="mdi" :class="mostrarPassword ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <!-- Documentos -->
         <div class="seccion-datos">
           <h3 class="seccion-titulo">
@@ -232,12 +279,41 @@
           <span>Eliminar Cooperativista</span>
         </button>
 
-        <button class="action-button imprimir" @click="imprimirCredencial">
-          <i class="mdi mdi-printer"></i>
-          <span>Imprimir Credencial</span>
-        </button>
+        <CredencialCooperativista :cooperativista="cooperativista" />
       </div>
 
+    </div>
+
+    <!-- Modal de Verificación de Contraseña para Edición -->
+    <div class="modal" :class="{ 'is-active': mostrarModalVerificacion }">
+      <div class="modal-background" @click="cerrarModalVerificacion"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Verificación de Seguridad</p>
+          <button class="delete" @click="cerrarModalVerificacion"></button>
+        </header>
+        <section class="modal-card-body">
+          <p>Para editar las credenciales del sistema externo, ingrese su contraseña actual:</p>
+          <div class="field mt-4">
+            <div class="control">
+              <input
+                v-model="passwordEdicion"
+                class="input"
+                type="password"
+                placeholder="Ingrese su contraseña"
+                @keyup.enter="verificarPasswordEdicion"
+              />
+            </div>
+            <p v-if="errorEdicion" class="help is-danger">{{ errorEdicion }}</p>
+          </div>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button" @click="cerrarModalVerificacion">Cancelar</button>
+          <button class="button is-success" @click="verificarPasswordEdicion" :disabled="!passwordEdicion">
+            Verificar
+          </button>
+        </footer>
+      </div>
     </div>
 
     <!-- Modal de Edición -->
@@ -250,7 +326,7 @@
         </header>
         <section class="modal-card-body">
           <FormularioCooperativista 
-            :cooperativista="cooperativista"
+            :cooperativista="cooperativistaEdicion"
             @guardar="handleGuardarEdicion"
             @cancel="cerrarFormularioEdicion"
           />
@@ -292,12 +368,21 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const store = useCooperativistasStore()
+const authStore = useAuthStore()
 const config = useRuntimeConfig()
 
 const cooperativista = ref(null)
 const loading = ref(true)
 const mostrarConfirmacion = ref(false)
 const mostrarFormularioEdicion = ref(false)
+const mostrarModalVerificacion = ref(false)
+const cooperativistaEdicion = ref(null)
+const passwordEdicion = ref('')
+const errorEdicion = ref('')
+const credencialesDesbloqueadas = ref(false)
+const passwordVerificacion = ref('')
+const errorVerificacion = ref('')
+const mostrarPassword = ref(false)
 
 const cooperativistaId = computed(() => parseInt(route.params.id))
 
@@ -376,16 +461,50 @@ const formatearFecha = (fecha) => {
 }
 
 const editarCooperativista = () => {
-  mostrarFormularioEdicion.value = true
+  if (cooperativista.value.external_username || cooperativista.value.external_password) {
+    mostrarModalVerificacion.value = true
+  } else {
+    cooperativistaEdicion.value = { ...cooperativista.value }
+    mostrarFormularioEdicion.value = true
+  }
+}
+
+const cerrarModalVerificacion = () => {
+  mostrarModalVerificacion.value = false
+  passwordEdicion.value = ''
+  errorEdicion.value = ''
+}
+
+const verificarPasswordEdicion = async () => {
+  errorEdicion.value = ''
+  try {
+    const response = await $fetch(`${authStore.apiUrl}/api/auth/login`, {
+      method: 'POST',
+      body: { 
+        username: authStore.user.username, 
+        password: passwordEdicion.value 
+      }
+    })
+    if (response.access_token) {
+      cooperativistaEdicion.value = { ...cooperativista.value }
+      mostrarModalVerificacion.value = false
+      mostrarFormularioEdicion.value = true
+      passwordEdicion.value = ''
+    }
+  } catch (error) {
+    errorEdicion.value = 'Contraseña incorrecta'
+  }
 }
 
 const cerrarFormularioEdicion = () => {
   mostrarFormularioEdicion.value = false
+  cooperativistaEdicion.value = null
 }
 
 const handleGuardarEdicion = async () => {
   mostrarFormularioEdicion.value = false
-  // Recargar datos
+  cooperativistaEdicion.value = null
+  credencialesDesbloqueadas.value = false
   try {
     cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
   } catch (error) {
@@ -399,6 +518,25 @@ const verDispositivos = () => {
 
 const verAsistencias = () => {
   router.push(`/asistencias?cooperativista=${cooperativistaId.value}`)
+}
+
+const verificarPassword = async () => {
+  errorVerificacion.value = ''
+  try {
+    const response = await $fetch(`${authStore.apiUrl}/api/auth/login`, {
+      method: 'POST',
+      body: { 
+        username: authStore.user.username, 
+        password: passwordVerificacion.value 
+      }
+    })
+    if (response.access_token) {
+      credencialesDesbloqueadas.value = true
+      passwordVerificacion.value = ''
+    }
+  } catch (error) {
+    errorVerificacion.value = 'Contraseña incorrecta'
+  }
 }
 
 const toggleEstado = async () => {
@@ -430,10 +568,6 @@ const eliminarCooperativista = async () => {
   } catch (error) {
     alert('Error al eliminar: ' + error.message)
   }
-}
-
-const imprimirCredencial = () => {
-  window.print()
 }
 
 useHead({
@@ -726,6 +860,67 @@ useHead({
   font-weight: 700;
 }
 
+.campo-bloqueado {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.4), rgba(15, 31, 15, 0.4));
+  border: 2px dashed rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.campo-bloqueado i {
+  font-size: 2.5rem;
+  color: #ffd700;
+  margin-bottom: 1rem;
+}
+
+.campo-bloqueado p {
+  color: #a5d6a7;
+  margin-bottom: 1rem;
+}
+
+.campo-bloqueado .field {
+  max-width: 400px;
+  margin: 1rem auto 0;
+}
+
+.campo-bloqueado .input {
+  background: rgba(26, 46, 26, 0.6);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  color: #e0f2f1;
+}
+
+.campo-bloqueado .button.is-success {
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: white;
+  border: none;
+  height: 40pxs;
+  font-weight: 600;
+}
+
+.campo-bloqueado .button.is-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #66bb6a, #388e3c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.campo-bloqueado .button.is-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button.is-ghost {
+  background: transparent;
+  border: none;
+  color: #ffd700;
+  padding: 0.25rem 0.5rem;
+}
+
+.button.is-ghost:hover {
+  background: rgba(255, 215, 0, 0.1);
+  color: #ff9800;
+}
+
 .documentos-grid {
   display: flex;
   flex-direction: column;
@@ -912,11 +1107,6 @@ useHead({
   color: #f44336;
 }
 
-.action-button.imprimir:hover {
-  border-color: #9c27b0;
-  color: #9c27b0;
-}
-
 /* Modal Styles */
 .modal-large .modal-card {
   width: 90%;
@@ -973,33 +1163,6 @@ useHead({
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(158, 157, 36, 0.4));
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-}
-
-@media print {
-  .breadcrumb-nav,
-  .acciones-panel {
-    display: none !important;
-  }
-  
-  .detalle-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .credencial-cooperativista {
-    box-shadow: none;
-    border: 2px solid #333;
-    page-break-after: always;
-  }
-  
-  body {
-    background: white;
-  }
-  
-  .detalle-cooperativista-page {
-    background: white;
-    padding: 0;
-    margin: 0;
-  }
 }
 
 @media screen and (max-width: 1023px) {

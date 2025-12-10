@@ -125,6 +125,36 @@
             </div>
           </div>
         </div>
+
+        <div class="column is-half">
+          <div class="field">
+            <label class="label">Usuario (Sistema Externo)</label>
+            <div class="control">
+              <input
+                v-model="formData.username"
+                class="input"
+                type="text"
+                placeholder="USUARIO DEL SISTEMA EXTERNO"
+                aria-label="Usuario externo"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-half">
+          <div class="field">
+            <label class="label">Contraseña (Sistema Externo)</label>
+            <div class="control">
+              <input
+                v-model="formData.password"
+                class="input"
+                type="password"
+                placeholder="CONTRASEÑA DEL SISTEMA EXTERNO"
+                aria-label="Contraseña externa"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Documentos -->
@@ -466,6 +496,8 @@ const formData = ref({
   documento_abc_url: '',
   fecha_nacimiento: '',
   email: '',
+  username: '',
+  password: '',
   seccion: '',
   cuadrilla: '',
   jefe_cuadrilla: '',

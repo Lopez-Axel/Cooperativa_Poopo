@@ -126,54 +126,63 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
 
   actions: {
     async cargarCooperativistas() {
-      this.loading = true
-      this.error = null
-      this.cooperativistas = [] // Limpiar array antes de cargar
-      
-      try {
-        const authStore = useAuthStore()
-        const config = useRuntimeConfig()
-        
-        let offset = 0
-        const limit = 500
-        let hasMore = true
-        let totalCargados = 0
-        
-        console.log('🔄 Iniciando carga de cooperativistas...')
-        
-        while (hasMore) {
-          const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            params: {
-              limit: limit,
-              offset: offset
-            }
-          })
-          
-          // Agregar los nuevos registros al array
-          this.cooperativistas.push(...response)
-          totalCargados += response.length
-          
-          console.log(`📦 Cargados ${response.length} registros (Total acumulado: ${totalCargados})`)
-          
-          // Si recibimos menos registros que el límite, ya no hay más
-          hasMore = response.length === limit
-          offset += limit
+
+        // ⚠️ Si ya hay una carga en progreso, REUTILIZA la misma promesa.
+        if (this._loadingPromise) {
+          return this._loadingPromise;
         }
-        
-        console.log(`✅ Carga completa: ${this.cooperativistas.length} cooperativistas`)
-        
-      } catch (error) {
-        this.error = error.message || 'Error al cargar cooperativistas'
-        console.error('❌ Error cargando cooperativistas:', error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
+
+        this._loadingPromise = (async () => {
+
+          this.loading = true
+          this.error = null
+
+          this.cooperativistas = []
+
+          try {
+            const authStore = useAuthStore()
+
+            let offset = 0
+            const limit = 500
+            let hasMore = true
+            let totalCargados = 0
+            
+            while (hasMore) {
+              const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${authStore.token}`
+                },
+                params: {
+                  limit,
+                  offset
+                }
+              })
+
+              this.cooperativistas.push(...response)
+              totalCargados += response.length
+
+              hasMore = response.length === limit
+              offset += limit
+            }
+
+            return this.cooperativistas
+
+          } catch (error) {
+            this.error = error.message || 'Error cargando cooperativistas'
+            console.error("❌ Error:", error)
+            throw error
+
+          } finally {
+            this.loading = false
+            this._loadingPromise = null
+          }
+
+        })()
+
+        return this._loadingPromise
+      },
+
 
     async obtenerCooperativista(id) {
       try {

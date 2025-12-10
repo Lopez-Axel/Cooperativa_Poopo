@@ -53,7 +53,7 @@
             <span>Asistencias</span>
           </NuxtLink>
           
-          <NuxtLink to="/dashboard/dispositivos" class="navbar-item nav-link">
+          <NuxtLink to="/dispositivos" class="navbar-item nav-link">
             <span class="icon">
               <i class="mdi mdi-cellphone-link"></i>
             </span>
