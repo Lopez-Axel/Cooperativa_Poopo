@@ -62,7 +62,7 @@ export const useUsersStore = defineStore('users', {
       try {
         const authStore = useAuthStore()
         
-        const response = await $fetch(`${authStore.apiUrl}/api/users/`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${authStore.token}`
@@ -108,7 +108,7 @@ export const useUsersStore = defineStore('users', {
         const authStore = useAuthStore()
         
         // ✅ AGREGADO TRAILING SLASH
-        await $fetch(`${authStore.apiUrl}/api/users/${userId}/`, {
+        await $fetch(`${authStore.apiUrl}/api/users/${userId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${authStore.token}`
