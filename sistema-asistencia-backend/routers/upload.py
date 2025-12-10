@@ -3,8 +3,6 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.cooperativista import Cooperativista
 from cloudinary import uploader
-import os
-import mimetypes
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -60,32 +58,41 @@ async def upload_documento_abc(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    # Buscar cooperativista
     coop = db.query(Cooperativista).filter(Cooperativista.id == cooperativista_id).first()
     if not coop:
         raise HTTPException(status_code=404, detail="Cooperativista no encontrado")
     
+    # Validar tipo de archivo
     if file.content_type not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=400, detail="Solo se permiten PDF o imágenes")
     
+    # Leer contenido y validar tamaño
     contents = await file.read()
     if len(contents) > MAX_DOC_SIZE:
         raise HTTPException(status_code=400, detail="Archivo muy pesado (máx 20MB)")
 
     try:
-        # Reset cursor para usar file.file después de leer
-        file.file.seek(0)
-
+        # Determinar tipo de recurso
         resource_type = "image" if file.content_type.startswith("image/") else "raw"
 
-        result = uploader.upload(
-            file.file,
+        # Configuración de subida
+        upload_kwargs = dict(
             folder="cooperativa/documentos_abc",
-            public_id=f"doc_abc_{cooperativista_id}",
+            public_id=f"doc_abc_{cooperativista_id}",  # sin extensión
             overwrite=True,
             resource_type=resource_type,
-            type="upload"  # <--- esto hace que el PDF sea público
+            type="upload"  # hace que sea público
         )
 
+        # Si es PDF, forzar extensión
+        if file.content_type == "application/pdf":
+            upload_kwargs["format"] = "pdf"
+
+        # Subir archivo a Cloudinary
+        result = uploader.upload(contents, **upload_kwargs)
+
+        # Guardar URL en la base de datos
         coop.documento_abc_url = result['secure_url']
         db.commit()
 
@@ -93,8 +100,6 @@ async def upload_documento_abc(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al subir documento: {str(e)}")
-
-
     
 @router.delete("/cooperativistas/{cooperativista_id}/ci-foto")
 def delete_ci_foto(cooperativista_id: int, db: Session = Depends(get_db)):
