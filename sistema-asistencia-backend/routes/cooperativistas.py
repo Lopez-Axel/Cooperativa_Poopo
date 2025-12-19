@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List
-from core.dependencies import get_db, get_current_user, get_current_superuser
+from utils.dependencies import get_db, get_current_user, get_current_superuser
 from services.cooperativista_service import cooperativista_service
 from schemas.cooperativista import CooperativistaCreate, CooperativistaUpdate, CooperativistaResponse
 
