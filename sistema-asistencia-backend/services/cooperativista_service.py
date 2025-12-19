@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from repositories.cooperativista_repo import cooperativista_repo
 from models.cooperativista import Cooperativista
 from schemas.cooperativista import CooperativistaCreate, CooperativistaUpdate, CooperativistaResponse
-from core.qr_utils import generate_qr_code
+from utils.qr_utils import generate_qr_code
 from typing import List
 
 class CooperativistaService:
