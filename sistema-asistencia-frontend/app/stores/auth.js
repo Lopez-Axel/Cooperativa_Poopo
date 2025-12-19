@@ -6,7 +6,7 @@ export const useAuthStore = defineStore('auth', {
     token: null,
     user: null,
     isAuthenticated: false,
-    apiUrl: 'https://cooperativapoopo-production-450b.up.railway.app' 
+    apiUrl: 'https://cooperativapoopo-production-450b.up.railway.app'
   }),
   
   actions: {
@@ -22,8 +22,8 @@ export const useAuthStore = defineStore('auth', {
         this.isAuthenticated = true
         
         if (process.client) {
-          localStorage.setItem('token', response.access_token)
-          localStorage.setItem('user', JSON.stringify(response.user))
+          sessionStorage.setItem('token', response.access_token)
+          sessionStorage.setItem('user', JSON.stringify(response.user))
         }
         
         return { success: true }
@@ -35,30 +35,53 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
+    async validateToken() {
+      if (!this.token) return false
+      
+      try {
+        const response = await $fetch(`${this.apiUrl}/api/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${this.token}`
+          }
+        })
+        
+        this.user = response
+        return true
+      } catch (error) {
+        console.log('Token inválido:', error)
+        this.logout()
+        return false
+      }
+    },
+    
     logout() {
       this.token = null
       this.user = null
       this.isAuthenticated = false
       
       if (process.client) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('user')
       }
       
       navigateTo('/login')
     },
     
-    initFromLocalStorage() {
-      if (process.client) {
-        const token = localStorage.getItem('token')
-        const user = localStorage.getItem('user')
-        
-        if (token && user) {
-          this.token = token
-          this.user = JSON.parse(user)
-          this.isAuthenticated = true
-        }
-      }
+    async initFromStorage() {
+      if (!process.client) return
+      
+      const token = sessionStorage.getItem('token')
+      const user = sessionStorage.getItem('user')
+      
+      if (!token || !user) return
+      
+      // Carga el estado temporal
+      this.token = token
+      this.user = JSON.parse(user)
+      this.isAuthenticated = true
+      
+      // Valida que el token sigue siendo válido en el backend
+      await this.validateToken()
     }
   },
   

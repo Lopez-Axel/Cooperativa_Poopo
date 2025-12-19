@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   
   // Si el store no está inicializado, intentar desde localStorage
   if (!authStore.isAuthenticated && process.client) {
-    authStore.initFromLocalStorage()
+    authStore.initFromStorage()
   }
   
   // Verificar autenticación

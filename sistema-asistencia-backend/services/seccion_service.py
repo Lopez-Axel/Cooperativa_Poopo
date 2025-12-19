@@ -5,6 +5,11 @@ from repositories.cooperativista_repo import cooperativista_repo
 from models.seccion import Seccion
 from schemas.seccion import SeccionCreate, SeccionUpdate, SeccionResponse, SeccionWithDelegadoResponse
 from typing import List
+from sqlalchemy import func
+from schemas.seccion import SeccionDetailsResponse, CuadrillaInfo, DelegadoInfo
+from models.cuadrilla import Cuadrilla
+from models.cooperativista import Cooperativista
+
 
 class SeccionService:
     
@@ -96,5 +101,53 @@ class SeccionService:
         
         seccion_repo.delete(db, seccion)
         return {"message": "Sección eliminada"}
+    
+    def get_seccion_details(self, db: Session, seccion_id: int) -> SeccionDetailsResponse:
+        seccion = seccion_repo.get_by_id(db, seccion_id)
+        if not seccion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sección no encontrada"
+            )
+        
+        cuadrillas_query = (
+            db.query(
+                Cuadrilla.id,
+                Cuadrilla.nombre,
+                func.count(Cooperativista.id).label('total_cooperativistas')
+            )
+            .outerjoin(Cooperativista, Cuadrilla.id == Cooperativista.id_cuadrilla)
+            .filter(Cuadrilla.id_seccion == seccion_id)
+            .group_by(Cuadrilla.id, Cuadrilla.nombre)
+            .all()
+        )
+        
+        cuadrillas_info = [
+            CuadrillaInfo(
+                id=c.id,
+                nombre=c.nombre,
+                total_cooperativistas=c.total_cooperativistas
+            )
+            for c in cuadrillas_query
+        ]
+        
+        total_cooperativistas = (
+            db.query(func.count(Cooperativista.id))
+            .filter(Cooperativista.id_seccion == seccion_id)
+            .scalar()
+        )
+        
+        return SeccionDetailsResponse(
+            id=seccion.id,
+            nombre=seccion.nombre,
+            descripcion=seccion.descripcion,
+            created_at=seccion.created_at,
+            updated_at=seccion.updated_at,
+            delegado=DelegadoInfo.model_validate(seccion.delegado) if seccion.delegado else None,
+            cuadrillas=cuadrillas_info,
+            total_cuadrillas=len(cuadrillas_info),
+            total_cooperativistas=total_cooperativistas or 0
+        )
+
 
 seccion_service = SeccionService()

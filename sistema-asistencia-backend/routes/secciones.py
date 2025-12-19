@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from utils.dependencies import get_db, get_current_user
 from services.seccion_service import seccion_service
-from schemas.seccion import SeccionCreate, SeccionUpdate, SeccionResponse, SeccionWithDelegadoResponse
+from schemas.seccion import SeccionCreate, SeccionUpdate, SeccionResponse, SeccionWithDelegadoResponse, SeccionDetailsResponse
 
 router = APIRouter(prefix="/secciones", tags=["Secciones"])
 
@@ -63,3 +63,11 @@ def delete_seccion(
     current_user = Depends(get_current_user)
 ):
     return seccion_service.delete_seccion(db, seccion_id)
+
+@router.get("/{seccion_id}/details", response_model=SeccionDetailsResponse)
+def get_seccion_details(
+    seccion_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return seccion_service.get_seccion_details(db, seccion_id)

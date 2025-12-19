@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
-
+from typing import List
 class SeccionBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
@@ -36,3 +36,26 @@ class DelegadoInfo(BaseModel):
 
 class SeccionWithDelegadoResponse(SeccionResponse):
     delegado: Optional[DelegadoInfo] = None
+
+class CuadrillaInfo(BaseModel):
+    id: int
+    nombre: str
+    total_cooperativistas: int
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class SeccionDetailsResponse(BaseModel):
+    id: int
+    nombre: str
+    descripcion: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    delegado: Optional[DelegadoInfo] = None
+
+    cuadrillas: List[CuadrillaInfo] = []
+    total_cuadrillas: int
+  
+    total_cooperativistas: int
+    
+    model_config = ConfigDict(from_attributes=True)
