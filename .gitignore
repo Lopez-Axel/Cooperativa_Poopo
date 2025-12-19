@@ -67,3 +67,5 @@ coverage.xml
 lista_cooperativistas_agosto.xlsx
 init_db.py
 limpieza.py
+~$*.xlsx
+*.xlsx

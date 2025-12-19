@@ -1,11 +1,10 @@
 from database import engine, Base, SessionLocal
-from models import User, Cooperativista
-from passlib.context import CryptContext
+from models import User, Seccion, Cuadrilla, Cooperativista
+from utils.security import hash_password
+from utils.qr_utils import generate_qr_code
 import pandas as pd
 from datetime import datetime
 import re
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def limpiar_ci(ci_str):
     """Limpiar y extraer CI"""
@@ -13,7 +12,6 @@ def limpiar_ci(ci_str):
         return None, None
     
     ci_str = str(ci_str).strip()
-    # Buscar patrón: números seguidos de letras (expedido)
     match = re.match(r'^(\d+)([A-Z]{2,5})?', ci_str.upper())
     if match:
         ci_numero = match.group(1)
@@ -30,7 +28,6 @@ def convertir_fecha(fecha_str):
         return fecha_str.date()
     
     try:
-        # Intentar varios formatos
         for formato in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
             try:
                 return datetime.strptime(str(fecha_str), formato).date()
@@ -50,7 +47,6 @@ def cargar_cooperativistas_excel():
         
         db = SessionLocal()
         try:
-            # Verificar si ya existen cooperativistas
             existing_count = db.query(Cooperativista).count()
             if existing_count > 0:
                 print(f"Ya existen {existing_count} cooperativistas. ¿Deseas continuar? (s/n)")
@@ -58,21 +54,100 @@ def cargar_cooperativistas_excel():
                 if respuesta != 's':
                     return
             
+            # PASO 1: Crear secciones únicas
+            print("\n--- PASO 1: Creando secciones ---")
+            secciones_unicas = df['SECCION'].dropna().unique()
+            secciones_map = {}
+            
+            for nombre_seccion in secciones_unicas:
+                nombre_seccion = str(nombre_seccion).strip()
+                
+                seccion_existente = db.query(Seccion).filter(Seccion.nombre == nombre_seccion).first()
+                if seccion_existente:
+                    secciones_map[nombre_seccion] = seccion_existente.id
+                    print(f"   Sección '{nombre_seccion}' ya existe (ID: {seccion_existente.id})")
+                else:
+                    nueva_seccion = Seccion(
+                        nombre=nombre_seccion,
+                        is_active=True
+                    )
+                    db.add(nueva_seccion)
+                    db.flush()
+                    secciones_map[nombre_seccion] = nueva_seccion.id
+                    print(f"   ✓ Sección '{nombre_seccion}' creada (ID: {nueva_seccion.id})")
+            
+            db.commit()
+            print(f"Secciones creadas: {len(secciones_map)}")
+            
+            # PASO 2: Crear cuadrillas únicas (cuadrilla + sección)
+            print("\n--- PASO 2: Creando cuadrillas ---")
+            cuadrillas_map = {}
+            
+            df_cuadrillas = df[['CUADRILLA', 'SECCION']].dropna()
+            cuadrillas_unicas = df_cuadrillas.drop_duplicates()
+            
+            for _, row in cuadrillas_unicas.iterrows():
+                nombre_cuadrilla = str(row['CUADRILLA']).strip()
+                nombre_seccion = str(row['SECCION']).strip()
+                
+                if nombre_seccion not in secciones_map:
+                    print(f"   ⚠ Sección '{nombre_seccion}' no encontrada para cuadrilla '{nombre_cuadrilla}'")
+                    continue
+                
+                id_seccion = secciones_map[nombre_seccion]
+                key = (nombre_cuadrilla, nombre_seccion)
+                
+                cuadrilla_existente = db.query(Cuadrilla).filter(
+                    Cuadrilla.nombre == nombre_cuadrilla,
+                    Cuadrilla.id_seccion == id_seccion
+                ).first()
+                
+                if cuadrilla_existente:
+                    cuadrillas_map[key] = cuadrilla_existente.id
+                    print(f"   Cuadrilla '{nombre_cuadrilla}' ({nombre_seccion}) ya existe (ID: {cuadrilla_existente.id})")
+                else:
+                    nueva_cuadrilla = Cuadrilla(
+                        nombre=nombre_cuadrilla,
+                        id_seccion=id_seccion,
+                        is_active=True
+                    )
+                    db.add(nueva_cuadrilla)
+                    db.flush()
+                    cuadrillas_map[key] = nueva_cuadrilla.id
+                    print(f"   ✓ Cuadrilla '{nombre_cuadrilla}' ({nombre_seccion}) creada (ID: {nueva_cuadrilla.id})")
+            
+            db.commit()
+            print(f"Cuadrillas creadas: {len(cuadrillas_map)}")
+            
+            # PASO 3: Crear cooperativistas
+            print("\n--- PASO 3: Creando cooperativistas ---")
             cooperativistas_creados = 0
             cooperativistas_error = 0
+            delegados_pendientes = []
             
             for index, row in df.iterrows():
                 try:
-                
-                    # Procesar CI
                     ci, ci_expedido = limpiar_ci(row.get('CI'))
                     
-                    # Crear cooperativista
+                    nombre_seccion = str(row.get('SECCION')).strip() if pd.notna(row.get('SECCION')) else None
+                    nombre_cuadrilla = str(row.get('CUADRILLA')).strip() if pd.notna(row.get('CUADRILLA')) else None
+                    
+                    id_seccion = secciones_map.get(nombre_seccion) if nombre_seccion else None
+                    id_cuadrilla = None
+                    if nombre_cuadrilla and nombre_seccion:
+                        id_cuadrilla = cuadrillas_map.get((nombre_cuadrilla, nombre_seccion))
+                    
+                    rol_cuadrilla = str(row.get('JEFE DE CUADRILLA', '')).strip() if pd.notna(row.get('JEFE DE CUADRILLA')) else None
+                    
+                    qr_code = generate_qr_code()
+                    while db.query(Cooperativista).filter(Cooperativista.qr_code == qr_code).first():
+                        qr_code = generate_qr_code()
+                    
                     cooperativista = Cooperativista(
-                        seccion=str(row.get('SECCION')) if pd.notna(row.get('SECCION')) else None,
-                        cuadrilla=str(row.get('CUADRILLA', '')).strip() if pd.notna(row.get('CUADRILLA')) else None,
-                        jefe_cuadrilla=str(row.get('JEFE DE CUADRILLA', '')).strip() if pd.notna(row.get('JEFE DE CUADRILLA')) else None,
-                        delegado_seccion=str(row.get('DELEGADO', '')).strip() if pd.notna(row.get('DELEGADO')) else None,
+                        qr_code=qr_code,
+                        id_seccion=id_seccion,
+                        id_cuadrilla=id_cuadrilla,
+                        rol_cuadrilla=rol_cuadrilla,
                         apellido_paterno=str(row.get('AP.', '')).strip(),
                         apellido_materno=str(row.get('AM.', '')).strip() if pd.notna(row.get('AM.')) else None,
                         nombres=str(row.get('NOMBRES', '')).strip(),
@@ -87,6 +162,14 @@ def cargar_cooperativistas_excel():
                     )
                     
                     db.add(cooperativista)
+                    db.flush()
+                    
+                    if pd.notna(row.get('DELEGADO')) and str(row.get('DELEGADO')).strip():
+                        delegados_pendientes.append({
+                            'cooperativista_id': cooperativista.id,
+                            'nombre_seccion': nombre_seccion
+                        })
+                    
                     cooperativistas_creados += 1
                     
                     if cooperativistas_creados % 50 == 0:
@@ -99,8 +182,39 @@ def cargar_cooperativistas_excel():
                     continue
             
             db.commit()
-            print(f"\n✅ Cooperativistas cargados exitosamente:")
-            print(f"   - Creados: {cooperativistas_creados}")
+            print(f"Cooperativistas creados: {cooperativistas_creados}")
+            
+            # PASO 4: Actualizar delegados en secciones
+            print("\n--- PASO 4: Actualizando delegados de secciones ---")
+            delegados_actualizados = 0
+            
+            for delegado_info in delegados_pendientes:
+                try:
+                    nombre_seccion = delegado_info['nombre_seccion']
+                    cooperativista_id = delegado_info['cooperativista_id']
+                    
+                    if nombre_seccion not in secciones_map:
+                        continue
+                    
+                    seccion_id = secciones_map[nombre_seccion]
+                    seccion = db.query(Seccion).filter(Seccion.id == seccion_id).first()
+                    
+                    if seccion:
+                        seccion.id_delegado = cooperativista_id
+                        delegados_actualizados += 1
+                        print(f"   ✓ Delegado asignado a sección '{nombre_seccion}' (Cooperativista ID: {cooperativista_id})")
+                
+                except Exception as e:
+                    print(f"   Error al asignar delegado: {e}")
+            
+            db.commit()
+            print(f"Delegados actualizados: {delegados_actualizados}")
+            
+            print(f"\n✅ Carga completada:")
+            print(f"   - Secciones: {len(secciones_map)}")
+            print(f"   - Cuadrillas: {len(cuadrillas_map)}")
+            print(f"   - Cooperativistas creados: {cooperativistas_creados}")
+            print(f"   - Delegados asignados: {delegados_actualizados}")
             print(f"   - Errores: {cooperativistas_error}")
             
         except Exception as e:
@@ -121,14 +235,12 @@ def init_db():
     
     db = SessionLocal()
     try:
-        # Verificar si ya existe el usuario admin
         existing_user = db.query(User).filter(User.username == "admin").first()
         if not existing_user:
             print("Creando usuario admin por defecto...")
-            # Crear usuario admin con password hasheado
             admin_user = User(
                 username="admin",
-                password_hash=pwd_context.hash("admin123"),
+                password_hash=hash_password("admin123"),
                 email="admin@cooperativa.com",
                 full_name="Administrador Sistema",
                 is_superuser=True,
@@ -136,7 +248,6 @@ def init_db():
             )
             db.add(admin_user)
             print("Usuario admin creado (username: admin, password: admin123)")
-    
         
         db.commit()
         print("\n✅ Base de datos inicializada correctamente!")
@@ -147,7 +258,6 @@ def init_db():
         print("=" * 50)
         print("\n⚠️  IMPORTANTE: Cambiar el password en producción!\n")
         
-        # Preguntar si cargar cooperativistas
         print("¿Deseas cargar los cooperativistas desde Excel? (s/n)")
         respuesta = input().lower()
         if respuesta == 's':

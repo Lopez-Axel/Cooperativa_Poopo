@@ -21,7 +21,6 @@ export const useAuthStore = defineStore('auth', {
         this.user = response.user
         this.isAuthenticated = true
         
-        // CRÍTICO: Guardar solo en el cliente
         if (process.client) {
           localStorage.setItem('token', response.access_token)
           localStorage.setItem('user', JSON.stringify(response.user))
@@ -49,7 +48,6 @@ export const useAuthStore = defineStore('auth', {
       navigateTo('/login')
     },
     
-    // CRÍTICO: Inicializar desde localStorage
     initFromLocalStorage() {
       if (process.client) {
         const token = localStorage.getItem('token')

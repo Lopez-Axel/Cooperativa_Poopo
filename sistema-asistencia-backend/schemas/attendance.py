@@ -7,12 +7,13 @@ from datetime import datetime, date, time
 class AttendancePeriodBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
-    mes: int  # 1-12
-    anio: int  # 2025, 2026, etc.
+    mes: int
+    anio: int
     fecha_asistencia: date
     hora_inicio: time
     hora_fin: time
     is_active: bool = True
+    is_open: bool = True
 
 class AttendancePeriodCreate(AttendancePeriodBase):
     pass
@@ -28,7 +29,6 @@ class AttendancePeriodUpdate(BaseModel):
 
 class AttendancePeriodResponse(AttendancePeriodBase):
     id: int
-    is_open: bool
     total_expected: int
     total_marked: int
     created_at: datetime
@@ -45,36 +45,24 @@ class AttendancePeriodResponse(AttendancePeriodBase):
 class AttendanceBase(BaseModel):
     cooperativista_id: int
     period_id: Optional[int] = None
-    device_id: str
     tipo: Literal["entrada", "salida"] = "entrada"
     fecha: date
     hora: time
-    location_lat: float
-    location_lon: float
-    distance_meters: Optional[int] = None
-    photo_url: Optional[str] = None
-    notes: Optional[str] = None
 
-class AttendanceCreate(AttendanceBase):
-    pass
+class AttendanceCreate(BaseModel):
+    qr_code: str
+    period_id: Optional[int] = None
+    tipo: Literal["entrada", "salida"] = "entrada"
 
 class AttendanceUpdate(BaseModel):
     tipo: Optional[Literal["entrada", "salida"]] = None
     fecha: Optional[date] = None
     hora: Optional[time] = None
-    location_lat: Optional[float] = None
-    location_lon: Optional[float] = None
-    distance_meters: Optional[int] = None
-    photo_url: Optional[str] = None
-    notes: Optional[str] = None
-    is_valid: Optional[bool] = None
-    validation_notes: Optional[str] = None
 
 class AttendanceResponse(AttendanceBase):
     id: int
+    registered_by: Optional[int] = None
     timestamp: datetime
-    is_valid: bool
-    validation_notes: Optional[str] = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
@@ -92,21 +80,5 @@ class AttendanceLogResponse(BaseModel):
     reason: Optional[str] = None
     ip_address: Optional[str] = None
     created_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ============ STATS SCHEMAS ============
-
-class PeriodStatsResponse(BaseModel):
-    """Estadísticas de un período de asistencia"""
-    period_id: int
-    nombre: str
-    fecha_asistencia: date
-    total_expected: int
-    total_marked: int
-    pendientes: int
-    porcentaje_asistencia: float
-    is_open: bool
     
     model_config = ConfigDict(from_attributes=True)

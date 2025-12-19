@@ -3,10 +3,8 @@ from typing import Optional
 from datetime import date, datetime
 
 class CooperativistaBase(BaseModel):
-    seccion: Optional[str] = None
-    cuadrilla: Optional[str] = None
-    jefe_cuadrilla: Optional[str] = None
-    delegado_seccion: Optional[str] = None
+    id_cuadrilla: Optional[int] = None
+    rol_cuadrilla: Optional[str] = None
     apellido_paterno: str
     apellido_materno: Optional[str] = None
     nombres: str
@@ -18,21 +16,18 @@ class CooperativistaBase(BaseModel):
     fecha_nacimiento: Optional[date] = None
     codigo_asegurado: Optional[str] = None
     cua: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
     email: Optional[EmailStr] = None
+    telefono: Optional[str] = None
     is_active: bool = True
 
 class CooperativistaCreate(CooperativistaBase):
     pass
 
 class CooperativistaUpdate(BaseModel):
-    seccion: Optional[str] = None
-    cuadrilla: Optional[str] = None
-    jefe_cuadrilla: Optional[str] = None
-    delegado_seccion: Optional[str] = None
+    id_cuadrilla: Optional[int] = None
+    rol_cuadrilla: Optional[str] = None
     apellido_paterno: Optional[str] = None
     apellido_materno: Optional[str] = None
     nombres: Optional[str] = None
@@ -44,17 +39,17 @@ class CooperativistaUpdate(BaseModel):
     fecha_nacimiento: Optional[date] = None
     codigo_asegurado: Optional[str] = None
     cua: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
     email: Optional[EmailStr] = None
+    telefono: Optional[str] = None
     is_active: Optional[bool] = None
     motivo_baja: Optional[str] = None
     fecha_baja: Optional[date] = None
 
 class CooperativistaResponse(CooperativistaBase):
     id: int
+    qr_code: str
     motivo_baja: Optional[str] = None
     fecha_baja: Optional[date] = None
     created_at: datetime
