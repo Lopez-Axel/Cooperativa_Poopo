@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List
-from utils.dependencies import get_db, get_current_user
+from core.dependencies import get_db, get_current_user, get_current_superuser
 from services.cooperativista_service import cooperativista_service
 from schemas.cooperativista import CooperativistaCreate, CooperativistaUpdate, CooperativistaResponse
 
@@ -71,3 +71,17 @@ def delete_cooperativista(
     current_user = Depends(get_current_user)
 ):
     return cooperativista_service.delete_cooperativista(db, cooperativista_id)
+
+@router.post("/bulk/activate")
+def activate_all_cooperativistas(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_superuser)
+):
+    return cooperativista_service.activate_all(db)
+
+@router.post("/bulk/deactivate")
+def deactivate_all_cooperativistas(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_superuser)
+):
+    return cooperativista_service.deactivate_all(db)

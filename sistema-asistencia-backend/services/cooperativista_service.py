@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from repositories.cooperativista_repo import cooperativista_repo
 from models.cooperativista import Cooperativista
 from schemas.cooperativista import CooperativistaCreate, CooperativistaUpdate, CooperativistaResponse
-from utils.qr_utils import generate_qr_code
+from core.qr_utils import generate_qr_code
 from typing import List
 
 class CooperativistaService:
@@ -92,5 +92,21 @@ class CooperativistaService:
         
         cooperativista_repo.delete(db, cooperativista)
         return {"message": "Cooperativista eliminado"}
+    
+    def activate_all(self, db: Session) -> dict:
+        count = db.query(Cooperativista).update({"is_active": True})
+        db.commit()
+        return {
+            "message": "Cooperativistas activados",
+            "total_affected": count
+        }
+    
+    def deactivate_all(self, db: Session) -> dict:
+        count = db.query(Cooperativista).update({"is_active": False})
+        db.commit()
+        return {
+            "message": "Cooperativistas desactivados",
+            "total_affected": count
+        }
 
 cooperativista_service = CooperativistaService()
