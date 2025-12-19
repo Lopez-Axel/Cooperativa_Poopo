@@ -22,7 +22,7 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Sistema de gestión de cooperativistas - Cooperativa Minera Poopó R.L. - Fundada 26 de Diciembre de 1953' }
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/x-icon', href: '/logo.jfif' },
       ]
     }
   },

@@ -59,6 +59,13 @@
             </span>
             <span>Dispositivos</span>
           </NuxtLink>
+
+          <NuxtLink to="/secciones" class="navbar-item nav-link">
+            <span class="icon">
+              <i class="mdi mdi-cellphone-link"></i>
+            </span>
+            <span>Secciones</span>
+          </NuxtLink>
           
           <!-- Solo para superadmin: se renderiza solo en cliente para evitar mismatch SSR -->
           <ClientOnly>
