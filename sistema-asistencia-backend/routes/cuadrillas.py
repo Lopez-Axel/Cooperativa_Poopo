@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from utils.dependencies import get_db, get_current_user
 from services.cuadrilla_service import cuadrilla_service
-from schemas.cuadrilla import CuadrillaCreate, CuadrillaUpdate, CuadrillaResponse
+from schemas.cuadrilla import CuadrillaCreate, CuadrillaUpdate, CuadrillaResponse, CuadrillaDetailsResponse
+
 
 router = APIRouter(prefix="/cuadrillas", tags=["Cuadrillas"])
 
@@ -63,3 +64,11 @@ def delete_cuadrilla(
     current_user = Depends(get_current_user)
 ):
     return cuadrilla_service.delete_cuadrilla(db, cuadrilla_id)
+
+@router.get("/{cuadrilla_id}/details", response_model=CuadrillaDetailsResponse)
+def get_cuadrilla_details(
+    cuadrilla_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return cuadrilla_service.get_cuadrilla_details(db, cuadrilla_id)

@@ -5,6 +5,8 @@ from repositories.seccion_repo import seccion_repo
 from models.cuadrilla import Cuadrilla
 from schemas.cuadrilla import CuadrillaCreate, CuadrillaUpdate, CuadrillaResponse
 from typing import List
+from schemas.cuadrilla import CuadrillaDetailsResponse, CooperativistaInfo, SeccionInfo
+from models.cooperativista import Cooperativista
 
 class CuadrillaService:
     
@@ -75,5 +77,44 @@ class CuadrillaService:
         
         cuadrilla_repo.delete(db, cuadrilla)
         return {"message": "Cuadrilla eliminada"}
+    
+    def get_cuadrilla_details(self, db: Session, cuadrilla_id: int) -> CuadrillaDetailsResponse:
+        cuadrilla = cuadrilla_repo.get_by_id(db, cuadrilla_id)
+        if not cuadrilla:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cuadrilla no encontrada"
+            )
+        
+        cooperativistas_query = (
+            db.query(Cooperativista)
+            .filter(Cooperativista.id_cuadrilla == cuadrilla_id)
+            .all()
+        )
+        
+        cooperativistas_info = [
+            CooperativistaInfo(
+                id=c.id,
+                nombres=c.nombres,
+                apellido_paterno=c.apellido_paterno,
+                apellido_materno=c.apellido_materno,
+                ci=c.ci,
+                rol_cuadrilla=c.rol_cuadrilla
+            )
+            for c in cooperativistas_query
+        ]
+        
+        return CuadrillaDetailsResponse(
+            id=cuadrilla.id,
+            nombre=cuadrilla.nombre,
+            created_at=cuadrilla.created_at,
+            updated_at=cuadrilla.updated_at,
+            seccion=SeccionInfo(
+                id=cuadrilla.seccion.id,
+                nombre=cuadrilla.seccion.nombre
+            ) if cuadrilla.seccion else None,
+            cooperativistas=cooperativistas_info,
+            total_cooperativistas=len(cooperativistas_info)
+        )
 
 cuadrilla_service = CuadrillaService()

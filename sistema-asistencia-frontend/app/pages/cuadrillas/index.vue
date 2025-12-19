@@ -1,22 +1,22 @@
 <template>
-  <div class="secciones-page">
+  <div class="cuadrillas-page">
     
     <!-- Header Section -->
     <div class="page-header">
       <div class="header-content">
         <div class="header-text">
           <h1 class="title is-2">
-            <i class="mdi mdi-sitemap"></i>
-            Gestión de Secciones
+            <i class="mdi mdi-folder-multiple"></i>
+            Gestión de Cuadrillas
           </h1>
-          <p class="subtitle">Administra las secciones de la cooperativa</p>
+          <p class="subtitle">Administra las cuadrillas organizadas por sección</p>
         </div>
         <button 
           class="button is-primary"
           @click="openCreateModal"
         >
           <i class="mdi mdi-plus"></i>
-          <span>Nueva Sección</span>
+          <span>Nueva Cuadrilla</span>
         </button>
       </div>
     </div>
@@ -29,7 +29,7 @@
           v-model="searchQuery"
           type="text" 
           class="input"
-          placeholder="Buscar por nombre..."
+          placeholder="Buscar por nombre de cuadrilla..."
           @input="handleSearch"
         >
       </div>
@@ -39,31 +39,51 @@
           <span class="filter-label">Estado:</span>
           <button 
             class="filter-btn"
-            :class="{ 'active': seccionesStore.filters.is_active === null }"
+            :class="{ 'active': cuadrillasStore.filters.is_active === null }"
             @click="setActiveFilter(null)"
           >
             Todos
           </button>
           <button 
             class="filter-btn"
-            :class="{ 'active': seccionesStore.filters.is_active === true }"
+            :class="{ 'active': cuadrillasStore.filters.is_active === true }"
             @click="setActiveFilter(true)"
           >
             Activos
           </button>
           <button 
             class="filter-btn"
-            :class="{ 'active': seccionesStore.filters.is_active === false }"
+            :class="{ 'active': cuadrillasStore.filters.is_active === false }"
             @click="setActiveFilter(false)"
           >
             Inactivos
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Sección:</span>
+          <button 
+            class="filter-btn"
+            :class="{ 'active': cuadrillasStore.filters.seccion_id === null }"
+            @click="setSeccionFilter(null)"
+          >
+            Todas
+          </button>
+          <button 
+            v-for="seccion in cuadrillasStore.secciones.slice(0, 5)" 
+            :key="seccion.id"
+            class="filter-btn"
+            :class="{ 'active': cuadrillasStore.filters.seccion_id === seccion.id }"
+            @click="setSeccionFilter(seccion.id)"
+          >
+            {{ seccion.nombre }}
           </button>
         </div>
         
         <button 
           class="button is-light is-small"
           @click="resetFilters"
-          v-if="seccionesStore.hasActiveFilters"
+          v-if="cuadrillasStore.hasActiveFilters"
         >
           <i class="mdi mdi-filter-remove"></i>
           Limpiar
@@ -72,132 +92,145 @@
     </div>
     
     <!-- Loading State -->
-    <div v-if="seccionesStore.loading" class="loading-container">
+    <div v-if="cuadrillasStore.loading" class="loading-container">
       <div class="loader"></div>
-      <p>Cargando secciones...</p>
+      <p>Cargando cuadrillas...</p>
     </div>
     
     <!-- Error State -->
-    <div v-else-if="seccionesStore.error" class="notification is-danger">
+    <div v-else-if="cuadrillasStore.error" class="notification is-danger">
       <i class="mdi mdi-alert-circle"></i>
-      {{ seccionesStore.error }}
+      {{ cuadrillasStore.error }}
     </div>
     
-    <!-- Secciones Table -->
-    <div v-else class="table-container">
-      <table class="table is-fullwidth is-hoverable">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Delegado</th>
-            <th>Estado</th>
-            <th class="has-text-centered">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="seccionesStore.seccionesFiltradas.length === 0">
-            <td colspan="5" class="has-text-centered empty-state">
-              <i class="mdi mdi-folder-open"></i>
-              <p>No se encontraron secciones</p>
-            </td>
-          </tr>
-          <tr v-for="seccion in seccionesStore.seccionesFiltradas" :key="seccion.id">
-            <td>
-              <strong>{{ seccion.nombre }}</strong>
-            </td>
-            <td>{{ seccion.descripcion || '-' }}</td>
-            <td>
-              <span 
-                v-if="seccion.id_delegado" 
-                class="tag is-info is-light"
-              >
-                <i class="mdi mdi-account-star"></i>
-                Asignado
-              </span>
-              <span v-else class="tag is-warning is-light">
-                <i class="mdi mdi-account-off"></i>
-                Sin asignar
-              </span>
-            </td>
-            <td>
-              <span class="tag" :class="seccion.is_active ? 'is-success' : 'is-danger'">
-                {{ seccion.is_active ? 'Activo' : 'Inactivo' }}
-              </span>
-            </td>
-            <td class="has-text-centered">
-              <div class="action-buttons">
-                <button 
-                  class="button is-small is-link"
-                  @click="openViewModal(seccion.id)"
-                  title="Ver detalles"
-                >
-                  <i class="mdi mdi-eye"></i>
-                </button>
-                <button 
-                  class="button is-small is-info"
-                  @click="openEditModal(seccion)"
-                  title="Editar sección"
-                >
-                  <i class="mdi mdi-pencil"></i>
-                </button>
-                <button 
-                  v-if="seccion.is_active"
-                  class="button is-small is-danger"
-                  @click="confirmDelete(seccion)"
-                  title="Desactivar sección"
-                >
-                  <i class="mdi mdi-delete"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Cuadrillas agrupadas por sección -->
+    <div v-else>
+      <div 
+        v-for="grupo in gruposFiltrados" 
+        :key="grupo.seccion.id"
+        class="seccion-grupo"
+      >
+        <div class="seccion-header">
+          <h2 class="seccion-titulo">
+            <i class="mdi mdi-sitemap"></i>
+            {{ grupo.seccion.nombre }}
+          </h2>
+          <span class="seccion-count">
+            {{ grupo.cuadrillas.length }} cuadrilla{{ grupo.cuadrillas.length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+
+        <div class="table-container">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Cooperativistas</th>
+                <th class="has-text-centered">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="grupo.cuadrillas.length === 0">
+                <td colspan="4" class="has-text-centered empty-state-small">
+                  <i class="mdi mdi-folder-open"></i>
+                  <p>No hay cuadrillas en esta sección</p>
+                </td>
+              </tr>
+              <tr v-for="cuadrilla in grupo.cuadrillas" :key="cuadrilla.id">
+                <td>
+                  <strong>{{ cuadrilla.nombre }}</strong>
+                </td>
+                <td>
+                  <span class="tag" :class="cuadrilla.is_active ? 'is-success' : 'is-danger'">
+                    {{ cuadrilla.is_active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="cooperativistas-badge">
+                    <i class="mdi mdi-account-multiple"></i>
+                    {{ contarCooperativistas(cuadrilla.id) }} miembros
+                  </span>
+                </td>
+                <td class="has-text-centered">
+                  <div class="action-buttons">
+                    <button 
+                      class="button is-small is-link"
+                      @click="openViewModal(cuadrilla.id)"
+                      title="Ver detalles"
+                    >
+                      <i class="mdi mdi-eye"></i>
+                    </button>
+                    <button 
+                      class="button is-small is-info"
+                      @click="openEditModal(cuadrilla)"
+                      title="Editar cuadrilla"
+                    >
+                      <i class="mdi mdi-pencil"></i>
+                    </button>
+                    <button 
+                      v-if="cuadrilla.is_active"
+                      class="button is-small is-danger"
+                      @click="confirmDelete(cuadrilla)"
+                      title="Desactivar cuadrilla"
+                    >
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Estado vacío global -->
+      <div v-if="gruposFiltrados.length === 0" class="empty-state">
+        <i class="mdi mdi-folder-open"></i>
+        <p>No se encontraron cuadrillas</p>
+      </div>
     </div>
     
-    <!-- Modals -->
+    <!-- Componentes de Modales -->
     <ModalVerDetalles
-    :is-open="modalVerAbierto"
-    :detalles="seccionDetalles"
-    @close="closeViewModal"
+      :is-open="modalVerAbierto"
+      :detalles="cuadrillaDetalles"
+      @close="closeViewModal"
     />
 
     <ModalFormulario
-    :is-open="modalFormAbierto"
-    :es-edicion="esEdicion"
-    :datos-iniciales="datosFormulario"
-    :cooperativistas="cooperativistasActivos"
-    :cargando="seccionesStore.loading"
-    @close="closeFormModal"
-    @guardar="handleGuardar"
+      :is-open="modalFormAbierto"
+      :es-edicion="esEdicion"
+      :datos-iniciales="datosFormulario"
+      :secciones="seccionesActivas"
+      :cargando="cuadrillasStore.loading"
+      @close="closeFormModal"
+      @guardar="handleGuardar"
     />
 
     <ModalConfirmarEliminacion
-    :is-open="modalEliminarAbierto"
-    :seccion="seccionParaEliminar"
-    :cargando="seccionesStore.loading"
-    @close="closeDeleteModal"
-    @confirmar="handleEliminar"
+      :is-open="modalEliminarAbierto"
+      :cuadrilla="cuadrillaParaEliminar"
+      :cargando="cuadrillasStore.loading"
+      @close="closeDeleteModal"
+      @confirmar="handleEliminar"
     />
+    
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useSeccionesStore } from '~/stores/secciones'
-import { useAuthStore } from '~/stores/auth'
-import ModalVerDetalles from '~/components/secciones/ModalVerDetalles.vue'
-import ModalFormulario from '~/components/secciones/ModalFormulario.vue'
-import ModalConfirmarEliminacion from '~/components/secciones/ModalConfirmarEliminacion.vue'
+import { useCuadrillasStore } from '~/stores/cuadrillas'
+import ModalVerDetalles from '~/components/cuadrillas/ModalVerDetalles.vue'
+import ModalFormulario from '~/components/cuadrillas/ModalFormulario.vue'
+import ModalConfirmarEliminacion from '~/components/cuadrillas/ModalConfirmarEliminacion.vue'
 
 definePageMeta({
-  layout: 'dashboard',
   middleware: 'auth'
 })
 
-const seccionesStore = useSeccionesStore()
-const authStore = useAuthStore()
+const cuadrillasStore = useCuadrillasStore()
 
 // Estados de modales
 const modalVerAbierto = ref(false)
@@ -205,42 +238,65 @@ const modalFormAbierto = ref(false)
 const modalEliminarAbierto = ref(false)
 
 const esEdicion = ref(false)
-const seccionDetalles = ref(null)
-const seccionParaEliminar = ref(null)
+const cuadrillaDetalles = ref(null)
+const cuadrillaParaEliminar = ref(null)
+const cuadrillaEditando = ref(null)
 const datosFormulario = ref({
   nombre: '',
-  descripcion: '',
-  id_delegado: null
+  id_seccion: null
 })
 
 const searchQuery = ref('')
-const cooperativistasActivos = ref([])
+const cooperativistasPorCuadrilla = ref({})
 
 onMounted(async () => {
-  if (!authStore.isAuthenticated) {
-    await authStore.initFromStorage()
-  }
-  await seccionesStore.fetchSecciones()
-  cooperativistasActivos.value = await seccionesStore.fetchCooperativistasActivos()
+  await cuadrillasStore.fetchSecciones()
+  await cuadrillasStore.fetchCuadrillas()
 })
 
+const seccionesActivas = computed(() => {
+  return cuadrillasStore.secciones.filter(s => s.is_active)
+})
+
+const gruposFiltrados = computed(() => {
+  const grupos = cuadrillasStore.cuadrillasAgrupadasPorSeccion
+  const cuadrillasFiltradas = cuadrillasStore.cuadrillasFiltradas
+  
+  return grupos
+    .map(grupo => ({
+      seccion: grupo.seccion,
+      cuadrillas: grupo.cuadrillas.filter(c => 
+        cuadrillasFiltradas.some(cf => cf.id === c.id)
+      )
+    }))
+    .filter(grupo => grupo.cuadrillas.length > 0)
+})
+
+const contarCooperativistas = (cuadrillaId) => {
+  return cooperativistasPorCuadrilla.value[cuadrillaId] || 0
+}
+
 const handleSearch = () => {
-  seccionesStore.setSearchQuery(searchQuery.value)
+  cuadrillasStore.setSearchQuery(searchQuery.value)
 }
 
 const setActiveFilter = (value) => {
-  seccionesStore.setActiveFilter(value)
+  cuadrillasStore.setActiveFilter(value)
+}
+
+const setSeccionFilter = (value) => {
+  cuadrillasStore.setSeccionFilter(value)
 }
 
 const resetFilters = () => {
   searchQuery.value = ''
-  seccionesStore.resetFilters()
+  cuadrillasStore.resetFilters()
 }
 
 // Modal Ver Detalles
-const openViewModal = async (seccionId) => {
+const openViewModal = async (cuadrillaId) => {
   try {
-    seccionDetalles.value = await seccionesStore.getSeccionDetails(seccionId)
+    cuadrillaDetalles.value = await cuadrillasStore.getCuadrillaDetails(cuadrillaId)
     modalVerAbierto.value = true
   } catch (error) {
     console.error('Error al cargar detalles:', error)
@@ -249,26 +305,26 @@ const openViewModal = async (seccionId) => {
 
 const closeViewModal = () => {
   modalVerAbierto.value = false
-  seccionDetalles.value = null
+  cuadrillaDetalles.value = null
 }
 
 // Modal Formulario
 const openCreateModal = () => {
   esEdicion.value = false
+  cuadrillaEditando.value = null
   datosFormulario.value = {
     nombre: '',
-    descripcion: '',
-    id_delegado: null
+    id_seccion: null
   }
   modalFormAbierto.value = true
 }
 
-const openEditModal = (seccion) => {
+const openEditModal = (cuadrilla) => {
   esEdicion.value = true
+  cuadrillaEditando.value = cuadrilla
   datosFormulario.value = {
-    nombre: seccion.nombre,
-    descripcion: seccion.descripcion || '',
-    id_delegado: seccion.id_delegado
+    nombre: cuadrilla.nombre,
+    id_seccion: cuadrilla.id_seccion
   }
   modalFormAbierto.value = true
 }
@@ -277,46 +333,41 @@ const closeFormModal = () => {
   modalFormAbierto.value = false
   datosFormulario.value = {
     nombre: '',
-    descripcion: '',
-    id_delegado: null
+    id_seccion: null
   }
 }
 
 const handleGuardar = async (datos) => {
   try {
     if (esEdicion.value) {
-      // Necesitamos el ID de la sección que se está editando
-      const seccionEditando = seccionesStore.secciones.find(
-        s => s.nombre === datosFormulario.value.nombre
-      )
-      await seccionesStore.updateSeccion(seccionEditando.id, datos)
+      await cuadrillasStore.updateCuadrilla(cuadrillaEditando.value.id, datos)
     } else {
-      await seccionesStore.createSeccion(datos)
+      await cuadrillasStore.createCuadrilla(datos)
     }
     
     closeFormModal()
-    await seccionesStore.fetchSecciones()
+    await cuadrillasStore.fetchCuadrillas()
   } catch (error) {
     console.error('Error:', error)
   }
 }
 
 // Modal Eliminar
-const confirmDelete = (seccion) => {
-  seccionParaEliminar.value = seccion
+const confirmDelete = (cuadrilla) => {
+  cuadrillaParaEliminar.value = cuadrilla
   modalEliminarAbierto.value = true
 }
 
 const closeDeleteModal = () => {
   modalEliminarAbierto.value = false
-  seccionParaEliminar.value = null
+  cuadrillaParaEliminar.value = null
 }
 
 const handleEliminar = async () => {
   try {
-    await seccionesStore.deleteSeccion(seccionParaEliminar.value.id)
+    await cuadrillasStore.deleteCuadrilla(cuadrillaParaEliminar.value.id)
     closeDeleteModal()
-    await seccionesStore.fetchSecciones()
+    await cuadrillasStore.fetchCuadrillas()
   } catch (error) {
     console.error('Error:', error)
   }
@@ -324,8 +375,7 @@ const handleEliminar = async () => {
 </script>
 
 <style scoped>
-
-.secciones-page {
+.cuadrillas-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #0a1f0a 0%, #0d1b0d 50%, #1a2e1a 100%);
   padding: 2rem;
@@ -441,6 +491,7 @@ const handleEliminar = async () => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .filter-label {
@@ -497,10 +548,44 @@ const handleEliminar = async () => {
   100% { transform: rotate(360deg); }
 }
 
+.seccion-grupo {
+  margin-bottom: 2rem;
+}
+
+.seccion-header {
+  background: linear-gradient(135deg, rgba(3, 135, 48, 0.4), rgba(30, 70, 30, 0.4));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px 12px 0 0;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seccion-titulo {
+  color: #ffd700;
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.seccion-count {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
 .table-container {
   background: rgba(15, 31, 15, 0.6);
   border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 12px;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
   overflow: hidden;
 }
 
@@ -511,7 +596,7 @@ const handleEliminar = async () => {
 }
 
 .table thead tr {
-  background: linear-gradient(135deg, rgba(3, 135, 48, 0.4), rgba(30, 70, 30, 0.4));
+  background: linear-gradient(135deg, rgba(3, 135, 48, 0.3), rgba(30, 70, 30, 0.3));
   border-bottom: 2px solid rgba(255, 215, 0, 0.3);
 }
 
@@ -548,11 +633,27 @@ const handleEliminar = async () => {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  background: rgba(15, 31, 15, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 12px;
 }
 
 .empty-state i {
   font-size: 4rem;
   color: rgba(255, 215, 0, 0.3);
+}
+
+.empty-state-small {
+  padding: 2rem;
+  color: #90a4ae;
+  text-align: center;
+}
+
+.empty-state-small i {
+  font-size: 2rem;
+  color: rgba(255, 215, 0, 0.3);
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 .tag {
@@ -577,21 +678,16 @@ const handleEliminar = async () => {
   border: 1px solid rgba(244, 67, 54, 0.5);
 }
 
-.tag.is-info {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(21, 101, 192, 0.3));
-  color: #bbdefb;
-  border: 1px solid rgba(33, 150, 243, 0.5);
+.cooperativistas-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #90a4ae;
+  font-size: 0.9rem;
 }
 
-.tag.is-warning {
-  background: linear-gradient(135deg, rgba(255, 152, 0, 0.3), rgba(245, 124, 0, 0.3));
-  color: #ffe0b2;
-  border: 1px solid rgba(255, 152, 0, 0.5);
-}
-
-.tag.is-light {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+.cooperativistas-badge i {
+  color: #64b5f6;
 }
 
 .action-buttons {
@@ -644,19 +740,23 @@ const handleEliminar = async () => {
   box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
 }
 
-@keyframes modal-slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.notification.is-danger {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.3), rgba(211, 47, 47, 0.3));
+  color: #ffcdd2;
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.has-text-centered {
+  text-align: center;
 }
 
 @media screen and (max-width: 1023px) {
-  .secciones-page {
+  .cuadrillas-page {
     padding: 1rem;
     margin: -1.5rem -1rem;
   }
@@ -685,10 +785,6 @@ const handleEliminar = async () => {
   
   .filter-group {
     flex-wrap: wrap;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

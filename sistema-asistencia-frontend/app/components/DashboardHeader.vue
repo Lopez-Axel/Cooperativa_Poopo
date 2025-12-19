@@ -60,9 +60,16 @@
             <span>Dispositivos</span>
           </NuxtLink>
 
+          <NuxtLink to="/cuadrillas" class="navbar-item nav-link">
+            <span class="icon">
+              <i class="mdi mdi-folder-multiple"></i>
+            </span>
+            <span>Cuadrillas</span>
+          </NuxtLink>          
+
           <NuxtLink to="/secciones" class="navbar-item nav-link">
             <span class="icon">
-              <i class="mdi mdi-cellphone-link"></i>
+              <i class="mdi mdi-sitemap"></i>
             </span>
             <span>Secciones</span>
           </NuxtLink>
