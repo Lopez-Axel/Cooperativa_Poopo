@@ -48,8 +48,8 @@ class CooperativistaService:
             )
         return CooperativistaResponse.model_validate(cooperativista)
     
-    def get_all(self, db: Session, skip: int = 0, limit: int = 1000) -> List[CooperativistaResponse]:
-        cooperativistas = cooperativista_repo.get_all(db, skip, limit)
+    def get_all(self, db: Session) -> List[CooperativistaResponse]:
+        cooperativistas = cooperativista_repo.get_all(db)
         return [CooperativistaResponse.model_validate(c) for c in cooperativistas]
     
     def get_active(self, db: Session) -> List[CooperativistaResponse]:

@@ -19,8 +19,8 @@ class CooperativistaRepository:
     def get_by_seccion(self, db: Session, seccion_id: int) -> List[Cooperativista]:
         return db.query(Cooperativista).filter(Cooperativista.id_seccion == seccion_id).all()
     
-    def get_all(self, db: Session, skip: int = 0, limit: int = 100) -> List[Cooperativista]:
-        return db.query(Cooperativista).offset(skip).limit(limit).all()
+    def get_all(self, db: Session) -> List[Cooperativista]:
+        return db.query(Cooperativista).all()
     
     def get_active(self, db: Session) -> List[Cooperativista]:
         return db.query(Cooperativista).filter(Cooperativista.is_active == True).all()

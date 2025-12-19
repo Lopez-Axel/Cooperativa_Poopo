@@ -23,17 +23,14 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
   }),
 
   getters: {
-    // Lista completa de cooperativistas
     listaCooperativistas: (state) => state.cooperativistas,
 
-    // Obtener cuadrilla de un cooperativista
     getCuadrilla: (state) => (cooperativista) => {
       if (!cooperativista.id_cuadrilla) return null
       const cuadrillasStore = useCuadrillasStore()
       return cuadrillasStore.cuadrillas.find(c => c.id === cooperativista.id_cuadrilla)
     },
 
-    // Obtener sección de un cooperativista (a través de su cuadrilla)
     getSeccion: (state) => (cooperativista) => {
       if (!cooperativista.id_cuadrilla) return null
       const cuadrillasStore = useCuadrillasStore()
@@ -44,7 +41,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
       return seccionesStore.secciones.find(s => s.id === cuadrilla.id_seccion)
     },
 
-    // Secciones únicas (obtenidas de las cuadrillas de los cooperativistas)
     secciones: (state) => {
       const cuadrillasStore = useCuadrillasStore()
       const seccionesStore = useSeccionesStore()
@@ -65,7 +61,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         .sort((a, b) => a.nombre.localeCompare(b.nombre))
     },
 
-    // Cuadrillas únicas
     cuadrillas: (state) => {
       const cuadrillasStore = useCuadrillasStore()
       
@@ -81,7 +76,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         .sort((a, b) => a.nombre.localeCompare(b.nombre))
     },
 
-    // Ocupaciones únicas
     ocupaciones: (state) => {
       const ocupacionesSet = new Set(
         state.cooperativistas
@@ -91,7 +85,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
       return Array.from(ocupacionesSet).sort()
     },
 
-    // Estados de asegurado únicos
     estadosAsegurado: (state) => {
       const estadosSet = new Set(
         state.cooperativistas
@@ -101,7 +94,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
       return Array.from(estadosSet).sort()
     },
 
-    // Cooperativistas filtrados
     cooperativistasFiltrados: (state) => {
       const cuadrillasStore = useCuadrillasStore()
       let resultado = state.cooperativistas
@@ -175,7 +167,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
       return resultado
     },
 
-    // Cooperativistas agrupados por sección
     cooperativistasPorSeccion: (state) => {
       const cuadrillasStore = useCuadrillasStore()
       const seccionesStore = useSeccionesStore()

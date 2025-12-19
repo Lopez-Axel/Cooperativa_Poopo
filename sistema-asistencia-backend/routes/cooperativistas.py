@@ -17,12 +17,10 @@ def create_cooperativista(
 
 @router.get("/", response_model=List[CooperativistaResponse])
 def get_cooperativistas(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    return cooperativista_service.get_all(db, skip, limit)
+    return cooperativista_service.get_all(db)
 
 @router.get("/active", response_model=List[CooperativistaResponse])
 def get_active_cooperativistas(
