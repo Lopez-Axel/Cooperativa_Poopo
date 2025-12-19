@@ -7,7 +7,7 @@ from schemas.seccion import SeccionCreate, SeccionUpdate, SeccionResponse, Secci
 
 router = APIRouter(prefix="/secciones", tags=["Secciones"])
 
-@router.post("/", response_model=SeccionResponse)
+@router.post("", response_model=SeccionResponse)
 def create_seccion(
     seccion_data: SeccionCreate,
     db: Session = Depends(get_db),
@@ -15,7 +15,7 @@ def create_seccion(
 ):
     return seccion_service.create_seccion(db, seccion_data, current_user.id)
 
-@router.get("/", response_model=List[SeccionResponse])
+@router.get("", response_model=List[SeccionResponse])
 def get_secciones(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),

@@ -9,45 +9,34 @@ export const useSeccionesStore = defineStore('secciones', {
     loading: false,
     error: null,
     filters: {
-      is_active: null,
+      is_active: null, // null = todos, true = activos, false = inactivos
       searchQuery: ''
     }
   }),
 
   actions: {
-// stores/secciones.js
-async fetchSecciones() {
-  this.loading = true
-  this.error = null
-  
-  try {
-    const authStore = useAuthStore()
-    
-    const url = `${authStore.apiUrl}/api/secciones`
-    
-    const response = await $fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      },
-      // Evitar que Nuxt modifique la URL
-      baseURL: '',
-      // Deshabilitar cualquier interceptor
-      retry: false,
-      onRequest({ request, options }) {
-        console.log('📤 Request URL:', request)
+    async fetchSecciones() {
+      this.loading = true
+      this.error = null
+      
+      try {
+        const authStore = useAuthStore()
+        console.log('API URL:', authStore.apiUrl)
+        console.log('Token:', authStore.token)
+        const response = await $fetch(`${authStore.apiUrl}/api/secciones`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        this.secciones = response
+      } catch (error) {
+        this.error = error.data?.detail || 'Error al cargar secciones'
+        throw error
+      } finally {
+        this.loading = false
       }
-    })
-    
-    this.secciones = response
-  } catch (error) {
-    console.error('❌ Error:', error)
-    this.error = error.data?.detail || 'Error al cargar secciones'
-    throw error
-  } finally {
-    this.loading = false
-  }
-},
+    },
 
     async createSeccion(seccionData) {
       this.loading = true
@@ -55,8 +44,6 @@ async fetchSecciones() {
       
       try {
         const authStore = useAuthStore()
-        
-        // SIN trailing slash
         const response = await $fetch(`${authStore.apiUrl}/api/secciones`, {
           method: 'POST',
           headers: {
@@ -82,8 +69,6 @@ async fetchSecciones() {
       
       try {
         const authStore = useAuthStore()
-        
-        // SIN trailing slash
         const response = await $fetch(`${authStore.apiUrl}/api/secciones/${id}`, {
           method: 'PUT',
           headers: {
@@ -113,8 +98,6 @@ async fetchSecciones() {
       
       try {
         const authStore = useAuthStore()
-        
-        // SIN trailing slash - soft delete usando PUT
         await $fetch(`${authStore.apiUrl}/api/secciones/${id}`, {
           method: 'PUT',
           headers: {
@@ -124,6 +107,7 @@ async fetchSecciones() {
           body: { is_active: false }
         })
         
+        // Actualizar localmente
         const seccion = this.secciones.find(s => s.id === id)
         if (seccion) {
           seccion.is_active = false
@@ -144,8 +128,6 @@ async fetchSecciones() {
       
       try {
         const authStore = useAuthStore()
-        
-        // SIN trailing slash
         const response = await $fetch(`${authStore.apiUrl}/api/secciones/${id}/details`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -164,8 +146,6 @@ async fetchSecciones() {
     async fetchCooperativistasActivos() {
       try {
         const authStore = useAuthStore()
-        
-        // SIN trailing slash
         const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/active`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -198,10 +178,12 @@ async fetchSecciones() {
     seccionesFiltradas: (state) => {
       let filtered = state.secciones
 
+      // Filtro por estado activo/inactivo
       if (state.filters.is_active !== null) {
         filtered = filtered.filter(s => s.is_active === state.filters.is_active)
       }
 
+      // Búsqueda difusa con Fuse.js (solo en nombre)
       if (state.filters.searchQuery.trim() !== '') {
         const fuse = new Fuse(filtered, {
           keys: ['nombre'],
