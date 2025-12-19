@@ -11,13 +11,24 @@
           </h1>
           <p class="subtitle">Administra las cuadrillas organizadas por sección</p>
         </div>
-        <button 
-          class="button is-primary"
-          @click="openCreateModal"
-        >
-          <i class="mdi mdi-plus"></i>
-          <span>Nueva Cuadrilla</span>
-        </button>
+        <div class="header-buttons">
+          <button 
+            class="button is-warning"
+            @click="generarReportePDF"
+            :disabled="generandoPDF || cuadrillasStore.cuadrillasFiltradas.length === 0"
+            :class="{ 'is-loading': generandoPDF }"
+          >
+            <i class="mdi mdi-file-pdf-box"></i>
+            <span>Generar PDF</span>
+          </button>
+          <button 
+            class="button is-primary"
+            @click="openCreateModal"
+          >
+            <i class="mdi mdi-plus"></i>
+            <span>Nueva Cuadrilla</span>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -62,22 +73,26 @@
 
         <div class="filter-group">
           <span class="filter-label">Sección:</span>
-          <button 
-            class="filter-btn"
-            :class="{ 'active': cuadrillasStore.filters.seccion_id === null }"
-            @click="setSeccionFilter(null)"
-          >
-            Todas
-          </button>
-          <button 
-            v-for="seccion in cuadrillasStore.secciones.slice(0, 5)" 
-            :key="seccion.id"
-            class="filter-btn"
-            :class="{ 'active': cuadrillasStore.filters.seccion_id === seccion.id }"
-            @click="setSeccionFilter(seccion.id)"
-          >
-            {{ seccion.nombre }}
-          </button>
+          <div class="control has-icons-left">
+            <div class="select">
+              <select 
+                :value="cuadrillasStore.filters.seccion_id" 
+                @change="setSeccionFilter($event.target.value === '' ? null : parseInt($event.target.value))"
+              >
+                <option value="">Todas las secciones</option>
+                <option 
+                  v-for="seccion in seccionesActivas" 
+                  :key="seccion.id"
+                  :value="seccion.id"
+                >
+                  {{ seccion.nombre }}
+                </option>
+              </select>
+            </div>
+            <span class="icon is-left">
+              <i class="mdi mdi-sitemap"></i>
+            </span>
+          </div>
         </div>
         
         <button 
@@ -126,7 +141,6 @@
               <tr>
                 <th>Nombre</th>
                 <th>Estado</th>
-                <th>Cooperativistas</th>
                 <th class="has-text-centered">Acciones</th>
               </tr>
             </thead>
@@ -146,12 +160,6 @@
                     {{ cuadrilla.is_active ? 'Activo' : 'Inactivo' }}
                   </span>
                 </td>
-                <td>
-                  <span class="cooperativistas-badge">
-                    <i class="mdi mdi-account-multiple"></i>
-                    {{ contarCooperativistas(cuadrilla.id) }} miembros
-                  </span>
-                </td>
                 <td class="has-text-centered">
                   <div class="action-buttons">
                     <button 
@@ -160,6 +168,15 @@
                       title="Ver detalles"
                     >
                       <i class="mdi mdi-eye"></i>
+                    </button>
+                    <button 
+                      class="button is-small is-warning"
+                      @click="generarReporteIndividual(cuadrilla.id)"
+                      title="Generar PDF"
+                      :disabled="generandoPDFIndividual === cuadrilla.id"
+                      :class="{ 'is-loading': generandoPDFIndividual === cuadrilla.id }"
+                    >
+                      <i class="mdi mdi-file-pdf-box"></i>
                     </button>
                     <button 
                       class="button is-small is-info"
@@ -225,8 +242,10 @@ import { useCuadrillasStore } from '~/stores/cuadrillas'
 import ModalVerDetalles from '~/components/cuadrillas/ModalVerDetalles.vue'
 import ModalFormulario from '~/components/cuadrillas/ModalFormulario.vue'
 import ModalConfirmarEliminacion from '~/components/cuadrillas/ModalConfirmarEliminacion.vue'
+import { generarReporteCuadrillas, generarReporteCuadrillaPorSeccion, generarReporteIndividualCuadrilla } from '~/utils/reporteCuadrillas'
 
 definePageMeta({
+  layout: 'dashboard',
   middleware: 'auth'
 })
 
@@ -247,7 +266,9 @@ const datosFormulario = ref({
 })
 
 const searchQuery = ref('')
-const cooperativistasPorCuadrilla = ref({})
+const generandoPDF = ref(false)
+const generandoPDFIndividual = ref(null) // Para tracking de cuál PDF se está generando
+
 
 onMounted(async () => {
   await cuadrillasStore.fetchSecciones()
@@ -272,10 +293,6 @@ const gruposFiltrados = computed(() => {
     .filter(grupo => grupo.cuadrillas.length > 0)
 })
 
-const contarCooperativistas = (cuadrillaId) => {
-  return cooperativistasPorCuadrilla.value[cuadrillaId] || 0
-}
-
 const handleSearch = () => {
   cuadrillasStore.setSearchQuery(searchQuery.value)
 }
@@ -291,6 +308,36 @@ const setSeccionFilter = (value) => {
 const resetFilters = () => {
   searchQuery.value = ''
   cuadrillasStore.resetFilters()
+}
+
+// Generar reporte PDF
+const generarReportePDF = async () => {
+  generandoPDF.value = true
+  
+  try {
+    // Obtener detalles de todas las cuadrillas filtradas
+    const cuadrillasFiltradas = cuadrillasStore.cuadrillasFiltradas
+    const detallesPromesas = cuadrillasFiltradas.map(c => 
+      cuadrillasStore.getCuadrillaDetails(c.id)
+    )
+    
+    const cuadrillasConDetalles = await Promise.all(detallesPromesas)
+    
+    // Si hay filtro de sección, usar nombre específico
+    if (cuadrillasStore.filters.seccion_id) {
+      const seccion = cuadrillasStore.secciones.find(
+        s => s.id === cuadrillasStore.filters.seccion_id
+      )
+      await generarReporteCuadrillaPorSeccion(seccion.nombre, cuadrillasConDetalles)
+    } else {
+      await generarReporteCuadrillas(cuadrillasConDetalles)
+    }
+  } catch (error) {
+    console.error('Error al generar PDF:', error)
+    alert('Error al generar el reporte PDF')
+  } finally {
+    generandoPDF.value = false
+  }
 }
 
 // Modal Ver Detalles
@@ -370,6 +417,20 @@ const handleEliminar = async () => {
     await cuadrillasStore.fetchCuadrillas()
   } catch (error) {
     console.error('Error:', error)
+  }
+}
+
+const generarReporteIndividual = async (cuadrillaId) => {
+  generandoPDFIndividual.value = cuadrillaId
+  
+  try {
+    const detalle = await cuadrillasStore.getCuadrillaDetails(cuadrillaId)
+    await generarReporteIndividualCuadrilla(detalle)
+  } catch (error) {
+    console.error('Error al generar PDF individual:', error)
+    alert('Error al generar el reporte PDF')
+  } finally {
+    generandoPDFIndividual.value = null
   }
 }
 </script>
@@ -541,6 +602,23 @@ const handleEliminar = async () => {
   width: 50px;
   height: 50px;
   animation: spin 1s linear infinite;
+}
+
+.button.is-small.is-warning {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.3), rgba(245, 124, 0, 0.3));
+  color: #ffe0b2;
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.button.is-small.is-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.5), rgba(245, 124, 0, 0.5));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+
+.button.is-small.is-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @keyframes spin {
@@ -753,6 +831,89 @@ const handleEliminar = async () => {
 
 .has-text-centered {
   text-align: center;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.button.is-warning {
+  background: linear-gradient(135deg, #ff9800 0%, #ff6f00 50%, #f57c00 100%);
+  color: #fff;
+  border: none;
+  font-weight: 800;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.button.is-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff9800 0%, #ff6f00 60%, #f57c00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 152, 0, 0.6);
+}
+
+.button.is-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-group .select {
+  position: relative;
+}
+
+.filter-group .select select {
+  background: rgba(15, 31, 15, 0.7);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  color: #e0f2f1;
+  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  appearance: none;
+}
+
+.filter-group .select select:focus {
+  border-color: #ffd700;
+  outline: none;
+  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
+}
+
+.filter-group .select::after {
+  border: 2px solid #ffd700;
+  border-right: 0;
+  border-top: 0;
+  content: " ";
+  display: block;
+  height: 0.5em;
+  width: 0.5em;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  margin-top: -0.375em;
+  right: 1.125em;
+  z-index: 4;
+}
+
+.filter-group .control {
+  position: relative;
+}
+
+.filter-group .icon.is-left {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9e9d24;
+  pointer-events: none;
+  z-index: 1;
 }
 
 @media screen and (max-width: 1023px) {

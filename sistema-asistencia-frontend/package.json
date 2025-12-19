@@ -18,6 +18,7 @@
     "dayjs": "^1.11.19",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "nuxt": "^4.2.1",
     "pinia": "^3.0.4",
     "qrcode-vue3": "^1.7.1",

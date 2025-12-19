@@ -34,7 +34,7 @@
             <input 
               class="input" 
               type="text" 
-              placeholder="Buscar por nombre, CI..."
+              placeholder="Buscar por nombre, CI, QR..."
               v-model="filtros.search"
             />
             <span class="icon is-left">
@@ -47,10 +47,10 @@
         <div class="field">
           <label class="label">Sección</label>
           <div class="select is-fullwidth">
-            <select v-model="filtros.seccion">
+            <select v-model="filtros.id_seccion">
               <option :value="null">Todas las Secciones</option>
-              <option v-for="seccion in store.secciones" :key="seccion" :value="seccion">
-                Sección {{ seccion }}
+              <option v-for="seccion in seccionesStore.secciones" :key="seccion.id" :value="seccion.id">
+                {{ seccion.nombre }}
               </option>
             </select>
           </div>
@@ -60,10 +60,10 @@
         <div class="field">
           <label class="label">Cuadrilla</label>
           <div class="select is-fullwidth">
-            <select v-model="filtros.cuadrilla">
+            <select v-model="filtros.id_cuadrilla">
               <option :value="null">Todas las Cuadrillas</option>
-              <option v-for="cuadrilla in store.cuadrillas" :key="cuadrilla" :value="cuadrilla">
-                {{ cuadrilla }}
+              <option v-for="cuadrilla in cuadrillasDisponibles" :key="cuadrilla.id" :value="cuadrilla.id">
+                {{ cuadrilla.nombre }}
               </option>
             </select>
           </div>
@@ -159,11 +159,11 @@
       </div>
       <div class="stat-item">
         <span class="stat-label">Secciones:</span>
-        <span class="stat-value">{{ store.secciones.length }}</span>
+        <span class="stat-value">{{ seccionesStore.secciones.length }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">Cuadrillas:</span>
-        <span class="stat-value">{{ store.cuadrillas.length }}</span>
+        <span class="stat-value">{{ cuadrillasStore.cuadrillas.length }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">Jefes:</span>
@@ -177,10 +177,6 @@
         <span class="stat-label">Tesoreros:</span>
         <span class="stat-value">{{ contarPorCargo('tesorero') }}</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">Delegados:</span>
-        <span class="stat-value">{{ contarDelegados }}</span>
-      </div>
     </div>
 
     <!-- Lista de Cooperativistas -->
@@ -189,8 +185,7 @@
         v-for="coop in cooperativistasFiltrados" 
         :key="coop.id"
         class="cooperativista-card"
-        :class="obtenerClasesCargo(coop)"
-        @click="verDetalle(coop.id)"
+        :class="[obtenerClasesCargo(coop), { 'is-inactive': !coop.is_active }]"
       >
         <div class="card-header-custom">
           <div class="status-badge" :class="{ 'active': coop.is_active }">
@@ -210,15 +205,25 @@
             </div>
             
             <div class="info-row">
+              <i class="mdi mdi-qrcode"></i>
+              <span>{{ coop.qr_code }}</span>
+            </div>
+            
+            <div class="info-row">
               <i class="mdi mdi-office-building"></i>
-              <span>{{ coop.seccion || 'N/A' }}</span>
+              <span>{{ getSeccionName(coop.id_cuadrilla) }}</span>
             </div>
             
             <div class="info-row">
               <i class="mdi mdi-account-group"></i>
-              <span>{{ coop.cuadrilla || 'Sin Cuadrilla' }}</span>
+              <span>{{ getCuadrillaName(coop.id_cuadrilla) }}</span>
             </div>
             
+            <div class="info-row" v-if="coop.rol_cuadrilla">
+              <i class="mdi mdi-star-circle"></i>
+              <span>{{ coop.rol_cuadrilla }}</span>
+            </div>
+
             <div class="info-row" v-if="coop.ocupacion">
               <i class="mdi mdi-briefcase"></i>
               <span>{{ coop.ocupacion }}</span>
@@ -233,40 +238,34 @@
               <i class="mdi mdi-calendar"></i>
               <span>{{ formatearFecha(coop.fecha_ingreso) }}</span>
             </div>
-
-            <!-- Badges de Cargos Especiales -->
-            <div class="badges-container">
-              <div v-if="esDelegadoSeccion(coop)" class="badge-cargo delegado">
-                <i class="mdi mdi-account-star"></i>
-                <span>DELEGADO DE SECCIÓN</span>
-              </div>
-              
-              <div v-if="esJefeCuadrilla(coop)" class="badge-cargo jefe">
-                <i class="mdi mdi-star"></i>
-                <span>JEFE DE CUADRILLA</span>
-              </div>
-              
-              <div v-if="esSubJefeCuadrilla(coop)" class="badge-cargo sub-jefe">
-                <i class="mdi mdi-star-half-full"></i>
-                <span>SUB JEFE DE CUADRILLA</span>
-              </div>
-              
-              <div v-if="esTesoreroCuadrilla(coop)" class="badge-cargo tesorero">
-                <i class="mdi mdi-cash-multiple"></i>
-                <span>TESORERO DE CUADRILLA</span>
-              </div>
-            </div>
           </div>
         </div>
 
         <div class="card-footer-custom">
-          <button class="button is-small is-ghost" @click.stop="verDetalle(coop.id)">
-            <i class="mdi mdi-eye"></i>
-            Ver Detalle
+          <button 
+            class="button is-small action-btn" 
+            :class="coop.is_active ? 'is-warning' : 'is-success'"
+            @click.stop="toggleActivacion(coop)"
+            :title="coop.is_active ? 'Desactivar' : 'Activar'"
+          >
+            <i class="mdi" :class="coop.is_active ? 'mdi-cancel' : 'mdi-check-circle'"></i>
+            <span>{{ coop.is_active ? 'Desactivar' : 'Activar' }}</span>
           </button>
-          <button class="button is-small is-ghost is-danger" @click.stop="confirmarEliminar(coop)">
+          <button 
+            class="button is-small is-info action-btn" 
+            @click.stop="verDetalle(coop.id)"
+            title="Ver Detalles"
+          >
+            <i class="mdi mdi-eye"></i>
+            <span>Detalles</span>
+          </button>
+          <button 
+            class="button is-small is-danger action-btn" 
+            @click.stop="confirmarEliminar(coop)"
+            title="Eliminar"
+          >
             <i class="mdi mdi-delete"></i>
-            Eliminar
+            <span>Eliminar</span>
           </button>
         </div>
       </div>
@@ -283,23 +282,6 @@
       <i class="mdi mdi-account-search"></i>
       <h3>No se encontraron cooperativistas</h3>
       <p>Intenta ajustar los filtros de búsqueda</p>
-    </div>
-
-    <!-- Modal de Crear Cooperativista -->
-    <div class="modal" :class="{ 'is-active': mostrarFormularioCrear }">
-      <div class="modal-background" @click="cerrarFormularioCrear"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Nuevo Cooperativista</p>
-          <button class="delete" @click="cerrarFormularioCrear"></button>
-        </header>
-        <section class="modal-card-body">
-          <FormularioCooperativista 
-            @guardar="handleGuardar"
-            @cancelar="cerrarFormularioCrear"
-          />
-        </section>
-      </div>
     </div>
 
     <!-- Modal de Confirmación de Eliminación -->
@@ -328,22 +310,29 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useCooperativistasStore } from '~/stores/cooperativistas'
+import { useCuadrillasStore } from '~/stores/cuadrillas'
+import { useSeccionesStore } from '~/stores/secciones'
+import { useRouter } from 'vue-router'
+
 definePageMeta({
   layout: 'dashboard',
   middleware: 'auth'
 })
 
 const store = useCooperativistasStore()
+const cuadrillasStore = useCuadrillasStore()
+const seccionesStore = useSeccionesStore()
 const router = useRouter()
 
-const mostrarFormularioCrear = ref(false)
 const cooperativistaAEliminar = ref(null)
 
-// Filtros locales extendidos
+// Filtros locales
 const filtros = ref({
   search: '',
-  seccion: null,
-  cuadrilla: null,
+  id_seccion: null,
+  id_cuadrilla: null,
   is_active: true,
   ocupacion: null,
   estado_asegurado: null,
@@ -353,9 +342,36 @@ const filtros = ref({
 })
 
 onMounted(async () => {
-  if (store.cooperativistas.length === 0) {
-    await store.cargarCooperativistas()
+  // Cargar datos necesarios
+  await Promise.all([
+    store.cooperativistas.length === 0 ? store.cargarCooperativistas() : Promise.resolve(),
+    cuadrillasStore.cuadrillas.length === 0 ? cuadrillasStore.fetchCuadrillas() : Promise.resolve(),
+    seccionesStore.secciones.length === 0 ? seccionesStore.fetchSecciones() : Promise.resolve()
+  ])
+})
+
+// Helper functions para obtener nombres
+const getCuadrillaName = (id_cuadrilla) => {
+  if (!id_cuadrilla) return 'Sin Cuadrilla'
+  const cuadrilla = cuadrillasStore.cuadrillas.find(c => c.id === id_cuadrilla)
+  return cuadrilla ? cuadrilla.nombre : 'N/A'
+}
+
+const getSeccionName = (id_cuadrilla) => {
+  if (!id_cuadrilla) return 'Sin Sección'
+  const cuadrilla = cuadrillasStore.cuadrillas.find(c => c.id === id_cuadrilla)
+  if (!cuadrilla || !cuadrilla.id_seccion) return 'N/A'
+  
+  const seccion = seccionesStore.secciones.find(s => s.id === cuadrilla.id_seccion)
+  return seccion ? seccion.nombre : 'N/A'
+}
+
+// Computed para cuadrillas disponibles según filtro de sección
+const cuadrillasDisponibles = computed(() => {
+  if (filtros.value.id_seccion !== null) {
+    return cuadrillasStore.cuadrillas.filter(c => c.id_seccion === filtros.value.id_seccion)
   }
+  return cuadrillasStore.cuadrillas
 })
 
 // Computed para ocupaciones únicas
@@ -387,14 +403,18 @@ const cooperativistasFiltrados = computed(() => {
     resultado = resultado.filter(c => c.is_active === filtros.value.is_active)
   }
 
-  // Filtrar por sección
-  if (filtros.value.seccion !== null) {
-    resultado = resultado.filter(c => c.seccion === filtros.value.seccion)
+  // Filtrar por sección (a través de cuadrilla)
+  if (filtros.value.id_seccion !== null) {
+    resultado = resultado.filter(c => {
+      if (!c.id_cuadrilla) return false
+      const cuadrilla = cuadrillasStore.cuadrillas.find(cu => cu.id === c.id_cuadrilla)
+      return cuadrilla?.id_seccion === filtros.value.id_seccion
+    })
   }
 
   // Filtrar por cuadrilla
-  if (filtros.value.cuadrilla) {
-    resultado = resultado.filter(c => c.cuadrilla === filtros.value.cuadrilla)
+  if (filtros.value.id_cuadrilla) {
+    resultado = resultado.filter(c => c.id_cuadrilla === filtros.value.id_cuadrilla)
   }
 
   // Filtrar por ocupación
@@ -432,15 +452,16 @@ const cooperativistasFiltrados = computed(() => {
     resultado = resultado.filter(c => {
       const nombreCompleto = `${c.nombres} ${c.apellido_paterno} ${c.apellido_materno}`.toLowerCase()
       const ci = c.ci ? c.ci.toLowerCase() : ''
-      return nombreCompleto.includes(searchLower) || ci.includes(searchLower)
+      const qr = c.qr_code ? c.qr_code.toLowerCase() : ''
+      return nombreCompleto.includes(searchLower) || ci.includes(searchLower) || qr.includes(searchLower)
     })
   }
 
   // Filtrar solo cargos especiales
   if (filtros.value.solo_cargos_especiales) {
     resultado = resultado.filter(c => {
-      return esDelegadoSeccion(c) || esJefeCuadrilla(c) || 
-             esSubJefeCuadrilla(c) || esTesoreroCuadrilla(c)
+      const rol = c.rol_cuadrilla ? c.rol_cuadrilla.toLowerCase() : ''
+      return rol.includes('jefe') || rol.includes('tesorero') || rol.includes('delegado')
     })
   }
 
@@ -448,43 +469,33 @@ const cooperativistasFiltrados = computed(() => {
 })
 
 // Funciones para identificar cargos específicos
-const esDelegadoSeccion = (coop) => {
-  const delegado = coop.delegado_seccion ? coop.delegado_seccion.toLowerCase() : ''
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  return delegado.includes('delegado') || ocupacion.includes('delegado')
+const esCargoEspecial = (coop) => {
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
+  return rol.includes('jefe') || rol.includes('tesorero') || rol.includes('delegado')
 }
 
 const esJefeCuadrilla = (coop) => {
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  const jefe = coop.jefe_cuadrilla ? coop.jefe_cuadrilla.toLowerCase() : ''
-  return (ocupacion.includes('jefe') || jefe.includes('jefe')) && 
-         !ocupacion.includes('sub') && !jefe.includes('sub') &&
-         !ocupacion.includes('tesorero') && !jefe.includes('tesorero')
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
+  return rol.includes('jefe') && !rol.includes('sub') && !rol.includes('tesorero')
 }
 
 const esSubJefeCuadrilla = (coop) => {
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  const jefe = coop.jefe_cuadrilla ? coop.jefe_cuadrilla.toLowerCase() : ''
-  return (ocupacion.includes('sub jefe') || ocupacion.includes('subjefe') || 
-          jefe.includes('sub jefe') || jefe.includes('subjefe') ||
-          (ocupacion.includes('sub') && ocupacion.includes('jefe')) ||
-          (jefe.includes('sub') && jefe.includes('jefe')))
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
+  return rol.includes('sub') && rol.includes('jefe')
 }
 
 const esTesoreroCuadrilla = (coop) => {
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  const jefe = coop.jefe_cuadrilla ? coop.jefe_cuadrilla.toLowerCase() : ''
-  return ocupacion.includes('tesorero') || jefe.includes('tesorero')
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
+  return rol.includes('tesorero')
 }
 
 // Obtener clases CSS según los cargos
 const obtenerClasesCargo = (coop) => {
   const clases = []
   
-  if (esDelegadoSeccion(coop)) clases.push('is-delegado')
   if (esJefeCuadrilla(coop)) clases.push('is-jefe')
-  if (esSubJefeCuadrilla(coop)) clases.push('is-sub-jefe')
-  if (esTesoreroCuadrilla(coop)) clases.push('is-tesorero')
+  else if (esSubJefeCuadrilla(coop)) clases.push('is-sub-jefe')
+  else if (esTesoreroCuadrilla(coop)) clases.push('is-tesorero')
   
   return clases.join(' ')
 }
@@ -499,10 +510,6 @@ const contarPorCargo = (cargo) => {
   }).length
 }
 
-const contarDelegados = computed(() => {
-  return cooperativistasFiltrados.value.filter(c => esDelegadoSeccion(c)).length
-})
-
 const formatearFecha = (fecha) => {
   if (!fecha) return ''
   return new Date(fecha).toLocaleDateString('es-BO', {
@@ -515,8 +522,8 @@ const formatearFecha = (fecha) => {
 const limpiarFiltros = () => {
   filtros.value = {
     search: '',
-    seccion: null,
-    cuadrilla: null,
+    id_seccion: null,
+    id_cuadrilla: null,
     is_active: true,
     ocupacion: null,
     estado_asegurado: null,
@@ -528,6 +535,14 @@ const limpiarFiltros = () => {
 
 const verDetalle = (id) => {
   router.push(`/cooperativistas/${id}`)
+}
+
+const toggleActivacion = async (coop) => {
+  try {
+    await store.toggleActivacion(coop.id, !coop.is_active)
+  } catch (error) {
+    alert('Error al cambiar estado: ' + error.message)
+  }
 }
 
 const confirmarEliminar = (coop) => {
@@ -549,20 +564,10 @@ const eliminarCooperativista = async () => {
   }
 }
 
-const cerrarFormularioCrear = () => {
-  mostrarFormularioCrear.value = false
-}
-
-const handleGuardar = async () => {
-  cerrarFormularioCrear()
-  await store.cargarCooperativistas()
-}
-
 useHead({
   title: 'Cooperativistas - Sistema de Gestión'
 })
 </script>
-
 <style scoped>
 .cooperativistas-page {
   min-height: calc(100vh - 200px);
@@ -1440,5 +1445,107 @@ useHead({
 /* Estilos para el calendario modal (mejora la apariencia) */
 .input[type="date"]:focus::-webkit-calendar-picker-indicator {
   background: rgba(255, 215, 0, 0.2) !important;
+}
+
+/* Estilos para los botones de acción en las cartas */
+.card-footer-custom {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(15, 31, 15, 0.8), rgba(10, 26, 10, 0.8));
+  border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.action-btn i {
+  font-size: 1rem;
+}
+
+.action-btn span {
+  font-size: 0.75rem;
+}
+
+.action-btn.is-warning {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  border-color: #ff9800;
+  color: white;
+}
+
+.action-btn.is-warning:hover {
+  background: linear-gradient(135deg, #f57c00, #e65100);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.action-btn.is-success {
+  background: linear-gradient(135deg, #4caf50, #388e3c);
+  border-color: #4caf50;
+  color: white;
+}
+
+.action-btn.is-success:hover {
+  background: linear-gradient(135deg, #388e3c, #2e7d32);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.action-btn.is-info {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  border-color: #2196f3;
+  color: white;
+}
+
+.action-btn.is-info:hover {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.action-btn.is-danger {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  border-color: #f44336;
+  color: white;
+}
+
+.action-btn.is-danger:hover {
+  background: linear-gradient(135deg, #d32f2f, #c62828);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* Carta inactiva tiene opacidad reducida */
+.cooperativista-card.is-inactive {
+  opacity: 0.7;
+}
+
+.cooperativista-card.is-inactive .card-body {
+  filter: grayscale(0.3);
+}
+
+/* Responsive para botones en móvil */
+@media screen and (max-width: 768px) {
+  .card-footer-custom {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+  
+  .action-btn span {
+    font-size: 0.875rem;
+  }
 }
 </style>

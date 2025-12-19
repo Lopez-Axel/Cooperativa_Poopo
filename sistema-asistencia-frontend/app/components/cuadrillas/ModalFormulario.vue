@@ -2,71 +2,62 @@
   <Teleport to="body">
     <div v-if="isOpen" class="modal is-active">
       <div class="modal-background" @click="cerrar"></div>
-      <div class="modal-card" style="max-width: 800px;">
+      <div class="modal-card">
         <header class="modal-card-head">
           <p class="modal-card-title">
-            <i class="mdi mdi-folder-information"></i>
-            Detalles de Cuadrilla
+            <i class="mdi" :class="esEdicion ? 'mdi-pencil' : 'mdi-plus'"></i>
+            {{ esEdicion ? 'Editar Cuadrilla' : 'Nueva Cuadrilla' }}
           </p>
           <button class="delete" @click="cerrar"></button>
         </header>
-        <section class="modal-card-body" v-if="detalles">
-          <div class="detail-section">
-            <h3 class="detail-title">Información General</h3>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <span class="detail-label">Nombre:</span>
-                <span class="detail-value">{{ detalles.nombre }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Sección:</span>
-                <span class="detail-value">{{ detalles.seccion?.nombre || 'Sin sección' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h3 class="detail-title">Estadísticas</h3>
-            <div class="stats-grid">
-              <div class="stat-card">
-                <i class="mdi mdi-account-group stat-icon"></i>
-                <div class="stat-info">
-                  <span class="stat-value">{{ detalles.total_cooperativistas }}</span>
-                  <span class="stat-label">Cooperativistas</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section" v-if="detalles.cooperativistas.length > 0">
-            <h3 class="detail-title">Cooperativistas</h3>
-            <div class="cooperativistas-list">
-              <div 
-                v-for="coop in detalles.cooperativistas" 
-                :key="coop.id"
-                class="cooperativista-item"
+        <section class="modal-card-body">
+          <div class="field">
+            <label class="label">Nombre *</label>
+            <div class="control has-icons-left">
+              <input 
+                v-model="formulario.nombre"
+                class="input"
+                type="text"
+                placeholder="Ej: Cuadrilla A"
               >
-                <div class="cooperativista-info">
-                  <i class="mdi mdi-account cooperativista-icon"></i>
-                  <div class="cooperativista-data">
-                    <strong>{{ coop.nombres }} {{ coop.apellido_paterno }} {{ coop.apellido_materno || '' }}</strong>
-                    <span v-if="coop.ci" class="cooperativista-ci">CI: {{ coop.ci }}</span>
-                  </div>
-                </div>
-                <div v-if="coop.rol_cuadrilla" class="cooperativista-rol">
-                  <span class="tag is-info">{{ coop.rol_cuadrilla }}</span>
-                </div>
-              </div>
+              <span class="icon is-left">
+                <i class="mdi mdi-tag"></i>
+              </span>
             </div>
           </div>
-
-          <div v-else class="empty-state-small">
-            <i class="mdi mdi-account-off"></i>
-            <p>No hay cooperativistas en esta cuadrilla</p>
+          
+          <div class="field">
+            <label class="label">Sección *</label>
+            <div class="control has-icons-left">
+              <div class="select is-fullwidth">
+                <select v-model="formulario.id_seccion">
+                  <option :value="null">Seleccione una sección</option>
+                  <option 
+                    v-for="seccion in secciones" 
+                    :key="seccion.id"
+                    :value="seccion.id"
+                  >
+                    {{ seccion.nombre }}
+                  </option>
+                </select>
+              </div>
+              <span class="icon is-left">
+                <i class="mdi mdi-sitemap"></i>
+              </span>
+            </div>
           </div>
         </section>
         <footer class="modal-card-foot">
-          <button class="button" @click="cerrar">Cerrar</button>
+          <button 
+            class="button is-primary"
+            @click="guardar"
+            :disabled="!formulario.nombre.trim() || !formulario.id_seccion"
+            :class="{ 'is-loading': cargando }"
+          >
+            <i class="mdi mdi-check"></i>
+            {{ esEdicion ? 'Actualizar' : 'Crear' }}
+          </button>
+          <button class="button" @click="cerrar">Cancelar</button>
         </footer>
       </div>
     </div>
@@ -74,24 +65,44 @@
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
   },
-  detalles: {
+  esEdicion: {
+    type: Boolean,
+    default: false
+  },
+  datosIniciales: {
     type: Object,
-    default: null
+    default: () => ({
+      nombre: '',
+      id_seccion: null
+    })
+  },
+  secciones: {
+    type: Array,
+    default: () => []
+  },
+  cargando: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'guardar'])
 
-const cerrar = () => {
-  emit('close')
-}
+const formulario = ref({
+  nombre: '',
+  id_seccion: null
+})
+
+watch(() => props.datosIniciales, (nuevosDatos) => {
+  formulario.value = { ...nuevosDatos }
+}, { immediate: true, deep: true })
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
@@ -100,9 +111,18 @@ watch(() => props.isOpen, (newVal) => {
     document.body.style.overflow = ''
   }
 })
+
+const cerrar = () => {
+  emit('close')
+}
+
+const guardar = () => {
+  emit('guardar', { ...formulario.value })
+}
 </script>
 
 <style scoped>
+/* Usa exactamente los mismos estilos del ModalFormulario de secciones */
 .modal {
   position: fixed;
   top: 0;
@@ -225,173 +245,131 @@ watch(() => props.isOpen, (newVal) => {
   flex-shrink: 0;
 }
 
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  color: #e0f2f1;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.control {
+  position: relative;
+}
+
+.input, .select select {
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+  background: rgba(15, 31, 15, 0.7);
+  color: #e0f2f1;
+  width: 100%;
+  box-sizing: border-box;
+  height: 3rem;
+}
+
+.control.has-icons-left .input,
+.control.has-icons-left .select select {
+  padding-left: 2.75rem;
+}
+
+.input::placeholder {
+  color: #90a4ae;
+}
+
+.input:focus, .select select:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
+  background: rgba(26, 46, 26, 0.9);
+  outline: none;
+}
+
+.icon.is-left {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9e9d24;
+}
+
+.select {
+  width: 100%;
+}
+
+.select:not(.is-multiple):not(.is-loading)::after {
+  border-color: #ffd700;
+  right: 1.125em;
+  z-index: 4;
+}
+
 .button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
-  border: 1px solid rgba(255, 215, 0, 0.3);
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
 }
 
-.button:hover {
+.button.is-primary {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+  color: #0d1b0d;
+  border: none;
+  font-weight: 800;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+.button.is-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+}
+
+.button.is-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button:not(.is-primary) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c8e6c9;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.button:not(.is-primary):hover {
   background: rgba(255, 215, 0, 0.2);
   color: #ffd700;
 }
 
-.detail-section {
-  margin-bottom: 2rem;
+.is-loading {
+  position: relative;
+  color: transparent !important;
 }
 
-.detail-section:last-child {
-  margin-bottom: 0;
+.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.detail-title {
-  color: #ffd700;
-  font-weight: 800;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
-}
-
-.detail-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-label {
-  color: #90a4ae;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.detail-value {
-  color: #e0f2f1;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.stat-card {
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon {
-  font-size: 2rem;
-  color: #ffd700;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  color: #ffd700;
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-.stat-label {
-  color: #c8e6c9;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.cooperativistas-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.cooperativista-item {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s ease;
-}
-
-.cooperativista-item:hover {
-  background: rgba(255, 215, 0, 0.1);
-  border-color: rgba(255, 215, 0, 0.4);
-}
-
-.cooperativista-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.cooperativista-icon {
-  font-size: 2rem;
-  color: #64b5f6;
-}
-
-.cooperativista-data {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.cooperativista-data strong {
-  color: #e0f2f1;
-  font-size: 1rem;
-}
-
-.cooperativista-ci {
-  color: #90a4ae;
-  font-size: 0.85rem;
-}
-
-.cooperativista-rol .tag {
-  font-weight: 700;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-}
-
-.tag.is-info {
-  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(21, 101, 192, 0.3));
-  color: #bbdefb;
-  border: 1px solid rgba(33, 150, 243, 0.5);
-}
-
-.empty-state-small {
-  text-align: center;
-  padding: 2rem;
-  color: #90a4ae;
-}
-
-.empty-state-small i {
-  font-size: 3rem;
-  color: rgba(255, 215, 0, 0.3);
-  margin-bottom: 0.5rem;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes modal-slideIn {

@@ -23,7 +23,7 @@ export const useCuadrillasStore = defineStore('cuadrillas', {
       
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/cuadrillas`, {
+        const response = await fetch(`${authStore.apiUrl}/api/cuadrillas/`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
@@ -67,7 +67,7 @@ export const useCuadrillasStore = defineStore('cuadrillas', {
       
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/cuadrillas`, {
+        const response = await fetch(`${authStore.apiUrl}/api/cuadrillas/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,

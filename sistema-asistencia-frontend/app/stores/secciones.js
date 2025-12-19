@@ -146,14 +146,23 @@ export const useSeccionesStore = defineStore('secciones', {
     async fetchCooperativistasActivos() {
       try {
         const authStore = useAuthStore()
-        const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/active`, {
+        
+        // Usar el endpoint /active que SÍ existe y funciona
+        const response = await fetch(`${authStore.apiUrl}/api/cooperativistas/active`, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${authStore.token}`
+            'Authorization': `Bearer ${authStore.token}`,
+            'Content-Type': 'application/json'
           }
         })
         
-        return response
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        
+        return await response.json()
       } catch (error) {
+        console.error('Error al cargar cooperativistas activos:', error)
         throw error
       }
     },

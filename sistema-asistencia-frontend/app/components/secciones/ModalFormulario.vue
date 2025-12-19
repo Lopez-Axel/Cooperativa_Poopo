@@ -287,6 +287,10 @@ const guardar = () => {
   box-sizing: border-box;
 }
 
+.input, .select select {
+  height: 3rem;
+}
+
 .control.has-icons-left .input,
 .control.has-icons-left .select select {
   padding-left: 2.75rem;
