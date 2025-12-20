@@ -20,7 +20,7 @@
       <div class="stat-card">
         <i class="mdi mdi-office-building"></i>
         <div>
-          <div class="stat-number">{{ store.secciones.length }}</div>
+          <div class="stat-number">{{ Object.keys(cooperativistasPorSeccion).length }}</div>
           <div class="stat-label">Secciones Activas</div>
         </div>
       </div>
@@ -34,7 +34,7 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="store.loading" class="loading-container">
+    <div v-if="cooperativistasStore.loading || seccionesStore.loading" class="loading-container">
       <div class="loader"></div>
       <p>Cargando secciones...</p>
     </div>
@@ -42,47 +42,47 @@
     <!-- Lista de Secciones -->
     <div v-else class="secciones-container">
       <div 
-        v-for="seccion in seccionesOrdenadas" 
-        :key="seccion"
+        v-for="grupo in seccionesOrdenadas" 
+        :key="grupo.seccion.id"
         class="seccion-card"
       >
         <div class="seccion-header">
           <div class="seccion-info">
             <h2 class="seccion-titulo">
               <i class="mdi mdi-office-building"></i>
-              Sección {{ seccion }}
+              {{ grupo.seccion.nombre }}
             </h2>
             <span class="seccion-count">
-              {{ cooperativistasPorSeccion[seccion].length }} cooperativistas
+              {{ grupo.cooperativistas.length }} cooperativistas
             </span>
           </div>
           <button 
             class="toggle-button"
-            @click="toggleSeccion(seccion)"
+            @click="toggleSeccion(grupo.seccion.id)"
           >
-            <i class="mdi" :class="seccionesExpandidas[seccion] ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
+            <i class="mdi" :class="seccionesExpandidas[grupo.seccion.id] ? 'mdi-chevron-up' : 'mdi-chevron-down'"></i>
           </button>
         </div>
 
         <transition name="slide">
-          <div v-show="seccionesExpandidas[seccion]" class="seccion-content">
+          <div v-show="seccionesExpandidas[grupo.seccion.id]" class="seccion-content">
             
             <!-- Estadísticas de la Sección -->
             <div class="seccion-stats">
               <div class="mini-stat">
                 <i class="mdi mdi-account-group"></i>
-                <span>{{ cuadrillasEnSeccion(seccion).length }} Cuadrillas</span>
+                <span>{{ cuadrillasEnSeccion(grupo.seccion.id) }} Cuadrillas</span>
               </div>
               <div class="mini-stat">
                 <i class="mdi mdi-star"></i>
-                <span>{{ jefesEnSeccion(seccion) }} Jefes/Tesoreros</span>
+                <span>{{ jefesEnSeccion(grupo.cooperativistas) }} Jefes/Tesoreros</span>
               </div>
             </div>
 
             <!-- Lista de Cooperativistas -->
             <div class="cooperativistas-list">
               <div 
-                v-for="coop in cooperativistasPorSeccion[seccion]" 
+                v-for="coop in grupo.cooperativistas" 
                 :key="coop.id"
                 class="cooperativista-item"
                 :class="{ 'is-jefe': esJefeOTesorero(coop) }"
@@ -99,7 +99,7 @@
                     <div class="item-detalles">
                       <span class="detalle-text">
                         <i class="mdi mdi-account-group"></i>
-                        {{ coop.cuadrilla || 'Sin Cuadrilla' }}
+                        {{ obtenerNombreCuadrilla(coop) }}
                       </span>
                       <span class="detalle-text" v-if="coop.ocupacion">
                         <i class="mdi mdi-briefcase"></i>
@@ -125,7 +125,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!store.loading && store.secciones.length === 0" class="empty-state">
+    <div v-if="!cooperativistasStore.loading && !seccionesStore.loading && Object.keys(cooperativistasPorSeccion).length === 0" class="empty-state">
       <i class="mdi mdi-office-building-off"></i>
       <h3>No hay secciones registradas</h3>
       <p>No se encontraron cooperativistas con secciones asignadas</p>
@@ -140,71 +140,90 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const store = useCooperativistasStore()
+const cooperativistasStore = useCooperativistasStore()
+const cuadrillasStore = useCuadrillasStore()
+const seccionesStore = useSeccionesStore()
 const router = useRouter()
 
 const seccionesExpandidas = ref({})
 
 onMounted(async () => {
-  if (store.cooperativistas.length === 0) {
-    await store.cargarCooperativistas()
-  }
+  // Cargar todos los datos necesarios
+  await Promise.all([
+    cooperativistasStore.cooperativistas.length === 0 ? cooperativistasStore.cargarCooperativistas() : Promise.resolve(),
+    cuadrillasStore.cuadrillas.length === 0 ? cuadrillasStore.fetchCuadrillas() : Promise.resolve(),
+    seccionesStore.secciones.length === 0 ? seccionesStore.fetchSecciones() : Promise.resolve()
+  ])
   
   // Expandir todas las secciones por defecto
-  store.secciones.forEach(seccion => {
-    seccionesExpandidas.value[seccion] = true
+  Object.keys(cooperativistasPorSeccion.value).forEach(seccionId => {
+    seccionesExpandidas.value[seccionId] = true
   })
 })
 
-const cooperativistasPorSeccion = computed(() => store.cooperativistasPorSeccion)
+// Usar el getter del store que ya maneja las relaciones correctamente
+const cooperativistasPorSeccion = computed(() => cooperativistasStore.cooperativistasPorSeccion)
 
+// Ordenar las secciones alfabéticamente
 const seccionesOrdenadas = computed(() => {
-  return store.secciones.sort((a, b) => a - b)
+  return Object.values(cooperativistasPorSeccion.value)
+    .filter(grupo => grupo.seccion) // Solo incluir grupos con sección válida
+    .sort((a, b) => a.seccion.nombre.localeCompare(b.seccion.nombre))
 })
 
 const totalCooperativistas = computed(() => {
   return Object.values(cooperativistasPorSeccion.value)
-    .reduce((total, coops) => total + coops.length, 0)
+    .reduce((total, grupo) => total + grupo.cooperativistas.length, 0)
 })
 
-const cuadrillasEnSeccion = (seccion) => {
-  const coops = cooperativistasPorSeccion.value[seccion] || []
-  const cuadrillas = new Set(coops.map(c => c.cuadrilla).filter(Boolean))
-  return Array.from(cuadrillas)
+// Contar cuadrillas únicas en una sección
+const cuadrillasEnSeccion = (seccionId) => {
+  const cuadrillasIds = new Set()
+  
+  cooperativistasStore.cooperativistas
+    .filter(c => c.is_active && c.id_cuadrilla)
+    .forEach(c => {
+      const cuadrilla = cuadrillasStore.cuadrillas.find(cu => cu.id === c.id_cuadrilla)
+      if (cuadrilla && cuadrilla.id_seccion === seccionId) {
+        cuadrillasIds.add(cuadrilla.id)
+      }
+    })
+  
+  return cuadrillasIds.size
 }
 
-const jefesEnSeccion = (seccion) => {
-  const coops = cooperativistasPorSeccion.value[seccion] || []
-  return coops.filter(c => esJefeOTesorero(c)).length
+const jefesEnSeccion = (cooperativistas) => {
+  return cooperativistas.filter(c => esJefeOTesorero(c)).length
 }
 
-const toggleSeccion = (seccion) => {
-  seccionesExpandidas.value[seccion] = !seccionesExpandidas.value[seccion]
+const toggleSeccion = (seccionId) => {
+  seccionesExpandidas.value[seccionId] = !seccionesExpandidas.value[seccionId]
 }
 
 const esJefeOTesorero = (coop) => {
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  const jefe = coop.jefe_cuadrilla ? coop.jefe_cuadrilla.toLowerCase() : ''
-  return ocupacion.includes('jefe') || 
-         ocupacion.includes('tesorero') ||
-         jefe.includes('jefe') || 
-         jefe.includes('tesorero')
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
+  return rol.includes('jefe') || rol.includes('tesorero')
 }
 
 const obtenerCargo = (coop) => {
-  const ocupacion = coop.ocupacion ? coop.ocupacion.toLowerCase() : ''
-  const jefe = coop.jefe_cuadrilla ? coop.jefe_cuadrilla.toLowerCase() : ''
+  const rol = coop.rol_cuadrilla ? coop.rol_cuadrilla.toLowerCase() : ''
   
-  if (ocupacion.includes('sub') || jefe.includes('sub')) {
+  if (rol.includes('sub')) {
     return 'SUB JEFE'
   }
-  if (ocupacion.includes('jefe') || jefe.includes('jefe')) {
+  if (rol.includes('jefe')) {
     return 'JEFE'
   }
-  if (ocupacion.includes('tesorero') || jefe.includes('tesorero')) {
+  if (rol.includes('tesorero')) {
     return 'TESORERO'
   }
   return ''
+}
+
+const obtenerNombreCuadrilla = (coop) => {
+  if (!coop.id_cuadrilla) return 'Sin Cuadrilla'
+  const cuadrilla = cuadrillasStore.cuadrillas.find(c => c.id === coop.id_cuadrilla)
+  return cuadrilla ? cuadrilla.nombre : 'Sin Cuadrilla'
 }
 
 const verDetalle = (id) => {
@@ -314,75 +333,70 @@ useHead({
   width: 200%;
   height: 200%;
   background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
-  transition: all 0.6s ease;
-  opacity: 0;
-}
-
-.stat-card:hover::before {
-  opacity: 1;
+  animation: float 15s infinite linear;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(158, 157, 36, 0.3);
+  box-shadow: 0 8px 30px rgba(255, 215, 0, 0.2);
 }
 
 .stat-card i {
   font-size: 3rem;
-  background: linear-gradient(135deg, #ffd700, #ff9800);
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
   flex-shrink: 0;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
 }
 
 .stat-number {
-  background: linear-gradient(135deg, #ffd700, #ff9800);
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 2.5rem;
   font-weight: 900;
   line-height: 1;
-  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+  margin-bottom: 0.25rem;
+  text-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
 .stat-label {
+  color: #a5d6a7;
   font-size: 0.95rem;
-  color: #c8e6c9;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .loading-container {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 4rem 2rem;
-  color: #c8e6c9;
+  gap: 1.5rem;
 }
 
 .loader {
-  border: 4px solid rgba(15, 31, 15, 0.7);
-  border-top: 4px solid #ffd700;
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 215, 0, 0.2);
+  border-top-color: #ffd700;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes float {
-  from {
-    transform: translateY(0) rotate(0deg);
-  }
-  to {
-    transform: translateY(-100px) rotate(360deg);
-  }
+.loading-container p {
+  color: #a5d6a7;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .secciones-container {
@@ -392,43 +406,37 @@ useHead({
 }
 
 .seccion-card {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
-  border: 2px solid rgba(255, 215, 0, 0.2);
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.9), rgba(15, 31, 15, 0.9));
   border-radius: 16px;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid transparent;
+  border-image: linear-gradient(135deg, #2e7d32, #9e9d24) 1;
+  transition: all 0.3s ease;
 }
 
 .seccion-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(158, 157, 36, 0.3), 0 0 60px rgba(255, 215, 0, 0.1);
-  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 8px 30px rgba(255, 215, 0, 0.2);
 }
 
 .seccion-header {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2));
   padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.seccion-header:hover {
-  background: linear-gradient(135deg, #1e461e 0%, #0f1f0f 50%, #1a2e1a 100%);
+  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
 }
 
 .seccion-info {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex: 1;
 }
 
 .seccion-titulo {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -442,14 +450,14 @@ useHead({
 }
 
 .seccion-titulo i {
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 
 .seccion-count {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
+  background: linear-gradient(135deg, #ffd700, #ff9800);
   color: #0d1b0d;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  border-radius: 8px;
   font-weight: 800;
   font-size: 0.9rem;
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
@@ -762,6 +770,15 @@ useHead({
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>
