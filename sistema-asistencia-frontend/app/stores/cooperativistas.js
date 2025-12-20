@@ -224,7 +224,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
 
   actions: {
     async cargarCooperativistas() {
-      // ⚠️ Si ya hay una carga en progreso, REUTILIZA la misma promesa.
       if (this._loadingPromise) {
         return this._loadingPromise
       }
@@ -236,29 +235,15 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
 
         try {
           const authStore = useAuthStore()
-          let offset = 0
-          const limit = 500
-          let hasMore = true
-          let totalCargados = 0
           
-          while (hasMore) {
-            const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${authStore.token}`
-              },
-              params: {
-                limit,
-                offset
-              }
-            })
+          const response = await $fetch(`${authStore.apiUrl}/api/cooperativistas/`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`
+            }
+          })
 
-            this.cooperativistas.push(...response)
-            totalCargados += response.length
-
-            hasMore = response.length === limit
-            offset += limit
-          }
+          this.cooperativistas = response
 
           return this.cooperativistas
 
@@ -266,7 +251,6 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
           this.error = error.message || 'Error cargando cooperativistas'
           console.error("❌ Error:", error)
           throw error
-
         } finally {
           this.loading = false
           this._loadingPromise = null

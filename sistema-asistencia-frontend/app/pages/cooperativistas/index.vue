@@ -203,12 +203,7 @@
               <i class="mdi mdi-card-account-details"></i>
               <span>{{ coop.ci || 'Sin CI' }} {{ coop.ci_expedido ? `- ${coop.ci_expedido}` : '' }}</span>
             </div>
-            
-            <div class="info-row">
-              <i class="mdi mdi-qrcode"></i>
-              <span>{{ coop.qr_code }}</span>
-            </div>
-            
+                        
             <div class="info-row">
               <i class="mdi mdi-office-building"></i>
               <span>{{ getSeccionName(coop.id_cuadrilla) }}</span>
@@ -219,7 +214,7 @@
               <span>{{ getCuadrillaName(coop.id_cuadrilla) }}</span>
             </div>
             
-            <div class="info-row" v-if="coop.rol_cuadrilla">
+            <div class="info-row-rol" v-if="coop.rol_cuadrilla">
               <i class="mdi mdi-star-circle"></i>
               <span>{{ coop.rol_cuadrilla }}</span>
             </div>
@@ -259,14 +254,6 @@
             <i class="mdi mdi-eye"></i>
             <span>Detalles</span>
           </button>
-          <button 
-            class="button is-small is-danger action-btn" 
-            @click.stop="confirmarEliminar(coop)"
-            title="Eliminar"
-          >
-            <i class="mdi mdi-delete"></i>
-            <span>Eliminar</span>
-          </button>
         </div>
       </div>
     </div>
@@ -283,29 +270,6 @@
       <h3>No se encontraron cooperativistas</h3>
       <p>Intenta ajustar los filtros de búsqueda</p>
     </div>
-
-    <!-- Modal de Confirmación de Eliminación -->
-    <div class="modal" :class="{ 'is-active': cooperativistaAEliminar !== null }">
-      <div class="modal-background" @click="cancelarEliminar"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Confirmar Eliminación</p>
-          <button class="delete" @click="cancelarEliminar"></button>
-        </header>
-        <section class="modal-card-body">
-          <p v-if="cooperativistaAEliminar">
-            ¿Está seguro que desea eliminar al cooperativista 
-            <strong>{{ cooperativistaAEliminar.nombres }} {{ cooperativistaAEliminar.apellido_paterno }}</strong>?
-          </p>
-          <p class="has-text-danger mt-3">Esta acción no se puede deshacer.</p>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" @click="cancelarEliminar">Cancelar</button>
-          <button class="button is-danger" @click="eliminarCooperativista">Eliminar</button>
-        </footer>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -397,7 +361,6 @@ const estadosAseguradoDisponibles = computed(() => {
 // Filtrado completo de cooperativistas
 const cooperativistasFiltrados = computed(() => {
   let resultado = store.cooperativistas
-
   // Filtrar por estado activo
   if (filtros.value.is_active !== null) {
     resultado = resultado.filter(c => c.is_active === filtros.value.is_active)
@@ -542,25 +505,6 @@ const toggleActivacion = async (coop) => {
     await store.toggleActivacion(coop.id, !coop.is_active)
   } catch (error) {
     alert('Error al cambiar estado: ' + error.message)
-  }
-}
-
-const confirmarEliminar = (coop) => {
-  cooperativistaAEliminar.value = coop
-}
-
-const cancelarEliminar = () => {
-  cooperativistaAEliminar.value = null
-}
-
-const eliminarCooperativista = async () => {
-  if (!cooperativistaAEliminar.value) return
-  
-  try {
-    await store.eliminarCooperativista(cooperativistaAEliminar.value.id)
-    cooperativistaAEliminar.value = null
-  } catch (error) {
-    alert('Error al eliminar cooperativista: ' + error.message)
   }
 }
 
@@ -934,6 +878,25 @@ useHead({
   flex-shrink: 0;
   text-shadow: 0 0 8px rgba(158, 157, 36, 0.4);
 }
+
+.info-row-rol {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  padding: 0.45rem 0.65rem;
+  margin: 0.25rem 0;
+
+  border: 1px solid rgba(224, 242, 241, 0.35);
+  border-radius: 6px;
+
+  background-color: rgba(224, 242, 241, 0.08);
+
+  color: #e0f2f1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 
 .badges-container {
   display: flex;

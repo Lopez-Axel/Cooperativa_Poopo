@@ -17,7 +17,7 @@
     <div v-else-if="cooperativista" class="detalle-container">
       
       <!-- Credencial del Cooperativista -->
-      <div class="credencial-cooperativista" :class="{ 'is-jefe': esJefeOTesorero }">
+      <div class="credencial-cooperativista" :class="{ 'is-jefe': esCargoEspecial }">
         
         <!-- Header de la Credencial -->
         <div class="credencial-header">
@@ -46,7 +46,7 @@
           
           <div class="qr-container">
             <QRCodeVue3
-              :value="urlCooperativista"
+              :value="cooperativista.qr_code"
               :width="180"
               :height="180"
               :margin="2"
@@ -54,7 +54,7 @@
               :corner-dot-options="{ type: 'square', color: '#feea01' }"
               :dots-options="{ type: 'square', color: '#1a2e1a' }"
               :background-options="{ color: '#ffffff' }"
-              image="/logo.jfif"
+              image="/logo.png"
               :image-options="{ hideBackgroundDots: true, imageSize: 0.5, margin: 2 }"
             />
           </div>
@@ -68,9 +68,9 @@
         </div>
 
         <!-- Badge de Cargo Especial -->
-        <div v-if="esJefeOTesorero" class="cargo-especial">
+        <div v-if="cooperativista.rol_cuadrilla" class="cargo-especial">
           <i class="mdi mdi-star"></i>
-          <span>{{ obtenerCargo }}</span>
+          <span>{{ cooperativista.rol_cuadrilla }}</span>
         </div>
 
         <!-- Datos Personales -->
@@ -100,6 +100,10 @@
               <span class="dato-label">Email:</span>
               <span class="dato-valor">{{ cooperativista.email }}</span>
             </div>
+            <div class="dato-item" v-if="cooperativista.telefono">
+              <span class="dato-label">Teléfono:</span>
+              <span class="dato-valor">{{ cooperativista.telefono }}</span>
+            </div>
           </div>
         </div>
 
@@ -112,19 +116,15 @@
           <div class="datos-grid">
             <div class="dato-item">
               <span class="dato-label">Sección:</span>
-              <span class="dato-valor">{{ cooperativista.seccion || 'No asignada' }}</span>
+              <span class="dato-valor">{{ seccionName }}</span>
             </div>
             <div class="dato-item">
               <span class="dato-label">Cuadrilla:</span>
-              <span class="dato-valor">{{ cooperativista.cuadrilla || 'No asignada' }}</span>
+              <span class="dato-valor">{{ cuadrillaName }}</span>
             </div>
-            <div class="dato-item" v-if="cooperativista.jefe_cuadrilla">
-              <span class="dato-label">Jefe Cuadrilla:</span>
-              <span class="dato-valor">{{ cooperativista.jefe_cuadrilla }}</span>
-            </div>
-            <div class="dato-item" v-if="cooperativista.delegado_seccion">
-              <span class="dato-label">Delegado Sección:</span>
-              <span class="dato-valor">{{ cooperativista.delegado_seccion }}</span>
+            <div class="dato-item" v-if="cooperativista.rol_cuadrilla">
+              <span class="dato-label">Rol en Cuadrilla:</span>
+              <span class="dato-valor cargo-badge">{{ cooperativista.rol_cuadrilla }}</span>
             </div>
             <div class="dato-item" v-if="cooperativista.ocupacion">
               <span class="dato-label">Ocupación:</span>
@@ -133,6 +133,10 @@
             <div class="dato-item" v-if="cooperativista.fecha_ingreso">
               <span class="dato-label">Fecha Ingreso:</span>
               <span class="dato-valor">{{ formatearFecha(cooperativista.fecha_ingreso) }}</span>
+            </div>
+            <div class="dato-item" v-if="antiguedad">
+              <span class="dato-label">Antigüedad:</span>
+              <span class="dato-valor">{{ antiguedad }}</span>
             </div>
           </div>
         </div>
@@ -159,53 +163,6 @@
           </div>
         </div>
 
-        <!-- Credenciales Sistema Externo -->
-        <div class="seccion-datos" v-if="cooperativista.username || cooperativista.password">
-          <h3 class="seccion-titulo">
-            <i class="mdi mdi-key"></i>
-            Credenciales Sistema Externo
-          </h3>
-          <div v-if="!credencialesDesbloqueadas">
-            <div class="campo-bloqueado">
-              <i class="mdi mdi-lock"></i>
-              <p>Para ver las credenciales, ingrese su contraseña actual</p>
-              <div class="field has-addons">
-                <div class="control is-expanded">
-                  <input
-                    v-model="passwordVerificacion"
-                    class="input"
-                    type="password"
-                    placeholder="Ingrese su contraseña"
-                    @keyup.enter="verificarPassword"
-                  />
-                </div>
-                <div class="control">
-                  <button class="button is-success" @click="verificarPassword" :disabled="!passwordVerificacion">
-                    <span>Desbloquear</span>
-                  </button>
-                </div>
-              </div>
-              <p v-if="errorVerificacion" class="help is-danger">{{ errorVerificacion }}</p>
-            </div>
-          </div>
-          <div v-else class="datos-grid">
-            <div class="dato-item" v-if="cooperativista.username">
-              <span class="dato-label">Usuario:</span>
-              <span class="dato-valor">{{ cooperativista.username }}</span>
-            </div>
-            <div class="dato-item" v-if="cooperativista.password">
-              <span class="dato-label">Contraseña:</span>
-              <span class="dato-valor">
-                <span v-if="!mostrarPassword">••••••••</span>
-                <span v-else>{{ cooperativista.password }}</span>
-                <button class="button is-small is-ghost ml-2" @click="mostrarPassword = !mostrarPassword">
-                  <i class="mdi" :class="mostrarPassword ? 'mdi-eye-off' : 'mdi-eye'"></i>
-                </button>
-              </span>
-            </div>
-          </div>
-        </div>
-
         <!-- Documentos -->
         <div class="seccion-datos">
           <h3 class="seccion-titulo">
@@ -213,6 +170,24 @@
             Documentos
           </h3>
           <div class="documentos-grid">
+            <div class="documento-item">
+              <span class="documento-label">Foto CI:</span>
+              <div class="documento-preview">
+                <a 
+                  v-if="cooperativista.ci_foto_url" 
+                  :href="cooperativista.ci_foto_url" 
+                  target="_blank"
+                  class="documento-link"
+                >
+                  <i class="mdi mdi-image"></i>
+                  Ver Foto
+                </a>
+                <div v-else class="documento-vacio">
+                  <i class="mdi mdi-image-outline"></i>
+                  <span>No disponible</span>
+                </div>
+              </div>
+            </div>
             <div class="documento-item">
               <span class="documento-label">Documento ABC:</span>
               <div class="documento-preview">
@@ -254,11 +229,6 @@
           <span>Editar Información</span>
         </button>
 
-        <button class="action-button dispositivos" @click="verDispositivos">
-          <i class="mdi mdi-cellphone-link"></i>
-          <span>Ver Dispositivos</span>
-        </button>
-
         <button class="action-button asistencias" @click="verAsistencias">
           <i class="mdi mdi-calendar-check"></i>
           <span>Ver Asistencias</span>
@@ -279,41 +249,12 @@
           <span>Eliminar Cooperativista</span>
         </button>
 
-        <CredencialCooperativista :cooperativista="cooperativista" />
+        <button class="action-button generar-pdf" @click="generarPerfil">
+          <i class="mdi mdi-file-pdf-box"></i>
+          <span>Generar Perfil PDF</span>
+        </button>
       </div>
 
-    </div>
-
-    <!-- Modal de Verificación de Contraseña para Edición -->
-    <div class="modal" :class="{ 'is-active': mostrarModalVerificacion }">
-      <div class="modal-background" @click="cerrarModalVerificacion"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Verificación de Seguridad</p>
-          <button class="delete" @click="cerrarModalVerificacion"></button>
-        </header>
-        <section class="modal-card-body">
-          <p>Para editar las credenciales del sistema externo, ingrese su contraseña actual:</p>
-          <div class="field mt-4">
-            <div class="control">
-              <input
-                v-model="passwordEdicion"
-                class="input"
-                type="password"
-                placeholder="Ingrese su contraseña"
-                @keyup.enter="verificarPasswordEdicion"
-              />
-            </div>
-            <p v-if="errorEdicion" class="help is-danger">{{ errorEdicion }}</p>
-          </div>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" @click="cerrarModalVerificacion">Cancelar</button>
-          <button class="button is-success" @click="verificarPasswordEdicion" :disabled="!passwordEdicion">
-            Verificar
-          </button>
-        </footer>
-      </div>
     </div>
 
     <!-- Modal de Edición -->
@@ -328,7 +269,7 @@
           <FormularioCooperativista 
             :cooperativista="cooperativistaEdicion"
             @guardar="handleGuardarEdicion"
-            @cancel="cerrarFormularioEdicion"
+            @cancelar="cerrarFormularioEdicion"
           />
         </section>
       </div>
@@ -344,7 +285,7 @@
         </header>
         <section class="modal-card-body">
           <p>¿Está seguro que desea eliminar al cooperativista?</p>
-          <p class="has-text-danger mt-3">Esta acción marcará al cooperativista como inactivo.</p>
+          <p class="has-text-danger mt-3">Esta acción no se puede deshacer.</p>
         </section>
         <footer class="modal-card-foot">
           <button class="button" @click="mostrarConfirmacion = false">Cancelar</button>
@@ -359,6 +300,7 @@
 
 <script setup>
 import QRCodeVue3 from 'qrcode-vue3'
+import { generarPerfilCooperativista } from '../../utils/reporteCooperativista'
 
 definePageMeta({
   layout: 'dashboard',
@@ -368,33 +310,27 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const store = useCooperativistasStore()
+const cuadrillasStore = useCuadrillasStore()
+const seccionesStore = useSeccionesStore()
 const authStore = useAuthStore()
-const config = useRuntimeConfig()
 
 const cooperativista = ref(null)
 const loading = ref(true)
 const mostrarConfirmacion = ref(false)
 const mostrarFormularioEdicion = ref(false)
-const mostrarModalVerificacion = ref(false)
 const cooperativistaEdicion = ref(null)
-const passwordEdicion = ref('')
-const errorEdicion = ref('')
-const credencialesDesbloqueadas = ref(false)
-const passwordVerificacion = ref('')
-const errorVerificacion = ref('')
-const mostrarPassword = ref(false)
 
 const cooperativistaId = computed(() => parseInt(route.params.id))
 
-const urlCooperativista = computed(() => {
-  if (process.client) {
-    return `${window.location.origin}/cooperativistas/${cooperativistaId.value}`
-  }
-  return `https://tu-dominio.com/cooperativistas/${cooperativistaId.value}`
-})
-
 onMounted(async () => {
   try {
+    // Cargar stores si están vacíos
+    await Promise.all([
+      cuadrillasStore.cuadrillas.length === 0 ? cuadrillasStore.fetchCuadrillas() : Promise.resolve(),
+      seccionesStore.secciones.length === 0 ? seccionesStore.fetchSecciones() : Promise.resolve()
+    ])
+    
+    // Cargar cooperativista
     cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
   } catch (error) {
     alert('Error al cargar cooperativista: ' + error.message)
@@ -404,33 +340,31 @@ onMounted(async () => {
   }
 })
 
-const esJefeOTesorero = computed(() => {
-  if (!cooperativista.value) return false
-  const ocupacion = cooperativista.value.ocupacion ? cooperativista.value.ocupacion.toLowerCase() : ''
-  const jefe = cooperativista.value.jefe_cuadrilla ? cooperativista.value.jefe_cuadrilla.toLowerCase() : ''
-  return ocupacion.includes('jefe') || 
-         ocupacion.includes('tesorero') ||
-         jefe.includes('jefe') || 
-         jefe.includes('tesorero')
+// Computed para obtener nombre de cuadrilla
+const cuadrillaName = computed(() => {
+  if (!cooperativista.value?.id_cuadrilla) return 'Sin Cuadrilla'
+  const cuadrilla = cuadrillasStore.cuadrillas.find(c => c.id === cooperativista.value.id_cuadrilla)
+  return cuadrilla ? cuadrilla.nombre : 'N/A'
 })
 
-const obtenerCargo = computed(() => {
-  if (!cooperativista.value) return ''
-  const ocupacion = cooperativista.value.ocupacion ? cooperativista.value.ocupacion.toLowerCase() : ''
-  const jefe = cooperativista.value.jefe_cuadrilla ? cooperativista.value.jefe_cuadrilla.toLowerCase() : ''
+// Computed para obtener nombre de sección (a través de cuadrilla)
+const seccionName = computed(() => {
+  if (!cooperativista.value?.id_cuadrilla) return 'Sin Sección'
+  const cuadrilla = cuadrillasStore.cuadrillas.find(c => c.id === cooperativista.value.id_cuadrilla)
+  if (!cuadrilla || !cuadrilla.id_seccion) return 'N/A'
   
-  if (ocupacion.includes('sub') || jefe.includes('sub')) {
-    return 'SUB JEFE DE CUADRILLA'
-  }
-  if (ocupacion.includes('jefe') || jefe.includes('jefe')) {
-    return 'JEFE DE CUADRILLA'
-  }
-  if (ocupacion.includes('tesorero') || jefe.includes('tesorero')) {
-    return 'TESORERO DE CUADRILLA'
-  }
-  return ''
+  const seccion = seccionesStore.secciones.find(s => s.id === cuadrilla.id_seccion)
+  return seccion ? seccion.nombre : 'N/A'
 })
 
+// Determinar si tiene cargo especial
+const esCargoEspecial = computed(() => {
+  if (!cooperativista.value?.rol_cuadrilla) return false
+  const rol = cooperativista.value.rol_cuadrilla.toLowerCase()
+  return rol.includes('jefe') || rol.includes('tesorero') || rol.includes('delegado')
+})
+
+// Calcular edad
 const edad = computed(() => {
   if (!cooperativista.value?.fecha_nacimiento) return null
   const hoy = new Date()
@@ -441,6 +375,29 @@ const edad = computed(() => {
     edad--
   }
   return edad
+})
+
+// Calcular antigüedad
+const antiguedad = computed(() => {
+  if (!cooperativista.value?.fecha_ingreso) return null
+  const hoy = new Date()
+  const ingreso = new Date(cooperativista.value.fecha_ingreso)
+  
+  let años = hoy.getFullYear() - ingreso.getFullYear()
+  let meses = hoy.getMonth() - ingreso.getMonth()
+  
+  if (meses < 0) {
+    años--
+    meses += 12
+  }
+  
+  if (años > 0 && meses > 0) {
+    return `${años} años y ${meses} meses`
+  } else if (años > 0) {
+    return `${años} ${años === 1 ? 'año' : 'años'}`
+  } else {
+    return `${meses} ${meses === 1 ? 'mes' : 'meses'}`
+  }
 })
 
 const fechaActual = computed(() => {
@@ -461,39 +418,8 @@ const formatearFecha = (fecha) => {
 }
 
 const editarCooperativista = () => {
-  if (cooperativista.value.external_username || cooperativista.value.external_password) {
-    mostrarModalVerificacion.value = true
-  } else {
-    cooperativistaEdicion.value = { ...cooperativista.value }
-    mostrarFormularioEdicion.value = true
-  }
-}
-
-const cerrarModalVerificacion = () => {
-  mostrarModalVerificacion.value = false
-  passwordEdicion.value = ''
-  errorEdicion.value = ''
-}
-
-const verificarPasswordEdicion = async () => {
-  errorEdicion.value = ''
-  try {
-    const response = await $fetch(`${authStore.apiUrl}/api/auth/login`, {
-      method: 'POST',
-      body: { 
-        username: authStore.user.username, 
-        password: passwordEdicion.value 
-      }
-    })
-    if (response.access_token) {
-      cooperativistaEdicion.value = { ...cooperativista.value }
-      mostrarModalVerificacion.value = false
-      mostrarFormularioEdicion.value = true
-      passwordEdicion.value = ''
-    }
-  } catch (error) {
-    errorEdicion.value = 'Contraseña incorrecta'
-  }
+  cooperativistaEdicion.value = { ...cooperativista.value }
+  mostrarFormularioEdicion.value = true
 }
 
 const cerrarFormularioEdicion = () => {
@@ -504,7 +430,6 @@ const cerrarFormularioEdicion = () => {
 const handleGuardarEdicion = async () => {
   mostrarFormularioEdicion.value = false
   cooperativistaEdicion.value = null
-  credencialesDesbloqueadas.value = false
   try {
     cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
   } catch (error) {
@@ -520,25 +445,6 @@ const verAsistencias = () => {
   router.push(`/asistencias?cooperativista=${cooperativistaId.value}`)
 }
 
-const verificarPassword = async () => {
-  errorVerificacion.value = ''
-  try {
-    const response = await $fetch(`${authStore.apiUrl}/api/auth/login`, {
-      method: 'POST',
-      body: { 
-        username: authStore.user.username, 
-        password: passwordVerificacion.value 
-      }
-    })
-    if (response.access_token) {
-      credencialesDesbloqueadas.value = true
-      passwordVerificacion.value = ''
-    }
-  } catch (error) {
-    errorVerificacion.value = 'Contraseña incorrecta'
-  }
-}
-
 const toggleEstado = async () => {
   const nuevoEstado = !cooperativista.value.is_active
   const mensaje = nuevoEstado ? 'activar' : 'desactivar'
@@ -546,9 +452,7 @@ const toggleEstado = async () => {
   if (!confirm(`¿Está seguro que desea ${mensaje} este cooperativista?`)) return
   
   try {
-    await store.actualizarCooperativista(cooperativistaId.value, {
-      is_active: nuevoEstado
-    })
+    await store.toggleActivacion(cooperativistaId.value, nuevoEstado)
     cooperativista.value.is_active = nuevoEstado
     alert(`Cooperativista ${mensaje}do exitosamente`)
   } catch (error) {
@@ -567,6 +471,23 @@ const eliminarCooperativista = async () => {
     router.push('/cooperativistas')
   } catch (error) {
     alert('Error al eliminar: ' + error.message)
+  }
+}
+
+const generarPerfil = async () => {
+  try {
+    loading.value = true
+    await generarPerfilCooperativista(
+      cooperativista.value,
+      cuadrillaName.value,
+      seccionName.value
+    )
+    alert('Perfil PDF generado exitosamente')
+  } catch (error) {
+    console.error('Error generando PDF:', error)
+    alert('Error al generar el PDF: ' + error.message)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -717,8 +638,8 @@ useHead({
 }
 
 .foto-ci {
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   object-fit: cover;
   border-radius: 12px;
   border: 3px solid #ffd700;
@@ -739,18 +660,28 @@ useHead({
 }
 
 .qr-container {
+  width: 200px;         
+  height: 200px;         
+  padding: 4px;          
+  border: 2px solid #038730; 
+  border-radius: 16px;   
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  background-color: #ffffff; 
 }
 
-.qr-label {
-  color: #a5d6a7;
-  font-size: 0.75rem;
-  text-align: center;
+
+.qr-code-text {
+  color: #ffd700;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 1px;
   margin: 0;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .info-principal {
@@ -785,6 +716,7 @@ useHead({
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .cargo-especial i {
@@ -860,65 +792,13 @@ useHead({
   font-weight: 700;
 }
 
-.campo-bloqueado {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.4), rgba(15, 31, 15, 0.4));
-  border: 2px dashed rgba(255, 215, 0, 0.3);
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.campo-bloqueado i {
-  font-size: 2.5rem;
-  color: #ffd700;
-  margin-bottom: 1rem;
-}
-
-.campo-bloqueado p {
-  color: #a5d6a7;
-  margin-bottom: 1rem;
-}
-
-.campo-bloqueado .field {
-  max-width: 400px;
-  margin: 1rem auto 0;
-}
-
-.campo-bloqueado .input {
-  background: rgba(26, 46, 26, 0.6);
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  color: #e0f2f1;
-}
-
-.campo-bloqueado .button.is-success {
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
-  color: white;
-  border: none;
-  height: 40pxs;
-  font-weight: 600;
-}
-
-.campo-bloqueado .button.is-success:hover:not(:disabled) {
-  background: linear-gradient(135deg, #66bb6a, #388e3c);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-}
-
-.campo-bloqueado .button.is-success:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.button.is-ghost {
-  background: transparent;
-  border: none;
-  color: #ffd700;
-  padding: 0.25rem 0.5rem;
-}
-
-.button.is-ghost:hover {
-  background: rgba(255, 215, 0, 0.1);
-  color: #ff9800;
+.dato-valor.cargo-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .documentos-grid {

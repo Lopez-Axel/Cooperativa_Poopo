@@ -63,17 +63,21 @@ definePageMeta({
   middleware: 'auth'
 })
 
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
 const authStore = useAuthStore()
 const cooperativistasStore = useCooperativistasStore()
-const userName = computed(() => authStore.fullName || authStore.username || 'Usuario')
+const seccionesStore = useSeccionesStore()
+const cuadrillasStore = useCuadrillasStore()
+
+const userName = computed(() =>
+  authStore.fullName || authStore.username || 'Usuario'
+)
 
 const stats = ref({
   cooperativistas: cooperativistasStore.listaCooperativistas.length || 0,
-  asistenciasMes: 0,
-  dispositivosActivos: 0,
-  pendientes: 0,
-  seccionesActivas: cooperativistasStore.secciones.length || 0,
-  cuadrillasActivas: cooperativistasStore.cuadrillas.length || 0,
+  seccionesActivas: seccionesStore.secciones.length || 0,
+  cuadrillasActivas: cuadrillasStore.cuadrillas.length || 0
 })
 
 const currentTime = ref('')
@@ -82,37 +86,49 @@ const currentMonth = ref('')
 
 const updateTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleTimeString('es-BO', { 
-    hour: '2-digit', 
+
+  currentTime.value = now.toLocaleTimeString('es-BO', {
+    hour: '2-digit',
     minute: '2-digit'
   })
+
   currentDate.value = now.toLocaleDateString('es-BO', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   })
+
   currentMonth.value = now.toLocaleDateString('es-BO', {
     month: 'long',
     year: 'numeric'
   })
 }
 
+let intervalId = null
+
 onMounted(async () => {
   updateTime()
-  const interval = setInterval(updateTime, 60000)
-  
+  intervalId = setInterval(updateTime, 60000)
+
   if (cooperativistasStore.cooperativistas.length === 0) {
-    await cooperativistasStore.cargarCooperativistas().then(() => {
-      stats.value.cooperativistas = cooperativistasStore.listaCooperativistas.length
-      stats.value.seccionesActivas = cooperativistasStore.secciones.length
-      stats.value.cuadrillasActivas = cooperativistasStore.cuadrillas.length
-    })
+    await cooperativistasStore.cargarCooperativistas()
+    stats.value.cooperativistas =
+      cooperativistasStore.listaCooperativistas.length
+
+    await seccionesStore.fetchSecciones()
+    stats.value.seccionesActivas = seccionesStore.secciones.length
+
+    await cuadrillasStore.fetchCuadrillas()
+    stats.value.cuadrillasActivas = cuadrillasStore.cuadrillas.length
   }
-  
-  onUnmounted(() => {
-    clearInterval(interval)
-  })
+})
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
+    intervalId = null
+  }
 })
 
 useHead({

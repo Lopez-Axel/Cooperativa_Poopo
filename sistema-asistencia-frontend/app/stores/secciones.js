@@ -21,8 +21,6 @@ export const useSeccionesStore = defineStore('secciones', {
       
       try {
         const authStore = useAuthStore()
-        console.log('API URL:', authStore.apiUrl)
-        console.log('Token:', authStore.token)
         const response = await $fetch(`${authStore.apiUrl}/api/secciones`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`

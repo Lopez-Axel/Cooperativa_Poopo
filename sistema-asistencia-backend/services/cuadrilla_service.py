@@ -38,7 +38,7 @@ class CuadrillaService:
         cuadrillas = cuadrilla_repo.get_by_seccion(db, seccion_id)
         return [CuadrillaResponse.model_validate(c) for c in cuadrillas]
     
-    def get_all(self, db: Session, skip: int = 0, limit: int = 100) -> List[CuadrillaResponse]:
+    def get_all(self, db: Session, skip: int = 0, limit: int = 500) -> List[CuadrillaResponse]:
         cuadrillas = cuadrilla_repo.get_all(db, skip, limit)
         return [CuadrillaResponse.model_validate(c) for c in cuadrillas]
     
