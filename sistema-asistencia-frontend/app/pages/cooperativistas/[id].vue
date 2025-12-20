@@ -244,11 +244,6 @@
           <span>Activar Cooperativista</span>
         </button>
 
-        <button class="action-button eliminar" @click="confirmarEliminar">
-          <i class="mdi mdi-delete"></i>
-          <span>Eliminar Cooperativista</span>
-        </button>
-
         <button class="action-button generar-pdf" @click="generarPerfil">
           <i class="mdi mdi-file-pdf-box"></i>
           <span>Generar Perfil PDF</span>
@@ -258,41 +253,17 @@
     </div>
 
     <!-- Modal de Edición -->
-    <div class="modal" :class="{ 'is-active': mostrarFormularioEdicion }">
-      <div class="modal-background" @click="cerrarFormularioEdicion"></div>
-      <div class="modal-card modal-large">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Editar Cooperativista</p>
-          <button class="delete" @click="cerrarFormularioEdicion"></button>
-        </header>
-        <section class="modal-card-body">
-          <FormularioCooperativista 
-            :cooperativista="cooperativistaEdicion"
-            @guardar="handleGuardarEdicion"
-            @cancelar="cerrarFormularioEdicion"
-          />
-        </section>
-      </div>
-    </div>
-
-    <!-- Modal de Confirmación de Eliminación -->
-    <div class="modal" :class="{ 'is-active': mostrarConfirmacion }">
-      <div class="modal-background" @click="mostrarConfirmacion = false"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">Confirmar Eliminación</p>
-          <button class="delete" @click="mostrarConfirmacion = false"></button>
-        </header>
-        <section class="modal-card-body">
-          <p>¿Está seguro que desea eliminar al cooperativista?</p>
-          <p class="has-text-danger mt-3">Esta acción no se puede deshacer.</p>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" @click="mostrarConfirmacion = false">Cancelar</button>
-          <button class="button is-danger" @click="eliminarCooperativista">Eliminar</button>
-        </footer>
-      </div>
-    </div>
+    <FormularioCooperativista
+      v-if="cooperativista"
+      :datosIniciales="cooperativista"
+      :isOpen="mostrarFormularioEdicion"
+      :esEdicion="true"
+      :secciones="seccionesStore.secciones"
+      :cuadrillas="cuadrillasStore.cuadrillas"
+      :cargando="guardando"
+      @close="mostrarFormularioEdicion = false"
+      @guardar="handleGuardarEdicion"
+    />
 
   </div>
 </template>
@@ -301,6 +272,7 @@
 <script setup>
 import QRCodeVue3 from 'qrcode-vue3'
 import { generarPerfilCooperativista } from '../../utils/reporteCooperativista'
+import FormularioCooperativista from '~/components/FormularioCooperativista.vue'
 
 definePageMeta({
   layout: 'dashboard',
@@ -321,6 +293,7 @@ const mostrarFormularioEdicion = ref(false)
 const cooperativistaEdicion = ref(null)
 
 const cooperativistaId = computed(() => parseInt(route.params.id))
+const guardando = ref(false)
 
 onMounted(async () => {
   try {
@@ -418,8 +391,27 @@ const formatearFecha = (fecha) => {
 }
 
 const editarCooperativista = () => {
-  cooperativistaEdicion.value = { ...cooperativista.value }
   mostrarFormularioEdicion.value = true
+}
+
+const handleGuardarEdicion = async (datos) => {
+  try {
+    guardando.value = true
+    
+    await store.actualizarCooperativista(cooperativistaId.value, datos)
+    
+    alert('Cooperativista actualizado exitosamente')
+    mostrarFormularioEdicion.value = false
+    
+    // Recargar datos
+    cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
+    
+  } catch (error) {
+    console.error('Error:', error)
+    alert('Error al actualizar: ' + error.message)
+  } finally {
+    guardando.value = false
+  }
 }
 
 const cerrarFormularioEdicion = () => {
@@ -427,19 +419,6 @@ const cerrarFormularioEdicion = () => {
   cooperativistaEdicion.value = null
 }
 
-const handleGuardarEdicion = async () => {
-  mostrarFormularioEdicion.value = false
-  cooperativistaEdicion.value = null
-  try {
-    cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
-  } catch (error) {
-    console.error('Error recargando cooperativista:', error)
-  }
-}
-
-const verDispositivos = () => {
-  router.push(`/dispositivos?cooperativista=${cooperativistaId.value}`)
-}
 
 const verAsistencias = () => {
   router.push(`/asistencias?cooperativista=${cooperativistaId.value}`)
@@ -460,19 +439,6 @@ const toggleEstado = async () => {
   }
 }
 
-const confirmarEliminar = () => {
-  mostrarConfirmacion.value = true
-}
-
-const eliminarCooperativista = async () => {
-  try {
-    await store.eliminarCooperativista(cooperativistaId.value)
-    alert('Cooperativista eliminado exitosamente')
-    router.push('/cooperativistas')
-  } catch (error) {
-    alert('Error al eliminar: ' + error.message)
-  }
-}
 
 const generarPerfil = async () => {
   try {

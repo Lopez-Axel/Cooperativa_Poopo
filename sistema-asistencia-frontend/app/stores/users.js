@@ -62,7 +62,7 @@ export const useUsersStore = defineStore('users', {
       try {
         const authStore = useAuthStore()
         
-        const response = await $fetch(`${authStore.apiUrl}/api/users`, {
+        const response = await $fetch(`${authStore.apiUrl}/api/users/`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${authStore.token}`

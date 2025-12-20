@@ -6,6 +6,7 @@ from .secciones import router as secciones_router
 from .cuadrillas import router as cuadrillas_router
 from .cooperativistas import router as cooperativistas_router
 from .attendance import router as attendance_router
+from .upload import router as upload_router
 
 api_router = APIRouter()
 
@@ -16,5 +17,6 @@ api_router.include_router(secciones_router)
 api_router.include_router(cuadrillas_router)
 api_router.include_router(cooperativistas_router)
 api_router.include_router(attendance_router)
+api_router.include_router(upload_router)
 
 __all__ = ["api_router"]
