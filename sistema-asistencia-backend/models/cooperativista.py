@@ -35,7 +35,8 @@ class Cooperativista(Base):
     
     fecha_ingreso = Column(Date)
     fecha_nacimiento = Column(Date)
-    
+    username_gestora = Column(String(100), unique=True, index=True)
+    password_gestora = Column(String(200))
     codigo_asegurado = Column(String(100))
     cua = Column(String(50))
     ocupacion = Column(String(150))

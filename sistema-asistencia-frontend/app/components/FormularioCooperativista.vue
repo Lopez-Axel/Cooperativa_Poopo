@@ -98,16 +98,16 @@
                   <div class="control has-icons-left">
                     <div class="select is-fullwidth">
                       <select v-model="formulario.ci_expedido">
-                        <option :value="null">SELECCIONE</option>
-                        <option value="LP">LA PAZ</option>
-                        <option value="OR">ORURO</option>
-                        <option value="PT">POTOSI</option>
-                        <option value="CB">COCHABAMBA</option>
-                        <option value="SC">SANTA CRUZ</option>
-                        <option value="CH">CHUQUISACA</option>
-                        <option value="TJ">TARIJA</option>
-                        <option value="BE">BENI</option>
-                        <option value="PD">PANDO</option>
+                        <option :value="null">Seleccione</option>
+                        <option value="LP">La Paz</option>
+                        <option value="OR">Oruro</option>
+                        <option value="PT">Potosí</option>
+                        <option value="CB">Cochabamba</option>
+                        <option value="SC">Santa Cruz</option>
+                        <option value="CH">Chuquisaca</option>
+                        <option value="TJ">Tarija</option>
+                        <option value="BE">Beni</option>
+                        <option value="PD">Pando</option>
                       </select>
                     </div>
                     <span class="icon is-left">
@@ -256,8 +256,12 @@
                       v-model="formulario.ocupacion"
                       class="input"
                       type="text"
+                      list="ocupaciones-list"
                       placeholder="Ej: Minero, Perforista"
                     >
+                    <datalist id="ocupaciones-list">
+                      <option v-for="ocupacion in ocupaciones" :key="ocupacion" :value="ocupacion"/>
+                    </datalist>
                     <span class="icon is-left">
                       <i class="mdi mdi-hammer-wrench"></i>
                     </span>
@@ -327,15 +331,16 @@
             <div class="field">
               <label class="label">Estado Asegurado</label>
               <div class="control has-icons-left">
-                <div class="select is-fullwidth">
-                  <select v-model="formulario.estado_asegurado">
-                    <option :value="null">Seleccione</option>
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Suspendido">Suspendido</option>
-                    <option value="En trámite">En trámite</option>
-                  </select>
-                </div>
+                <input 
+                  v-model="formulario.estado_asegurado"
+                  class="input"
+                  type="text"
+                  list="estados-list"
+                  placeholder="Seleccione o escriba"
+                >
+                <datalist id="estados-list">
+                  <option v-for="estado in estadosAsegurado" :key="estado" :value="estado"/>
+                </datalist>
                 <span class="icon is-left">
                   <i class="mdi mdi-shield-account"></i>
                 </span>
@@ -347,39 +352,100 @@
           <div class="seccion-formulario">
             <h3 class="seccion-titulo">
               <i class="mdi mdi-file-document"></i>
-              URLs de Documentos
+              Documentos
             </h3>
 
+            <!-- Foto CI -->
             <div class="field">
-              <label class="label">URL Foto CI</label>
-              <div class="control has-icons-left">
-                <input 
-                  v-model="formulario.ci_foto_url"
-                  class="input"
-                  type="url"
-                  placeholder="https://ejemplo.com/foto.jpg"
-                >
-                <span class="icon is-left">
-                  <i class="mdi mdi-image"></i>
-                </span>
+              <label class="label">Foto de CI</label>
+              
+              <!-- Preview de imagen actual (si existe) -->
+              <div v-if="formulario.ci_foto_url && !previewCiFoto" class="preview-container">
+                <img :src="formulario.ci_foto_url" alt="Foto CI Actual" class="preview-image">
+                <p class="help">Imagen actual</p>
               </div>
-              <p class="help">URL de la imagen de la cédula de identidad</p>
+              
+              <!-- Preview de nueva imagen -->
+              <div v-if="previewCiFoto" class="preview-container">
+                <img :src="previewCiFoto" alt="Vista previa" class="preview-image">
+                <button type="button" class="button is-small is-danger" @click="cancelarCiFoto">
+                  <i class="mdi mdi-close"></i>
+                  Cancelar
+                </button>
+              </div>
+
+              <!-- Input de archivo -->
+              <div class="file has-name is-fullwidth">
+                <label class="file-label">
+                  <input 
+                    class="file-input" 
+                    type="file" 
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    @change="onCiFotoChange"
+                    ref="ciFotoInput"
+                  >
+                  <span class="file-cta">
+                    <span class="file-icon">
+                      <i class="mdi mdi-upload"></i>
+                    </span>
+                    <span class="file-label">
+                      {{ ciFotoFile ? 'Cambiar imagen' : 'Seleccionar imagen' }}
+                    </span>
+                  </span>
+                  <span v-if="ciFotoFile" class="file-name">
+                    {{ ciFotoFile.name }}
+                  </span>
+                </label>
+              </div>
+              <p class="help">JPG, PNG, WEBP - Máx 10MB</p>
             </div>
 
+            <!-- Documento ABC -->
             <div class="field">
-              <label class="label">URL Documento ABC</label>
-              <div class="control has-icons-left">
-                <input 
-                  v-model="formulario.documento_abc_url"
-                  class="input"
-                  type="url"
-                  placeholder="https://ejemplo.com/documento.pdf"
-                >
-                <span class="icon is-left">
+              <label class="label">Documento ABC</label>
+              
+              <!-- Link a documento actual -->
+              <div v-if="formulario.documento_abc_url && !documentoAbcFile" class="documento-actual">
+                <a :href="formulario.documento_abc_url" target="_blank" class="button is-small is-info">
                   <i class="mdi mdi-file-pdf-box"></i>
-                </span>
+                  Ver documento actual
+                </a>
               </div>
-              <p class="help">URL del documento ABC</p>
+
+              <!-- Input de archivo -->
+              <div class="file has-name is-fullwidth">
+                <label class="file-label">
+                  <input 
+                    class="file-input" 
+                    type="file" 
+                    accept="application/pdf,image/jpeg,image/jpg,image/png"
+                    @change="onDocumentoAbcChange"
+                    ref="documentoAbcInput"
+                  >
+                  <span class="file-cta">
+                    <span class="file-icon">
+                      <i class="mdi mdi-upload"></i>
+                    </span>
+                    <span class="file-label">
+                      {{ documentoAbcFile ? 'Cambiar documento' : 'Seleccionar documento' }}
+                    </span>
+                  </span>
+                  <span v-if="documentoAbcFile" class="file-name">
+                    {{ documentoAbcFile.name }}
+                  </span>
+                </label>
+              </div>
+              <p class="help">PDF o imagen - Máx 20MB</p>
+              
+              <button 
+                v-if="documentoAbcFile" 
+                type="button" 
+                class="button is-small is-danger mt-2" 
+                @click="cancelarDocumentoAbc"
+              >
+                <i class="mdi mdi-close"></i>
+                Cancelar
+              </button>
             </div>
           </div>
 
@@ -403,7 +469,7 @@
             class="button is-primary"
             @click="guardar"
             :disabled="!formularioValido"
-            :class="{ 'is-loading': cargando }"
+            :class="{ 'is-loading': cargando || subiendoArchivos }"
           >
             <i class="mdi mdi-check"></i>
             {{ esEdicion ? 'Actualizar' : 'Crear' }}
@@ -420,6 +486,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 const props = defineProps({
   isOpen: {
@@ -461,6 +528,18 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  ocupaciones: {
+    type: Array,
+    default: () => []
+  },
+  estadosAsegurado: {
+    type: Array,
+    default: () => []
+  },
+  cooperativistaId: {
+    type: Number,
+    default: null
+  },
   cargando: {
     type: Boolean,
     default: false
@@ -468,6 +547,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'guardar'])
+
+const authStore = useAuthStore()
 
 const formulario = ref({
   nombres: '',
@@ -492,6 +573,16 @@ const formulario = ref({
 
 const seccionSeleccionada = ref(null)
 
+// Estado para archivos
+const ciFotoFile = ref(null)
+const documentoAbcFile = ref(null)
+const previewCiFoto = ref(null)
+const subiendoArchivos = ref(false)
+
+// Refs para inputs
+const ciFotoInput = ref(null)
+const documentoAbcInput = ref(null)
+
 // Filtrar cuadrillas por sección seleccionada
 const cuadrillasFiltradas = computed(() => {
   if (!seccionSeleccionada.value) return []
@@ -507,6 +598,8 @@ const formularioValido = computed(() => {
 
 // Watch para datos iniciales
 watch(() => props.datosIniciales, (nuevosDatos) => {
+  if (!nuevosDatos) return
+  
   formulario.value = { ...nuevosDatos }
   
   // Si es edición, encontrar la sección de la cuadrilla
@@ -532,30 +625,171 @@ const onSeccionChange = () => {
   formulario.value.id_cuadrilla = null
 }
 
-const cerrar = () => {
-  emit('close')
-  // Resetear sección seleccionada
-  seccionSeleccionada.value = null
+const onCiFotoChange = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // Validar tamaño (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('La imagen es muy pesada. Máximo 10MB.')
+    event.target.value = ''
+    return
+  }
+  
+  // Validar tipo
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Solo se permiten imágenes JPG, PNG, WEBP')
+    event.target.value = ''
+    return
+  }
+  
+  ciFotoFile.value = file
+  
+  // Crear preview
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewCiFoto.value = e.target.result
+  }
+  reader.readAsDataURL(file)
 }
 
-const guardar = () => {
+const cancelarCiFoto = () => {
+  ciFotoFile.value = null
+  previewCiFoto.value = null
+  if (ciFotoInput.value) {
+    ciFotoInput.value.value = ''
+  }
+}
+
+const onDocumentoAbcChange = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // Validar tamaño (20MB)
+  if (file.size > 20 * 1024 * 1024) {
+    alert('El archivo es muy pesado. Máximo 20MB.')
+    event.target.value = ''
+    return
+  }
+  
+  // Validar tipo
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Solo se permiten PDF o imágenes')
+    event.target.value = ''
+    return
+  }
+  
+  documentoAbcFile.value = file
+}
+
+const cancelarDocumentoAbc = () => {
+  documentoAbcFile.value = null
+  if (documentoAbcInput.value) {
+    documentoAbcInput.value.value = ''
+  }
+}
+
+const subirArchivos = async (cooperativistaId) => {
+  const uploads = []
+  
+  // Subir foto CI
+  if (ciFotoFile.value) {
+    const formData = new FormData()
+    formData.append('file', ciFotoFile.value)
+    
+    uploads.push(
+      $fetch(`${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/ci-foto`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authStore.token}`
+        },
+        body: formData
+      }).then(response => {
+        // Actualizar URL en el formulario
+        if (response.url) {
+          formulario.value.ci_foto_url = response.url
+        }
+        return response
+      })
+    )
+  }
+  
+  // Subir documento ABC
+  if (documentoAbcFile.value) {
+    const formData = new FormData()
+    formData.append('file', documentoAbcFile.value)
+    
+    uploads.push(
+      $fetch(`${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/documento-abc`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authStore.token}`
+        },
+        body: formData
+      }).then(response => {
+        // Actualizar URL en el formulario
+        if (response.url) {
+          formulario.value.documento_abc_url = response.url
+        }
+        return response
+      })
+    )
+  }
+  
+  if (uploads.length > 0) {
+    await Promise.all(uploads)
+  }
+}
+
+const cerrar = () => {
+  emit('close')
+  // Resetear estado
+  seccionSeleccionada.value = null
+  ciFotoFile.value = null
+  documentoAbcFile.value = null
+  previewCiFoto.value = null
+}
+
+const guardar = async () => {
   if (!formularioValido.value) return
   
-  // Limpiar campos vacíos (convertir strings vacíos a null)
-  const datosLimpios = { ...formulario.value }
-  
-  Object.keys(datosLimpios).forEach(key => {
-    if (datosLimpios[key] === '') {
-      datosLimpios[key] = null
+  try {
+    // EN EDICIÓN: Subir archivos PRIMERO (actualiza URLs en formulario.value)
+    if (props.esEdicion && props.cooperativistaId && (ciFotoFile.value || documentoAbcFile.value)) {
+      subiendoArchivos.value = true
+      await subirArchivos(props.cooperativistaId)
+      subiendoArchivos.value = false
     }
-  })
-  
-  emit('guardar', datosLimpios)
+    
+    // Limpiar campos vacíos (convertir strings vacíos a null)
+    // DESPUÉS de subir archivos para incluir las URLs actualizadas
+    const datosLimpios = { ...formulario.value }
+    
+    Object.keys(datosLimpios).forEach(key => {
+      if (datosLimpios[key] === '') {
+        datosLimpios[key] = null
+      }
+    })
+    
+    // Emitir evento de guardar con URLs actualizadas
+    emit('guardar', datosLimpios)
+    
+  } catch (error) {
+    console.error('Error al guardar:', error)
+    alert('Error al guardar: ' + error.message)
+    throw error
+  }
 }
+
+// Exponer función para subir archivos después de crear (se llama desde el padre)
+defineExpose({
+  subirArchivos
+})
 </script>
 
 <style scoped>
-/* Usa los mismos estilos base del ModalFormulario */
 .modal {
   position: fixed;
   top: 0;
@@ -678,7 +912,6 @@ const guardar = () => {
   flex-shrink: 0;
 }
 
-/* Secciones del formulario */
 .seccion-formulario {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
@@ -743,7 +976,7 @@ const guardar = () => {
   color: #e0f2f1;
   width: 100%;
   box-sizing: border-box;
-  height: 3rem;
+  height: 2.75rem;
   font-size: 0.95rem;
 }
 
@@ -794,7 +1027,6 @@ const guardar = () => {
   margin-top: 0.25rem;
 }
 
-/* Checkbox personalizado */
 .checkbox-container {
   display: flex;
   align-items: center;
@@ -858,13 +1090,113 @@ const guardar = () => {
   font-weight: 600;
 }
 
+/* File upload styles */
+.file {
+  align-items: stretch;
+  display: flex;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.file.is-fullwidth .file-label {
+  width: 100%;
+}
+
+.file.has-name .file-cta {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.file.has-name .file-name {
+  border-bottom-left-radius: 0;
+  border-top-left-radius: 0;
+}
+
+.file-label {
+  align-items: stretch;
+  display: flex;
+  cursor: pointer;
+  justify-content: flex-start;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.file-input {
+  height: 100%;
+  left: 0;
+  opacity: 0;
+  outline: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.file-cta, .file-name {
+  border-color: rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+}
+
+.file-cta {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(158, 157, 36, 0.1));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  transition: all 0.3s ease;
+}
+
+.file-label:hover .file-cta {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(158, 157, 36, 0.2));
+  border-color: #ffd700;
+}
+
+.file-name {
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-left: none;
+  background: rgba(15, 31, 15, 0.7);
+  color: #e0f2f1;
+  display: block;
+  max-width: 16em;
+  overflow: hidden;
+  text-align: inherit;
+  text-overflow: ellipsis;
+}
+
+.file-icon {
+  align-items: center;
+  display: flex;
+  height: 1em;
+  justify-content: center;
+  margin-right: 0.5em;
+  width: 1em;
+}
+
+.preview-container {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+.documento-actual {
+  margin-bottom: 1rem;
+}
+
 .button {
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   border: 1px solid transparent;
@@ -889,13 +1221,38 @@ const guardar = () => {
   cursor: not-allowed;
 }
 
-.button:not(.is-primary) {
+.button.is-small {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+}
+
+.button.is-danger {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+  border: none;
+}
+
+.button.is-danger:hover {
+  background: linear-gradient(135deg, #d32f2f, #c62828);
+}
+
+.button.is-info {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  border: none;
+}
+
+.button.is-info:hover {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+}
+
+.button:not(.is-primary):not(.is-danger):not(.is-info) {
   background: rgba(255, 255, 255, 0.1);
   color: #c8e6c9;
   border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.button:not(.is-primary):hover {
+.button:not(.is-primary):not(.is-danger):not(.is-info):hover {
   background: rgba(255, 215, 0, 0.2);
   color: #ffd700;
 }

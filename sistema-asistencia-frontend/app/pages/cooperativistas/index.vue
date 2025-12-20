@@ -16,7 +16,7 @@
           <i class="mdi mdi-account-group"></i>
           <span>Ver por Cuadrillas</span>
         </NuxtLink>
-        <button class="button is-warning" @click="mostrarFormularioCrear = true">
+        <button class="button is-warning" @click="abrirModalCrear">
           <i class="mdi mdi-plus-circle"></i>
           <span>Nuevo Cooperativista</span>
         </button>
@@ -258,6 +258,22 @@
       </div>
     </div>
 
+    <!-- Modal de Creación -->
+    <FormularioCooperativista
+      ref="formularioRef"
+      :isOpen="mostrarFormularioCreacion"
+      :esEdicion="false"
+      :datosIniciales="datosCooperativistaVacio"
+      :secciones="seccionesStore.secciones"
+      :cuadrillas="cuadrillasStore.cuadrillas"
+      :ocupaciones="ocupacionesDisponibles"
+      :estadosAsegurado="estadosAseguradoDisponibles"
+      :cooperativistaId="null"
+      :cargando="guardando"
+      @close="cerrarModalCrear"
+      @guardar="handleGuardarCreacion"
+    />
+
     <!-- Loading State -->
     <div v-if="store.loading" class="loading-container">
       <div class="loader"></div>
@@ -275,6 +291,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import FormularioCooperativista from '~/components/FormularioCooperativista.vue'
 import { useCooperativistasStore } from '~/stores/cooperativistas'
 import { useCuadrillasStore } from '~/stores/cuadrillas'
 import { useSeccionesStore } from '~/stores/secciones'
@@ -290,7 +307,32 @@ const cuadrillasStore = useCuadrillasStore()
 const seccionesStore = useSeccionesStore()
 const router = useRouter()
 
-const cooperativistaAEliminar = ref(null)
+// Estado del modal de creación
+const mostrarFormularioCreacion = ref(false)
+const guardando = ref(false)
+const formularioRef = ref(null)
+
+// Datos vacíos para nuevo cooperativista
+const datosCooperativistaVacio = ref({
+  nombres: '',
+  apellido_paterno: '',
+  apellido_materno: '',
+  ci: '',
+  ci_expedido: null,
+  ci_foto_url: '',
+  fecha_nacimiento: '',
+  email: '',
+  telefono: '',
+  id_cuadrilla: null,
+  rol_cuadrilla: null,
+  ocupacion: '',
+  fecha_ingreso: '',
+  codigo_asegurado: '',
+  cua: '',
+  estado_asegurado: null,
+  documento_abc_url: '',
+  is_active: true
+})
 
 // Filtros locales
 const filtros = ref({
@@ -313,6 +355,62 @@ onMounted(async () => {
     seccionesStore.secciones.length === 0 ? seccionesStore.fetchSecciones() : Promise.resolve()
   ])
 })
+
+// Funciones del modal
+const abrirModalCrear = () => {
+  // Resetear datos vacíos
+  datosCooperativistaVacio.value = {
+    nombres: '',
+    apellido_paterno: '',
+    apellido_materno: '',
+    ci: '',
+    ci_expedido: null,
+    ci_foto_url: '',
+    fecha_nacimiento: '',
+    email: '',
+    telefono: '',
+    id_cuadrilla: null,
+    rol_cuadrilla: null,
+    ocupacion: '',
+    fecha_ingreso: '',
+    codigo_asegurado: '',
+    cua: '',
+    estado_asegurado: null,
+    documento_abc_url: '',
+    is_active: true
+  }
+  mostrarFormularioCreacion.value = true
+}
+
+const cerrarModalCrear = () => {
+  mostrarFormularioCreacion.value = false
+}
+
+const handleGuardarCreacion = async (datos) => {
+  try {
+    guardando.value = true
+    
+    // Crear cooperativista
+    const nuevoCooperativista = await store.crearCooperativista(datos)
+    
+    // Subir archivos si hay (foto CI o documento ABC)
+    if (formularioRef.value) {
+      await formularioRef.value.subirArchivos(nuevoCooperativista.id)
+    }
+    
+    alert('Cooperativista creado exitosamente')
+    cerrarModalCrear()
+    
+    // Recargar lista
+    await store.cargarCooperativistas()
+    
+  } catch (error) {
+    console.error('Error al crear:', error)
+    alert('Error al crear cooperativista: ' + error.message)
+  } finally {
+    guardando.value = false
+  }
+}
 
 // Helper functions para obtener nombres
 const getCuadrillaName = (id_cuadrilla) => {
@@ -361,6 +459,7 @@ const estadosAseguradoDisponibles = computed(() => {
 // Filtrado completo de cooperativistas
 const cooperativistasFiltrados = computed(() => {
   let resultado = store.cooperativistas
+  
   // Filtrar por estado activo
   if (filtros.value.is_active !== null) {
     resultado = resultado.filter(c => c.is_active === filtros.value.is_active)

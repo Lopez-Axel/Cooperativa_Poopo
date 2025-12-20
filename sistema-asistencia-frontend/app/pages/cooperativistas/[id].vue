@@ -255,11 +255,14 @@
     <!-- Modal de Edición -->
     <FormularioCooperativista
       v-if="cooperativista"
-      :datosIniciales="cooperativista"
       :isOpen="mostrarFormularioEdicion"
       :esEdicion="true"
+      :datosIniciales="cooperativista"
       :secciones="seccionesStore.secciones"
       :cuadrillas="cuadrillasStore.cuadrillas"
+      :ocupaciones="store.ocupaciones"
+      :estadosAsegurado="store.estadosAsegurado"
+      :cooperativistaId="cooperativistaId"
       :cargando="guardando"
       @close="mostrarFormularioEdicion = false"
       @guardar="handleGuardarEdicion"
@@ -403,7 +406,6 @@ const handleGuardarEdicion = async (datos) => {
     alert('Cooperativista actualizado exitosamente')
     mostrarFormularioEdicion.value = false
     
-    // Recargar datos
     cooperativista.value = await store.obtenerCooperativista(cooperativistaId.value)
     
   } catch (error) {
@@ -412,11 +414,6 @@ const handleGuardarEdicion = async (datos) => {
   } finally {
     guardando.value = false
   }
-}
-
-const cerrarFormularioEdicion = () => {
-  mostrarFormularioEdicion.value = false
-  cooperativistaEdicion.value = null
 }
 
 
