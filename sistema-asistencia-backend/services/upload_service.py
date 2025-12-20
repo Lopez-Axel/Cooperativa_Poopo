@@ -23,7 +23,7 @@ class UploadService:
             raise HTTPException(status_code=400, detail="Imagen muy pesada (máx 10MB)")
         
         try:
-            result = uploader.upload(
+            result = uploader(
                 contents,
                 folder="cooperativa/ci_fotos",
                 public_id=f"ci_{cooperativista_id}",
@@ -72,7 +72,7 @@ class UploadService:
             if file.content_type == "application/pdf":
                 upload_kwargs["format"] = "pdf"
             
-            result = uploader.upload(contents, **upload_kwargs)
+            result = uploader(contents, **upload_kwargs)
             
             cooperativista.documento_abc_url = result['secure_url']
             cooperativista_repo.update(db, cooperativista)
