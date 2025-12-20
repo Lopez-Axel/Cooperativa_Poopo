@@ -9,13 +9,12 @@ app = FastAPI(
     title="Sistema de Asistencia Cooperativa",
     description="API para gestión de asistencia con QR",
     version="2.0.0",
+    redirect_slashes=False
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://cooperativa-poopo.vercel.app"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
