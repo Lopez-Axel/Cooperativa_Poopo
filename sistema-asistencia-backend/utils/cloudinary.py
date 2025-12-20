@@ -1,5 +1,5 @@
 import cloudinary
-import cloudinary.uploader 
+from cloudinary.uploader import upload
 from config import CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
 cloudinary.config(
@@ -8,3 +8,5 @@ cloudinary.config(
     api_secret=CLOUDINARY_API_SECRET,
     secure=True
 )
+
+uploader = upload
