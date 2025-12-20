@@ -9,7 +9,6 @@ app = FastAPI(
     title="Sistema de Asistencia Cooperativa",
     description="API para gestión de asistencia con QR",
     version="2.0.0",
-    redirect_slashes=False
 )
 
 app.add_middleware(
