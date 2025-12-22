@@ -7,7 +7,7 @@ from services.attendance_service import attendance_service, attendance_period_se
 from schemas.attendance import (
     AttendanceCreate, AttendanceResponse, AttendanceUpdate,
     AttendancePeriodCreate, AttendancePeriodResponse, AttendancePeriodUpdate,
-    AttendanceLogResponse
+    AttendanceLogResponse, ManualAttendanceCreate
 )
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
@@ -199,7 +199,7 @@ def register_attendance(
 
 @router.post("/manual", response_model=AttendanceResponse, status_code=status.HTTP_201_CREATED)
 def register_manual_attendance(
-    attendance_data: dict,
+    attendance_data: ManualAttendanceCreate,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -215,11 +215,11 @@ def register_manual_attendance(
     """
     return attendance_service.register_manual_attendance(
         db, 
-        attendance_data.get('cooperativista_id'), 
+        attendance_data.cooperativista_id, 
         current_user.id, 
-        attendance_data.get('period_id'), 
-        attendance_data.get('tipo', 'entrada'), 
-        attendance_data.get('reason')
+        attendance_data.period_id, 
+        attendance_data.tipo, 
+        attendance_data.reason
     )
 
 

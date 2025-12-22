@@ -6,7 +6,7 @@ from .cooperativista import CooperativistaCreate, CooperativistaUpdate, Cooperat
 from .attendance import (
     AttendancePeriodCreate, AttendancePeriodUpdate, AttendancePeriodResponse,
     AttendanceCreate, AttendanceUpdate, AttendanceResponse,
-    AttendanceLogResponse
+    AttendanceLogResponse, ManualAttendanceCreate
 )
 from .token import Token, TokenData, LoginRequest
 
@@ -18,6 +18,7 @@ __all__ = [
     "CooperativistaCreate", "CooperativistaUpdate", "CooperativistaResponse",
     "AttendancePeriodCreate", "AttendancePeriodUpdate", "AttendancePeriodResponse",
     "AttendanceCreate", "AttendanceUpdate", "AttendanceResponse",
+    "ManualAttendanceCreate",
     "AttendanceLogResponse",
     "Token", "TokenData", "LoginRequest"
 ]

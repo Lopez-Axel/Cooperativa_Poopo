@@ -82,3 +82,9 @@ class AttendanceLogResponse(BaseModel):
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+class ManualAttendanceCreate(BaseModel):
+    cooperativista_id: int
+    period_id: Optional[int] = None
+    tipo: Literal["entrada", "salida"] = "entrada"
+    reason: Optional[str] = None

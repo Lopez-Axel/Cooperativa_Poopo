@@ -1,254 +1,200 @@
 <template>
-  <div class="container">
-    <div class="hero is-info is-bold mb-5" v-if="periodStore.selectedPeriod">
-      <div class="hero-body">
-        <div class="level">
-          <div class="level-left">
-            <div class="level-item">
-              <div>
-                <h1 class="title has-text-white">{{ periodStore.selectedPeriod.nombre }}</h1>
-                <p class="subtitle has-text-white-bis">{{ formatDate(periodStore.selectedPeriod.fecha_asistencia) }}</p>
-              </div>
+  <div class="attendance-details-page">
+    <div class="page-header" v-if="periodStore.selectedPeriod">
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="title is-2">
+            <i class="mdi mdi-calendar-check"></i>
+            {{ periodStore.selectedPeriod.nombre }}
+          </h1>
+          <p class="subtitle">{{ formatDate(periodStore.selectedPeriod.fecha_asistencia) }}</p>
+        </div>
+        <button class="button is-light" @click="router.back()">
+          <i class="mdi mdi-arrow-left"></i>
+          <span>Volver</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="attendanceStore.error || periodStore.error || cooperativistaStore.error" class="notification is-danger">
+      <i class="mdi mdi-alert-circle"></i>
+      {{ attendanceStore.error || periodStore.error || cooperativistaStore.error }}
+    </div>
+
+    <div class="stats-section" v-if="periodStore.selectedPeriod">
+      <div class="stat-card">
+        <div class="stat-header">
+          <i class="mdi mdi-information-outline"></i>
+          <span>Información del Período</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-item">
+            <span class="stat-label">Horario</span>
+            <span class="stat-value">
+              <i class="mdi mdi-clock-outline"></i>
+              {{ periodStore.selectedPeriod.hora_inicio.substring(0, 5) }} - {{ periodStore.selectedPeriod.hora_fin.substring(0, 5) }}
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Estado</span>
+            <span v-if="periodStore.selectedPeriod.is_open" class="tag is-success">
+              <i class="mdi mdi-lock-open"></i>
+              Abierto
+            </span>
+            <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'programado'" class="tag is-info">
+              <i class="mdi mdi-clock-outline"></i>
+              Programado
+            </span>
+            <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'en_curso'" class="tag is-warning">
+              <i class="mdi mdi-alert"></i>
+              En Curso
+            </span>
+            <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'finalizado'" class="tag is-dark">
+              <i class="mdi mdi-check-circle"></i>
+              Finalizado
+            </span>
+            <span v-else class="tag is-light">
+              <i class="mdi mdi-lock"></i>
+              Cerrado
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <i class="mdi mdi-chart-bar"></i>
+          <span>Estadísticas de Asistencia</span>
+        </div>
+        <div class="stat-content">
+          <div class="attendance-count">
+            <i class="mdi mdi-account-multiple-check"></i>
+            <div class="count-text">
+              <span class="count-number">{{ periodStore.selectedPeriod.total_marked }}</span>
+              <span class="count-divider">/</span>
+              <span class="count-total">{{ periodStore.selectedPeriod.total_expected }}</span>
             </div>
           </div>
-          <div class="level-right">
-            <div class="level-item">
-              <button class="button is-light" @click="router.back()">
-                <span class="icon">
-                  <i class="mdi mdi-arrow-left"></i>
-                </span>
-                <span>Volver</span>
-              </button>
-            </div>
+          <div v-if="periodStore.selectedPeriod.total_expected > 0" class="progress-section">
+            <progress 
+              class="progress" 
+              :class="{
+                'is-success': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) >= 80,
+                'is-warning': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) >= 50 && Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) < 80,
+                'is-danger': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) < 50
+              }"
+              :value="periodStore.selectedPeriod.total_marked" 
+              :max="periodStore.selectedPeriod.total_expected"
+            ></progress>
+            <span class="progress-label">
+              {{ Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) }}% de asistencia
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="attendanceStore.error || periodStore.error || cooperativistaStore.error" class="notification is-danger is-light">
-      <button class="delete" @click="clearErrors"></button>
-      <strong>Error:</strong> {{ attendanceStore.error || periodStore.error || cooperativistaStore.error }}
-    </div>
-
-    <div class="box" v-if="periodStore.selectedPeriod">
-      <div class="columns is-multiline">
-        <div class="column is-6">
-          <div class="field is-grouped is-grouped-multiline">
-            <div class="control">
-              <div class="tags has-addons">
-                <span class="tag is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-clock-outline"></i>
-                  </span>
-                  <span>Horario</span>
-                </span>
-                <span class="tag is-info is-medium">
-                  {{ periodStore.selectedPeriod.hora_inicio.substring(0, 5) }} - {{ periodStore.selectedPeriod.hora_fin.substring(0, 5) }}
-                </span>
-              </div>
-            </div>
-            <div class="control">
-              <div class="tags has-addons">
-                <span class="tag is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-information"></i>
-                  </span>
-                  <span>Estado</span>
-                </span>
-                <span v-if="periodStore.selectedPeriod.is_open" class="tag is-success is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-lock-open"></i>
-                  </span>
-                  <span>Abierto</span>
-                </span>
-                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'programado'" class="tag is-info is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-clock-outline"></i>
-                  </span>
-                  <span>Programado</span>
-                </span>
-                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'en_curso'" class="tag is-primary is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-clock"></i>
-                  </span>
-                  <span>En Curso</span>
-                </span>
-                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'finalizado'" class="tag is-dark is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-check-circle"></i>
-                  </span>
-                  <span>Finalizado</span>
-                </span>
-                <span v-else class="tag is-light is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-lock"></i>
-                  </span>
-                  <span>Cerrado</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="column is-6">
-          <div class="field is-grouped is-grouped-multiline is-pulled-right">
-            <div class="control">
-              <div class="tags has-addons">
-                <span class="tag is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-account-multiple-check"></i>
-                  </span>
-                  <span>Asistencias</span>
-                </span>
-                <span class="tag is-primary is-medium">
-                  <strong>{{ periodStore.selectedPeriod.total_marked }}</strong> / {{ periodStore.selectedPeriod.total_expected }}
-                </span>
-              </div>
-            </div>
-            <div class="control" v-if="periodStore.selectedPeriod.total_expected > 0">
-              <div class="tags has-addons">
-                <span class="tag is-dark">
-                  <span class="icon">
-                    <i class="mdi mdi-percent"></i>
-                  </span>
-                  <span>Porcentaje</span>
-                </span>
-                <span class="tag is-medium" :class="{
-                  'is-success': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) >= 80,
-                  'is-warning': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) >= 50 && Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) < 80,
-                  'is-danger': Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) < 50
-                }">
-                  {{ Math.round((periodStore.selectedPeriod.total_marked / periodStore.selectedPeriod.total_expected) * 100) }}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="box">
-      <div class="level">
-        <div class="level-left">
-          <div class="level-item">
-            <h2 class="title is-4">Lista de Asistencias</h2>
-          </div>
-        </div>
-        <div class="level-right">
-          <div class="level-item">
-            <button class="button is-primary" @click="showAddModal = true">
-              <span class="icon">
-                <i class="mdi mdi-plus-circle"></i>
-              </span>
-              <span>Agregar Asistencia Manual</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="label">Buscar por CI o Nombre</label>
-        <div class="control has-icons-left has-icons-right">
-          <input 
-            class="input is-medium" 
-            type="text" 
-            placeholder="Ingrese CI o nombre del cooperativista..." 
-            v-model="searchFilter"
+    <div class="filters-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="mdi mdi-format-list-bulleted"></i>
+          Lista de Asistencias
+        </h2>
+        <div class="action-buttons-group">
+          <button 
+            class="button is-danger"
+            @click="generarPDF"
+            :disabled="attendanceStore.loading || filteredAttendances.length === 0"
           >
-          <span class="icon is-left is-medium">
-            <i class="mdi mdi-magnify"></i>
-          </span>
-          <span class="icon is-right is-medium" v-if="searchFilter">
-            <a @click="searchFilter = ''">
-              <i class="mdi mdi-close-circle"></i>
-            </a>
-          </span>
+            <i class="mdi mdi-file-pdf-box"></i>
+            <span>PDF</span>
+          </button>
+          <button class="button is-primary" @click="showAddModal = true">
+            <i class="mdi mdi-plus"></i>
+            <span>Agregar Asistencia</span>
+          </button>
         </div>
+      </div>
+
+      <div class="search-box">
+        <i class="mdi mdi-magnify"></i>
+        <input 
+          class="input"
+          type="text" 
+          placeholder="Buscar por CI o nombre del cooperativista..." 
+          v-model="searchFilter"
+        >
       </div>
     </div>
 
-    <div class="box">
-      <div v-if="attendanceStore.loading" class="has-text-centered py-6">
-        <span class="icon is-large has-text-primary">
-          <i class="mdi mdi-loading mdi-spin mdi-48px"></i>
-        </span>
-        <p class="mt-3">Cargando asistencias...</p>
-      </div>
+    <div v-if="attendanceStore.loading" class="loading-container">
+      <div class="loader"></div>
+      <p>Cargando asistencias...</p>
+    </div>
 
-      <div v-else-if="filteredAttendances.length === 0" class="has-text-centered py-6">
-        <span class="icon is-large has-text-grey-light">
-          <i class="mdi mdi-account-off mdi-48px"></i>
-        </span>
-        <p class="mt-3 has-text-grey">No hay asistencias registradas</p>
-      </div>
-
-      <div v-else class="table-container">
-        <table class="table is-fullwidth is-striped is-hoverable">
-          <thead>
-            <tr>
-              <th>CI</th>
-              <th>Cooperativista</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th class="has-text-centered">Tipo</th>
-              <th class="has-text-centered">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="attendance in filteredAttendances" :key="attendance.id">
-              <td>
-                <span class="tag is-medium">{{ getCooperativistaById(attendance.cooperativista_id)?.ci || 'N/A' }}</span>
-              </td>
-              <td>
-                <strong>{{ getCooperativistaById(attendance.cooperativista_id)?.nombres || 'Cooperativista no encontrado' }}</strong>
-                <br>
-                <small class="has-text-grey">{{ getCooperativistaById(attendance.cooperativista_id)?.apellidos || '' }}</small>
-              </td>
-              <td>{{ formatDate(attendance.fecha) }}</td>
-              <td>
-                <span class="icon-text">
-                  <span class="icon has-text-info">
-                    <i class="mdi mdi-clock"></i>
-                  </span>
-                  <span>{{ attendance.hora.substring(0, 5) }}</span>
-                </span>
-              </td>
-              <td class="has-text-centered">
-                <span class="tag is-medium" :class="{
-                  'is-success': attendance.tipo === 'entrada',
-                  'is-warning': attendance.tipo === 'salida'
-                }">
-                  <span class="icon">
-                    <i :class="attendance.tipo === 'entrada' ? 'mdi mdi-login' : 'mdi mdi-logout'"></i>
-                  </span>
-                  <span>{{ attendance.tipo.toUpperCase() }}</span>
-                </span>
-              </td>
-              <td>
-                <div class="buttons are-small is-centered">
-                  <button 
-                    class="button is-info"
-                    @click="viewLogs(attendance.id)"
-                    title="Ver logs"
-                  >
-                    <span class="icon">
-                      <i class="mdi mdi-history"></i>
-                    </span>
-                  </button>
-                  <button 
-                    class="button is-danger"
-                    @click="confirmDelete(attendance.id)"
-                    title="Eliminar registro"
-                  >
-                    <span class="icon">
-                      <i class="mdi mdi-delete"></i>
-                    </span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-else class="table-container">
+      <table class="table is-fullwidth is-hoverable">
+        <thead>
+          <tr>
+            <th>CI</th>
+            <th>Cooperativista</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th class="has-text-centered">Tipo</th>
+            <th class="has-text-centered">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="filteredAttendances.length === 0">
+            <td colspan="6" class="has-text-centered empty-state">
+              <i class="mdi mdi-account-off"></i>
+              <p>No hay asistencias registradas</p>
+            </td>
+          </tr>
+          <tr v-for="attendance in filteredAttendances" :key="attendance.id">
+            <td>
+              <span class="tag">{{ getCooperativistaById(attendance.cooperativista_id)?.ci || 'N/A' }}</span>
+            </td>
+            <td>
+              <strong>{{ getCooperativistaById(attendance.cooperativista_id)?.nombres || 'Cooperativista no encontrado' }}</strong>
+              <br>
+              <small>{{ getCooperativistaById(attendance.cooperativista_id)?.apellidos || '' }}</small>
+            </td>
+            <td>{{ formatDate(attendance.fecha) }}</td>
+            <td>
+              <i class="mdi mdi-clock"></i>
+              {{ attendance.hora.substring(0, 5) }}
+            </td>
+            <td class="has-text-centered">
+              <span class="tag" :class="{
+                'is-success': attendance.tipo === 'entrada',
+                'is-warning': attendance.tipo === 'salida'
+              }">
+                <i :class="attendance.tipo === 'entrada' ? 'mdi mdi-login' : 'mdi mdi-logout'"></i>
+                {{ attendance.tipo.toUpperCase() }}
+              </span>
+            </td>
+            <td class="has-text-centered">
+              <div class="action-buttons">
+                <button 
+                  class="button is-small is-info"
+                  @click="viewLogs(attendance.id)"
+                  title="Ver logs"
+                >
+                  <i class="mdi mdi-history"></i>
+                </button>
+                <button 
+                  class="button is-small is-danger"
+                  @click="confirmDelete(attendance.id)"
+                  title="Eliminar registro"
+                >
+                  <i class="mdi mdi-delete"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="modal" :class="{ 'is-active': showAddModal }">
@@ -256,12 +202,8 @@
       <div class="modal-card">
         <header class="modal-card-head">
           <p class="modal-card-title">
-            <span class="icon-text">
-              <span class="icon">
-                <i class="mdi mdi-account-plus"></i>
-              </span>
-              <span>Agregar Asistencia Manual</span>
-            </span>
+            <i class="mdi mdi-account-plus"></i>
+            Agregar Asistencia Manual
           </p>
           <button class="delete" @click="closeAddModal"></button>
         </header>
@@ -329,7 +271,7 @@
             </div>
           </div>
 
-          <div class="notification is-info is-light">
+          <div class="notification is-info">
             <p><strong>Nota:</strong> Se creará un log con el motivo especificado para auditoría.</p>
           </div>
         </section>
@@ -339,9 +281,7 @@
             @click="saveManualAttendance"
             :disabled="!canSaveManualAttendance || attendanceStore.loading"
           >
-            <span class="icon">
-              <i class="mdi mdi-content-save"></i>
-            </span>
+            <i class="mdi mdi-content-save"></i>
             <span v-if="attendanceStore.loading">Guardando...</span>
             <span v-else>Registrar Asistencia</span>
           </button>
@@ -355,28 +295,25 @@
       <div class="modal-card">
         <header class="modal-card-head">
           <p class="modal-card-title">
-            <span class="icon-text">
-              <span class="icon">
-                <i class="mdi mdi-history"></i>
-              </span>
-              <span>Historial de Cambios</span>
-            </span>
+            <i class="mdi mdi-history"></i>
+            Historial de Cambios
           </p>
           <button class="delete" @click="showLogsModal = false"></button>
         </header>
         <section class="modal-card-body">
-          <div v-if="attendanceStore.logs.length === 0" class="has-text-centered py-6">
-            <p class="has-text-grey">No hay logs registrados</p>
+          <div v-if="attendanceStore.logs.length === 0" class="empty-state">
+            <i class="mdi mdi-clipboard-text-off"></i>
+            <p>No hay logs registrados</p>
           </div>
           <div v-else class="timeline">
             <div v-for="log in attendanceStore.logs" :key="log.id" class="timeline-item">
-              <div class="timeline-marker is-icon">
+              <div class="timeline-marker">
                 <i class="mdi mdi-flag"></i>
               </div>
               <div class="timeline-content">
                 <p class="heading">{{ formatDateTime(log.created_at) }}</p>
                 <p><strong>{{ log.action }}</strong></p>
-                <p v-if="log.reason" class="has-text-grey">{{ log.reason }}</p>
+                <p v-if="log.reason">{{ log.reason }}</p>
               </div>
             </div>
           </div>
@@ -391,13 +328,9 @@
       <div class="modal-background" @click="showDeleteModal = false"></div>
       <div class="modal-card">
         <header class="modal-card-head has-background-danger">
-          <p class="modal-card-title has-text-white">
-            <span class="icon-text">
-              <span class="icon">
-                <i class="mdi mdi-alert-circle"></i>
-              </span>
-              <span>Confirmar Eliminación</span>
-            </span>
+          <p class="modal-card-title">
+            <i class="mdi mdi-alert-circle"></i>
+            Confirmar Eliminación
           </p>
           <button class="delete" @click="showDeleteModal = false"></button>
         </header>
@@ -415,9 +348,7 @@
             @click="deleteAttendance"
             :disabled="attendanceStore.loading"
           >
-            <span class="icon">
-              <i class="mdi mdi-delete"></i>
-            </span>
+            <i class="mdi mdi-delete"></i>
             <span v-if="attendanceStore.loading">Eliminando...</span>
             <span v-else>Eliminar</span>
           </button>
@@ -434,6 +365,9 @@ import 'dayjs/locale/es'
 import { useAttendanceStore } from '~/stores/attendance'
 import { useAttendancePeriodStore } from '~/stores/attendancePeriod'
 import { useCooperativistasStore } from '~/stores/cooperativistas'
+import { useCuadrillasStore } from '~/stores/cuadrillas'
+import { useSeccionesStore } from '~/stores/secciones'
+import { generarReporteAsistencia } from '~/utils/reporteAsistencia'
 
 dayjs.locale('es')
 
@@ -447,6 +381,8 @@ const route = useRoute()
 const attendanceStore = useAttendanceStore()
 const periodStore = useAttendancePeriodStore()
 const cooperativistaStore = useCooperativistasStore()
+const cuadrillasStore = useCuadrillasStore()
+const seccionesStore = useSeccionesStore()
 
 const periodId = computed(() => parseInt(route.params.id))
 
@@ -508,6 +444,8 @@ const loadData = async () => {
     await periodStore.fetchPeriod(periodId.value)
     await attendanceStore.fetchByPeriod(periodId.value)
     await cooperativistaStore.cargarCooperativistas()
+    await cuadrillasStore.fetchCuadrillas()
+    await seccionesStore.fetchSecciones()
   } catch (error) {
     console.error('Error al cargar datos:', error)
   }
@@ -574,6 +512,44 @@ const clearErrors = () => {
   cooperativistaStore.error = null
 }
 
+const generarPDF = async () => {
+  try {
+    if (!periodStore.selectedPeriod) {
+      alert('No se ha cargado el período')
+      return
+    }
+
+    if (filteredAttendances.value.length === 0) {
+      alert('No hay asistencias para generar el reporte')
+      return
+    }
+
+    const getCooperativistaByIdLocal = (id) => {
+      return cooperativistaStore.cooperativistas.find(c => c.id === id)
+    }
+
+    const getCuadrillaById = (id) => {
+      return cuadrillasStore.cuadrillas.find(c => c.id === id)
+    }
+
+    const getSeccionById = (id) => {
+      return seccionesStore.secciones.find(s => s.id === id)
+    }
+
+    await generarReporteAsistencia(
+      periodStore.selectedPeriod,
+      filteredAttendances.value,
+      getCooperativistaByIdLocal,
+      getCuadrillaById,
+      getSeccionById
+    )
+
+  } catch (error) {
+    console.error('Error al generar PDF:', error)
+    alert('Error al generar el PDF. Por favor, intente nuevamente.')
+  }
+}
+
 onMounted(() => {
   loadData()
 })
@@ -584,563 +560,909 @@ useHead({
 </script>
 
 <style scoped>
-.timeline {
-  padding-left: 2rem;
+.attendance-details-page {
+  min-height: 100vh;
+  background: #0d1b0d;
+  color: #e0f2f1;
+  padding: 2rem;
+  margin: -1.5rem -1.5rem;
 }
 
-.timeline-item {
-  position: relative;
-  padding-bottom: 1.5rem;
-  border-left: 2px solid #dbdbdb;
-  padding-left: 2rem;
-}
-
-.timeline-item:last-child {
-  border-left: none;
-}
-
-.timeline-marker {
-  position: absolute;
-  left: -0.65rem;
-  top: 0;
-  width: 1.3rem;
-  height: 1.3rem;
-  border-radius: 50%;
-  background: #3273dc;
-  border: 2px solid #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.timeline-marker.is-icon {
-  background: #48c774;
-}
-
-.timeline-marker i {
-  font-size: 0.7rem;
-  color: white;
-}
-
-.timeline-content .heading {
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
-}
-
-.index_home-page {
-  min-height: calc(100vh - 200px);
-  padding: 1.5rem;
-  margin: -2rem -1.5rem;
-  background: linear-gradient(to bottom, #0a1a0a 0%, #0f1f0f 50%, #0a1a0a 100%);
-  width: 100%;
-  position: relative;
-}
-
-.index_home-welcome-section {
+.page-header {
   background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 30px rgba(76, 175, 80, 0.2), 0 0 60px rgba(255, 215, 0, 0.1);
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700) 1;
-  position: relative;
-  overflow: hidden;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
 }
 
-.index_home-welcome-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
-  animation: index_home-float 20s infinite linear;
-  z-index: 0;
-}
-
-.index_home-welcome-content {
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  position: relative;
-  z-index: 1;
-  flex-wrap: wrap;
 }
 
-.index_home-welcome-text {
-  flex: 1;
-  min-width: 300px;
-}
-
-.index_home-welcome-text .index_home-title {
+.header-text .title {
   background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
-  font-weight: 800;
   text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
-  letter-spacing: 0.5px;
-  font-size: 1.75rem;
 }
 
-.index_home-welcome-text .index_home-subtitle {
-  color: #a5d6a7;
-  margin: 0;
-  font-weight: 500;
+.header-text .title i {
+  font-size: 2rem;
+}
+
+.header-text .subtitle {
+  color: #c8e6c9;
+  font-weight: 600;
+}
+
+.button {
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.button.is-primary {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+  color: #0d1b0d;
+  border: none;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+.button.is-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+}
+
+.button.is-light {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c8e6c9;
+}
+
+.button.is-light:hover {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.button.is-danger {
+  background: rgba(244, 67, 54, 0.3);
+  color: #ffcdd2;
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.button.is-danger:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.5);
+  transform: translateY(-2px);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notification.is-danger {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.3), rgba(211, 47, 47, 0.3));
+  color: #ffcdd2;
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.7), rgba(15, 31, 15, 0.9));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #ffd700;
+  font-weight: 700;
   font-size: 1.1rem;
 }
 
-.index_home-date-time-box {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.3), rgba(158, 157, 36, 0.2));
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  padding: 1.25rem 1.75rem;
+.stat-header i {
+  font-size: 1.5rem;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  color: #90a4ae;
+  font-weight: 600;
+}
+
+.stat-value {
+  color: #c8e6c9;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attendance-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.attendance-count i {
+  font-size: 2.5rem;
+  color: #ffd700;
+}
+
+.count-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.count-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.count-divider {
+  font-size: 1.5rem;
+  color: #90a4ae;
+}
+
+.count-total {
+  font-size: 1.5rem;
+  color: #c8e6c9;
+  font-weight: 700;
+}
+
+.progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress {
+  height: 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.progress::-webkit-progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.progress::-webkit-progress-value {
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progress.is-success::-webkit-progress-value {
+  background: linear-gradient(90deg, #4caf50, #81c784);
+}
+
+.progress.is-warning::-webkit-progress-value {
+  background: linear-gradient(90deg, #ff9800, #ffb74d);
+}
+
+.progress.is-danger::-webkit-progress-value {
+  background: linear-gradient(90deg, #f44336, #ef5350);
+}
+
+.progress-label {
   text-align: center;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  min-width: 180px;
+  color: #90a4ae;
+  font-size: 0.9rem;
+}
+
+.filters-section {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.7), rgba(15, 31, 15, 0.9));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-buttons-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.search-box {
   position: relative;
+  width: 100%;
+}
+
+.search-box i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9e9d24;
+  font-size: 1.25rem;
   z-index: 1;
 }
 
-.index_home-current-date {
+.search-box .input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  background: rgba(15, 31, 15, 0.7);
+  color: #e0f2f1;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-box .input::placeholder {
+  color: #90a4ae;
+}
+
+.search-box .input:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
+  background: rgba(26, 46, 26, 0.9);
+  outline: none;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
   color: #c8e6c9;
-  font-size: 0.9rem;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 215, 0, 0.3);
+  border-top: 4px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.table-container {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.7), rgba(15, 31, 15, 0.9));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.table {
+  width: 100%;
+  background: transparent;
+  color: #e0f2f1;
+}
+
+.table thead th {
+  background: rgba(15, 31, 15, 0.9);
+  color: #ffd700;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 1rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.5);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #c8e6c9;
+}
+
+.table tbody td strong {
+  color: #e0f2f1;
+}
+
+.table tbody td small {
+  color: #90a4ae;
+}
+
+.empty-state {
+  padding: 4rem 2rem !important;
+  text-align: center;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: #90a4ae;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #90a4ae;
+  font-size: 1.1rem;
+}
+
+.tag {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
   font-weight: 600;
-  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.tag.is-success {
+  background: rgba(76, 175, 80, 0.3);
+  color: #81c784;
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.tag.is-danger {
+  background: rgba(244, 67, 54, 0.3);
+  color: #ffcdd2;
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.tag.is-warning {
+  background: rgba(255, 152, 0, 0.3);
+  color: #ffb74d;
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.tag.is-info {
+  background: rgba(77, 182, 172, 0.3);
+  color: #4db6ac;
+  border-color: rgba(77, 182, 172, 0.5);
+}
+
+.tag.is-dark {
+  background: rgba(96, 125, 139, 0.3);
+  color: #b0bec5;
+  border-color: rgba(96, 125, 139, 0.5);
+}
+
+.tag.is-light {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0f2f1;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.button.is-small {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.button.is-small.is-info {
+  background: rgba(77, 182, 172, 0.3);
+  color: #4db6ac;
+  border-color: rgba(77, 182, 172, 0.5);
+}
+
+.button.is-small.is-info:hover {
+  background: rgba(77, 182, 172, 0.5);
+}
+
+.button.is-small.is-danger {
+  background: rgba(244, 67, 54, 0.3);
+  color: #ffcdd2;
+  border-color: rgba(244, 67, 54, 0.5);
+}
+
+.button.is-small.is-danger:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.5);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.is-active {
+  display: flex;
+}
+
+.modal-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  position: relative;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.95), rgba(15, 31, 15, 0.98));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+}
+
+.modal-card-head {
+  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+  border: none;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal-card-head.has-background-danger {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.8), rgba(211, 47, 47, 0.9));
+}
+
+.modal-card-title {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-card-head.has-background-danger .modal-card-title {
+  background: white;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-card-title i {
+  font-size: 1.5rem;
+}
+
+.delete {
+  background: rgba(255, 215, 0, 0.3);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.delete::before, .delete::after {
+  background: #ffd700;
+  content: '';
+  height: 2px;
+  left: 25%;
+  position: absolute;
+  top: 50%;
+  width: 50%;
+  transition: all 0.3s ease;
+}
+
+.delete::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.delete::after {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.delete:hover {
+  background: rgba(255, 215, 0, 0.5);
+  transform: scale(1.1);
+}
+
+.delete:hover::before, .delete:hover::after {
+  background: #ff6f00;
+}
+
+.modal-card-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  background: transparent;
+}
+
+.modal-card-foot {
+  background: rgba(15, 31, 15, 0.9);
+  border: none;
+  padding: 1.5rem;
+  gap: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.field {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  color: #e0f2f1;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.control {
+  position: relative;
+}
+
+.control .input,
+.control .textarea,
+.control .select select {
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  padding-left: 2.75rem;
+  transition: all 0.3s ease;
+  background: rgba(15, 31, 15, 0.7);
+  color: #e0f2f1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.control .textarea {
+  padding-left: 0.75rem;
+}
+
+.control .input::placeholder,
+.control .textarea::placeholder {
+  color: #90a4ae;
+}
+
+.control .input:focus,
+.control .textarea:focus,
+.control .select select:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
+  background: rgba(26, 46, 26, 0.9);
+  outline: none;
+}
+
+.control .icon.is-left {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9e9d24;
+}
+
+.message {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.message.is-danger {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(211, 47, 47, 0.2));
+  border: 1px solid rgba(244, 67, 54, 0.5);
+}
+
+.message-body {
+  color: #ffcdd2;
+  padding: 1rem;
+}
+
+.notification.is-info {
+  background: linear-gradient(135deg, rgba(77, 182, 172, 0.2), rgba(38, 166, 154, 0.2));
+  color: #4db6ac;
+  border: 1px solid rgba(77, 182, 172, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.timeline {
+  padding: 1rem 0;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-left: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.timeline-item:last-child {
+  border-left: none;
+  padding-bottom: 0;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -0.6rem;
+  top: 0;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-marker i {
+  font-size: 0.7rem;
+  color: #0d1b0d;
+}
+
+.timeline-content {
+  padding-left: 0.5rem;
+}
+
+.timeline-content .heading {
+  color: #90a4ae;
+  font-size: 0.85rem;
   margin-bottom: 0.5rem;
 }
 
-.index_home-current-time {
-  color: #ffd700;
-  font-size: 1.75rem;
-  font-weight: 800;
-  margin: 0;
-  text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-}
-
-.index_home-main-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
-  position: relative;
-  z-index: 1;
-}
-
-.index_home-stat-box {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.9), rgba(15, 31, 15, 0.9));
-  border-radius: 14px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-image: linear-gradient(135deg, #2e7d32, #9e9d24, #ffd700) 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.index_home-stat-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
-  transition: left 0.6s ease;
-}
-
-.index_home-stat-box:hover::before {
-  left: 100%;
-}
-
-.index_home-stat-box:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 8px 30px rgba(158, 157, 36, 0.3), 0 0 50px rgba(255, 215, 0, 0.15);
-}
-
-.index_home-stat-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #0d1b0d;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-  transition: all 0.3s ease;
-}
-
-.index_home-stat-box:hover .index_home-stat-icon {
-  transform: scale(1.08) rotate(5deg);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-}
-
-.index_home-stat-info {
-  flex: 1;
-}
-
-.index_home-stat-number {
-  font-size: 2.25rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ffd700, #ff9800);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-  margin-bottom: 0.4rem;
-  text-shadow: 0 3px 15px rgba(255, 215, 0, 0.3);
-}
-
-.index_home-stat-title {
-  font-weight: 700;
-  font-size: 1rem;
+.timeline-content strong {
   color: #e0f2f1;
-  margin-bottom: 0.4rem;
-  letter-spacing: 0.4px;
 }
 
-.index_home-stat-footer {
-  color: #a5d6a7;
-  font-size: 0.85rem;
-  font-weight: 500;
+.timeline-content p {
+  margin-bottom: 0.25rem;
 }
 
-.index_home-secondary-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+.modal.is-active .modal-card {
+  animation: modal-slideIn 0.3s ease-out;
 }
 
-.index_home-info-card {
-  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
-  border-radius: 12px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-image: linear-gradient(135deg, #9e9d24, #ffd700) 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.index_home-info-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, #ffd700, #9e9d24);
-  transform: scaleX(0);
-  transition: transform 0.4s ease;
-}
-
-.index_home-info-card:hover::after {
-  transform: scaleX(1);
-}
-
-.index_home-info-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 6px 25px rgba(158, 157, 36, 0.25);
-}
-
-.index_home-info-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  color: #e0f2f1;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.4);
-  transition: all 0.3s ease;
-}
-
-.index_home-info-card:hover .index_home-info-icon {
-  transform: scale(1.08);
-  background: linear-gradient(135deg, #9e9d24 0%, #cddc39 100%);
-  color: #0d1b0d;
-}
-
-.index_home-info-content {
-  flex: 1;
-}
-
-.index_home-info-value {
-  font-size: 2rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #9e9d24, #cddc39);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-  margin-bottom: 0.4rem;
-  text-shadow: 0 3px 12px rgba(158, 157, 36, 0.3);
-}
-
-.index_home-info-label {
-  font-size: 0.9rem;
-  color: #c8e6c9;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-@keyframes index_home-float {
+@keyframes modal-slideIn {
   from {
-    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
   }
   to {
-    transform: translateY(-80px) rotate(360deg);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-/* Responsive Design */
-@media screen and (max-width: 1024px) {
-  .index_home-page {
-    padding: 1.25rem;
+.has-text-centered {
+  text-align: center;
+}
+
+.control .select {
+  width: 100%;
+}
+
+.control .select select {
+  width: 100%;
+  cursor: pointer;
+}
+
+.control .select::after {
+  border-color: #9e9d24;
+  right: 1.125em;
+  z-index: 4;
+}
+
+.control .select select:focus + .icon {
+  color: #ffd700;
+}
+
+.checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: #ffd700;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #c8e6c9;
+}
+
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+
+.modal-card-foot .button.is-primary {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+  color: #0d1b0d;
+  border: none;
+  font-weight: 800;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+.modal-card-foot .button.is-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+}
+
+.modal-card-foot .button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c8e6c9;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 0.75rem 1.5rem;
+}
+
+.modal-card-foot .button:hover {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+@media screen and (max-width: 1023px) {
+  .attendance-details-page {
+    padding: 1rem;
     margin: -1.5rem -1rem;
   }
   
-  .index_home-main-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .index_home-secondary-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .index_home-welcome-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.25rem;
-  }
-  
-  .index_home-date-time-box {
-    width: 100%;
-    min-width: unset;
-  }
-  
-  .index_home-welcome-text .index_home-title {
-    font-size: 1.5rem;
-  }
-  
-  .index_home-welcome-text .index_home-subtitle {
-    font-size: 1rem;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .index_home-page {
-    padding: 1rem;
-    margin: -1rem -0.75rem;
-  }
-  
-  .index_home-welcome-section {
+  .page-header {
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-radius: 14px;
   }
   
-  .index_home-main-stats {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .index_home-secondary-stats {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .index_home-stat-box {
-    padding: 1.25rem;
-    border-radius: 12px;
-  }
-  
-  .index_home-stat-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 1.75rem;
-  }
-  
-  .index_home-stat-number {
-    font-size: 2rem;
-  }
-  
-  .index_home-info-card {
-    padding: 1.25rem;
-    border-radius: 12px;
-  }
-  
-  .index_home-info-icon {
-    width: 55px;
-    height: 55px;
-    font-size: 1.5rem;
-  }
-  
-  .index_home-info-value {
-    font-size: 1.75rem;
-  }
-  
-  .index_home-current-time {
-    font-size: 1.5rem;
-  }
-  
-  .index_home-current-date {
-    font-size: 0.85rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .index_home-page {
-    padding: 0.75rem;
-    margin: -0.75rem -0.5rem;
-  }
-  
-  .index_home-welcome-section {
-    padding: 1.25rem 1rem;
-    border-radius: 12px;
-    border-width: 2px;
-  }
-  
-  .index_home-welcome-text .index_home-title {
-    font-size: 1.25rem;
-    line-height: 1.3;
-  }
-  
-  .index_home-welcome-text .index_home-subtitle {
-    font-size: 0.9rem;
-  }
-  
-  .index_home-stat-box {
+  .header-content {
     flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-    padding: 1rem;
+    align-items: stretch;
   }
   
-  .index_home-stat-number {
-    font-size: 1.75rem;
-  }
-  
-  .index_home-stat-title {
-    font-size: 0.95rem;
-  }
-  
-  .index_home-stat-footer {
-    font-size: 0.8rem;
-  }
-  
-  .index_home-info-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-  
-  .index_home-info-value {
+  .header-text .title {
     font-size: 1.5rem;
   }
   
-  .index_home-info-label {
-    font-size: 0.85rem;
+  .stats-section {
+    grid-template-columns: 1fr;
   }
   
-  .index_home-date-time-box {
-    padding: 1rem;
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
   }
   
-  .index_home-current-time {
-    font-size: 1.25rem;
+  .action-buttons-group {
+    justify-content: stretch;
   }
   
-  .index_home-current-date {
-    font-size: 0.8rem;
-  }
-}
-
-/* Para tablets en modo paisaje */
-@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
-  .index_home-main-stats {
-    grid-template-columns: repeat(3, 1fr);
+  .action-buttons-group .button {
+    flex: 1;
   }
   
-  .index_home-secondary-stats {
-    grid-template-columns: repeat(3, 1fr);
+  .table-container {
+    overflow-x: auto;
   }
   
-  .index_home-welcome-content {
-    flex-direction: row;
+  .modal {
+    padding: 10px;
   }
   
-  .index_home-date-time-box {
-    width: auto;
-    min-width: 180px;
-  }
-}
-
-/* Para pantallas muy grandes */
-@media (min-width: 1400px) {
-  .index_home-page {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: -2rem auto;
+  .modal-card {
+    max-height: calc(100vh - 20px);
+    max-width: 100%;
   }
   
-  .index_home-welcome-section {
-    padding: 3rem;
-    margin-bottom: 2.5rem;
+  .modal-card-body {
+    padding: 1.5rem;
   }
   
-  .index_home-main-stats {
-    gap: 1.5rem;
+  .modal-card-head {
+    padding: 1.25rem;
   }
   
-  .index_home-stat-box {
-    padding: 2rem;
+  .modal-card-foot {
+    padding: 1.25rem;
+    flex-direction: column;
   }
   
-  .index_home-stat-number {
-    font-size: 2.5rem;
-  }
-  
-  .index_home-stat-icon {
-    width: 80px;
-    height: 80px;
-    font-size: 2.25rem;
-  }
-  
-  .index_home-info-card {
-    padding: 2rem;
-  }
-  
-  .index_home-info-value {
-    font-size: 2.25rem;
-  }
-  
-  .index_home-info-icon {
-    width: 70px;
-    height: 70px;
-    font-size: 2rem;
+  .modal-card-foot .button {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
