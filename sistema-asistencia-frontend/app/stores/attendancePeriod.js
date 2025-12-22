@@ -4,21 +4,15 @@ import { useAuthStore } from './auth'
 export const useAttendancePeriodStore = defineStore('attendancePeriod', {
   state: () => ({
     periods: [],
-    currentPeriods: [],
-    openPeriods: [],
     selectedPeriod: null,
     periodStats: null,
     loading: false,
-    error: null,
-    durationShortcuts: [
-      { label: '+30 min', minutes: 30 },
-      { label: '+1 hora', minutes: 60 },
-      { label: '+2 horas', minutes: 120 }
-    ]
+    error: null
   }),
 
   getters: {
     activePeriods: (state) => state.periods.filter(p => p.is_active),
+    openPeriods: (state) => state.periods.filter(p => p.is_open && p.is_active),
     closedPeriods: (state) => state.periods.filter(p => !p.is_open && p.is_active),
     
     getPeriodStatus: (state) => (period) => {
@@ -33,33 +27,38 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       if (now > periodEnd) return 'finalizado'
       
       return 'invalid'
-    },
-    
-    shouldBeOpen: (state) => (period) => {
-      const status = state.getPeriodStatus(period)
-      return status === 'en_curso' && !period.is_open
-    },
-    
-    isOpenOutOfTime: (state) => (period) => {
-      const status = state.getPeriodStatus(period)
-      return period.is_open && (status === 'programado' || status === 'finalizado')
     }
   },
 
   actions: {
-    async fetchPeriods(filters = {}) {
+    async checkAndOpenPeriods() {
+      try {
+        const authStore = useAuthStore()
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/check-and-open`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (!response.ok) throw new Error('Error al verificar períodos')
+        
+        const result = await response.json()
+        return result
+      } catch (error) {
+        console.error('Error al verificar períodos:', error)
+        return null
+      }
+    },
+
+    async fetchPeriods(skip = 0, limit = 100, activeOnly = false) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const params = new URLSearchParams()
+        const params = new URLSearchParams({ skip, limit, active_only: activeOnly })
         
-        if (filters.mes) params.append('mes', filters.mes)
-        if (filters.anio) params.append('anio', filters.anio)
-        if (filters.is_active !== undefined) params.append('is_active', filters.is_active)
-        if (filters.is_open !== undefined && filters.is_open !== null) params.append('is_open', filters.is_open)
-        
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/?${params}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods?${params}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
@@ -69,62 +68,18 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
         
         this.periods = await response.json()
         
-        for (const period of this.periods) {
-          if (this.shouldBeOpen(period)) {
-            await this.openPeriod(period.id)
+        await this.checkAndOpenPeriods()
+        
+        const responseUpdated = await fetch(`${authStore.apiUrl}/api/attendance/periods?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
           }
-          if (this.isOpenOutOfTime(period) && this.getPeriodStatus(period) === 'finalizado') {
-            await this.closePeriod(period.id)
-          }
+        })
+        if (responseUpdated.ok) {
+          this.periods = await responseUpdated.json()
         }
         
         return this.periods
-      } catch (error) {
-        this.error = error.message
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async fetchCurrentPeriods() {
-      this.loading = true
-      this.error = null
-      try {
-        const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/current`, {
-          headers: {
-            'Authorization': `Bearer ${authStore.token}`
-          }
-        })
-        
-        if (!response.ok) throw new Error('Error al obtener períodos actuales')
-        
-        this.currentPeriods = await response.json()
-        return this.currentPeriods
-      } catch (error) {
-        this.error = error.message
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async fetchOpenPeriods() {
-      this.loading = true
-      this.error = null
-      try {
-        const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/open`, {
-          headers: {
-            'Authorization': `Bearer ${authStore.token}`
-          }
-        })
-        
-        if (!response.ok) throw new Error('Error al obtener períodos abiertos')
-        
-        this.openPeriods = await response.json()
-        return this.openPeriods
       } catch (error) {
         this.error = error.message
         throw error
@@ -138,7 +93,7 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
@@ -147,12 +102,6 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
         if (!response.ok) throw new Error('Error al obtener período')
         
         this.selectedPeriod = await response.json()
-        
-        if (this.shouldBeOpen(this.selectedPeriod)) {
-          await this.openPeriod(periodId)
-          this.selectedPeriod = await response.json()
-        }
-        
         return this.selectedPeriod
       } catch (error) {
         this.error = error.message
@@ -162,21 +111,44 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       }
     },
 
-    async fetchPeriodStats(periodId) {
+    async fetchPeriodsByMonth(year, month) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}/stats`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/month/${year}/${month}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
         
-        if (!response.ok) throw new Error('Error al obtener estadísticas')
+        if (!response.ok) throw new Error('Error al obtener períodos del mes')
         
-        this.periodStats = await response.json()
-        return this.periodStats
+        const periods = await response.json()
+        return periods
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchPeriodByDate(fecha) {
+      this.loading = true
+      this.error = null
+      try {
+        const authStore = useAuthStore()
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/date/${fecha}`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (!response.ok) throw new Error('No hay período activo para esta fecha')
+        
+        const period = await response.json()
+        return period
       } catch (error) {
         this.error = error.message
         throw error
@@ -186,28 +158,17 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
     },
 
     async createPeriod(periodData) {
-      const now = new Date()
-      const periodDateTime = new Date(periodData.fecha_asistencia + 'T' + periodData.hora_inicio)
-      
-      if (periodDateTime < now) {
-        throw new Error('No se puede crear un período con fecha/hora anterior al momento actual')
-      }
-      
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            ...periodData,
-            total_expected: 894,
-            created_by: authStore.user.id
-          })
+          body: JSON.stringify(periodData)
         })
         
         if (!response.ok) {
@@ -231,7 +192,7 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
@@ -259,43 +220,12 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       }
     },
 
-    async openPeriod(periodId) {
-      this.loading = true
-      this.error = null
-      try {
-        const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}/open`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authStore.token}`
-          }
-        })
-        
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.detail || 'Error al abrir período')
-        }
-        
-        const openedPeriod = await response.json()
-        const index = this.periods.findIndex(p => p.id === periodId)
-        if (index !== -1) {
-          this.periods[index] = openedPeriod
-        }
-        return openedPeriod
-      } catch (error) {
-        this.error = error.message
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
     async closePeriod(periodId) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}/close?closed_by=${authStore.user.id}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}/close`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -321,12 +251,80 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
       }
     },
 
-    async deletePeriod(periodId) {
+    async openPeriod(periodId) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance-periods/${periodId}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}/open`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.detail || 'Error al abrir período')
+        }
+        
+        const openedPeriod = await response.json()
+        const index = this.periods.findIndex(p => p.id === periodId)
+        if (index !== -1) {
+          this.periods[index] = openedPeriod
+        }
+        return openedPeriod
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deactivatePeriod(periodId) {
+      this.loading = true
+      this.error = null
+      try {
+        const authStore = useAuthStore()
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}/deactivate`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.detail || 'Error al desactivar período')
+        }
+        
+        const deactivatedPeriod = await response.json()
+        const index = this.periods.findIndex(p => p.id === periodId)
+        if (index !== -1) {
+          this.periods[index] = deactivatedPeriod
+        }
+        return deactivatedPeriod
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deletePeriod(periodId, confirm = '') {
+      if (confirm !== 'DELETE_PERMANENTLY') {
+        throw new Error('Debe confirmar la eliminación')
+      }
+      
+      this.loading = true
+      this.error = null
+      try {
+        const authStore = useAuthStore()
+        const params = new URLSearchParams({ confirm })
+        
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/periods/${periodId}/hard-delete?${params}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -339,35 +337,6 @@ export const useAttendancePeriodStore = defineStore('attendancePeriod', {
         }
         
         this.periods = this.periods.filter(p => p.id !== periodId)
-        return true
-      } catch (error) {
-        this.error = error.message
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async extendPeriodDuration(periodId, additionalMinutes) {
-      this.loading = true
-      this.error = null
-      try {
-        const period = this.periods.find(p => p.id === periodId)
-        if (!period || period.is_open) {
-          throw new Error('No se puede modificar la duración de un período abierto')
-        }
-        
-        const endTime = new Date(`2000-01-01T${period.hora_fin}`)
-        const newEndTime = new Date(endTime.getTime() + (additionalMinutes * 60000))
-        
-        const endHour = String(newEndTime.getHours()).padStart(2, '0')
-        const endMinute = String(newEndTime.getMinutes()).padStart(2, '0')
-        const newEndTimeString = `${endHour}:${endMinute}:00`
-        
-        await this.updatePeriod(periodId, {
-          hora_fin: newEndTimeString
-        })
-        
         return true
       } catch (error) {
         this.error = error.message

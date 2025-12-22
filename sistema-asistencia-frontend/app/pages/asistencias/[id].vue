@@ -61,7 +61,25 @@
                   </span>
                   <span>Abierto</span>
                 </span>
-                <span v-else class="tag is-dark is-medium">
+                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'programado'" class="tag is-info is-medium">
+                  <span class="icon">
+                    <i class="mdi mdi-clock-outline"></i>
+                  </span>
+                  <span>Programado</span>
+                </span>
+                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'en_curso'" class="tag is-primary is-medium">
+                  <span class="icon">
+                    <i class="mdi mdi-clock"></i>
+                  </span>
+                  <span>En Curso</span>
+                </span>
+                <span v-else-if="periodStore.getPeriodStatus(periodStore.selectedPeriod) === 'finalizado'" class="tag is-dark is-medium">
+                  <span class="icon">
+                    <i class="mdi mdi-check-circle"></i>
+                  </span>
+                  <span>Finalizado</span>
+                </span>
+                <span v-else class="tag is-light is-medium">
                   <span class="icon">
                     <i class="mdi mdi-lock"></i>
                   </span>
@@ -128,19 +146,19 @@
       </div>
 
       <div class="field">
-        <label class="label">Buscar por CI</label>
+        <label class="label">Buscar por CI o Nombre</label>
         <div class="control has-icons-left has-icons-right">
           <input 
             class="input is-medium" 
             type="text" 
-            placeholder="Ingrese CI del cooperativista..." 
-            v-model="ciFilter"
+            placeholder="Ingrese CI o nombre del cooperativista..." 
+            v-model="searchFilter"
           >
           <span class="icon is-left is-medium">
             <i class="mdi mdi-magnify"></i>
           </span>
-          <span class="icon is-right is-medium" v-if="ciFilter">
-            <a @click="ciFilter = ''">
+          <span class="icon is-right is-medium" v-if="searchFilter">
+            <a @click="searchFilter = ''">
               <i class="mdi mdi-close-circle"></i>
             </a>
           </span>
@@ -171,9 +189,7 @@
               <th>Cooperativista</th>
               <th>Fecha</th>
               <th>Hora</th>
-              <th>Ubicación GPS</th>
-              <th class="has-text-centered">Distancia</th>
-              <th class="has-text-centered">Estado</th>
+              <th class="has-text-centered">Tipo</th>
               <th class="has-text-centered">Acciones</th>
             </tr>
           </thead>
@@ -196,53 +212,26 @@
                   <span>{{ attendance.hora.substring(0, 5) }}</span>
                 </span>
               </td>
-              <td>
-                <small class="has-text-grey-dark">
-                  <span class="icon-text">
-                    <span class="icon">
-                      <i class="mdi mdi-map-marker"></i>
-                    </span>
-                    <span>{{ attendance.location_lat.toFixed(6) }}, {{ attendance.location_lon.toFixed(6) }}</span>
-                  </span>
-                </small>
-              </td>
               <td class="has-text-centered">
-                <span v-if="attendance.distance_meters !== null" class="tag is-medium" :class="{
-                  'is-success': attendance.distance_meters <= 50,
-                  'is-warning': attendance.distance_meters > 50 && attendance.distance_meters <= 100,
-                  'is-danger': attendance.distance_meters > 100
+                <span class="tag is-medium" :class="{
+                  'is-success': attendance.tipo === 'entrada',
+                  'is-warning': attendance.tipo === 'salida'
                 }">
                   <span class="icon">
-                    <i class="mdi mdi-map-marker-distance"></i>
+                    <i :class="attendance.tipo === 'entrada' ? 'mdi mdi-login' : 'mdi mdi-logout'"></i>
                   </span>
-                  <span>{{ attendance.distance_meters }}m</span>
-                </span>
-                <span v-else class="tag is-medium">N/A</span>
-              </td>
-              <td class="has-text-centered">
-                <span v-if="attendance.is_valid" class="tag is-success is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-check-circle"></i>
-                  </span>
-                  <span>Válida</span>
-                </span>
-                <span v-else class="tag is-warning is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-alert-circle"></i>
-                  </span>
-                  <span>Pendiente</span>
+                  <span>{{ attendance.tipo.toUpperCase() }}</span>
                 </span>
               </td>
               <td>
                 <div class="buttons are-small is-centered">
                   <button 
-                    v-if="attendance.notes"
                     class="button is-info"
-                    @click="showNotes(attendance.notes)"
-                    title="Ver notas"
+                    @click="viewLogs(attendance.id)"
+                    title="Ver logs"
                   >
                     <span class="icon">
-                      <i class="mdi mdi-note-text"></i>
+                      <i class="mdi mdi-history"></i>
                     </span>
                   </button>
                   <button 
@@ -278,54 +267,33 @@
         </header>
         <section class="modal-card-body">
           <div class="field">
-            <label class="label">CI del Cooperativista *</label>
+            <label class="label">Cooperativista *</label>
             <div class="control has-icons-left">
-              <input 
-                class="input is-medium" 
-                type="text" 
-                placeholder="Ingrese CI..." 
-                v-model="manualForm.ci"
-                list="cooperativistas-list"
-                @input="onCiInput"
-              >
-              <span class="icon is-left">
-                <i class="mdi mdi-card-account-details"></i>
-              </span>
-              <datalist id="cooperativistas-list">
-                <option v-for="coop in cooperativistaStore.cooperativistas" :key="coop.id" :value="coop.ci">
-                  {{ coop.ci }} - {{ coop.nombres }} {{ coop.apellidos }}
-                </option>
-              </datalist>
-            </div>
-          </div>
-
-          <div v-if="selectedCooperativista" class="field">
-            <label class="label">Cooperativista Seleccionado</label>
-            <div class="box has-background-info-light">
-              <div class="media">
-                <div class="media-left">
-                  <span class="icon is-large has-text-info">
-                    <i class="mdi mdi-account-circle mdi-48px"></i>
-                  </span>
-                </div>
-                <div class="media-content">
-                  <p class="title is-6">{{ selectedCooperativista.nombres }} {{ selectedCooperativista.apellidos }}</p>
-                  <p class="subtitle is-7"><strong>CI:</strong> {{ selectedCooperativista.ci }}</p>
-                </div>
+              <div class="select is-fullwidth">
+                <select v-model="manualAttendanceForm.cooperativista_id">
+                  <option :value="null">Seleccione un cooperativista</option>
+                  <option v-for="coop in activeCooperativistas" :key="coop.id" :value="coop.id">
+                    {{ coop.ci }} - {{ coop.nombres }} {{ coop.apellidos }}
+                  </option>
+                </select>
               </div>
+              <span class="icon is-left">
+                <i class="mdi mdi-account"></i>
+              </span>
             </div>
           </div>
 
           <div class="field">
-            <label class="label">Hora de Registro *</label>
+            <label class="label">Tipo de Registro *</label>
             <div class="control has-icons-left">
-              <input 
-                class="input is-medium" 
-                type="time" 
-                v-model="manualForm.hora"
-              >
+              <div class="select is-fullwidth">
+                <select v-model="manualAttendanceForm.tipo">
+                  <option value="entrada">Entrada</option>
+                  <option value="salida">Salida</option>
+                </select>
+              </div>
               <span class="icon is-left">
-                <i class="mdi mdi-clock"></i>
+                <i class="mdi mdi-swap-horizontal"></i>
               </span>
             </div>
           </div>
@@ -333,15 +301,14 @@
           <div class="field">
             <label class="label">Motivo del Registro Manual *</label>
             <div class="control has-icons-left">
-              <div class="select is-fullwidth is-medium">
-                <select v-model="manualForm.motivo">
-                  <option value="">Seleccione un motivo...</option>
-                  <option value="presente_sin_registro">Cooperativista en reunión pero no registró asistencia</option>
-                  <option value="retraso_presente">Retraso pero estuvo en la reunión</option>
-                  <option value="problema_dispositivo">Problemas con el dispositivo</option>
-                  <option value="admin_ingresado">Ingresado por el administrador</option>
-                  <option value="justificacion_especial">Justificación especial</option>
-                  <option value="otro">Otro motivo...</option>
+              <div class="select is-fullwidth">
+                <select v-model="manualAttendanceForm.reason">
+                  <option value="">Seleccione un motivo</option>
+                  <option value="Falta de credencial">Falta de credencial</option>
+                  <option value="Registro tardío">Registro tardío</option>
+                  <option value="Credencial dañada">Credencial dañada</option>
+                  <option value="Error en scanner">Error en scanner</option>
+                  <option value="Otro">Otro motivo</option>
                 </select>
               </div>
               <span class="icon is-left">
@@ -350,35 +317,72 @@
             </div>
           </div>
 
-          <div v-if="manualForm.motivo === 'otro'" class="field">
-            <label class="label">Especifique el motivo *</label>
+          <div v-if="manualAttendanceForm.reason === 'Otro'" class="field">
+            <label class="label">Especificar Motivo</label>
             <div class="control">
               <textarea 
                 class="textarea" 
-                placeholder="Describa el motivo..."
-                v-model="manualForm.motivoOtro"
-                rows="3"
+                placeholder="Describa el motivo del registro manual..."
+                v-model="manualAttendanceForm.customReason"
+                rows="2"
               ></textarea>
             </div>
           </div>
 
-          <div class="notification is-warning is-light">
-            <p><strong>Nota:</strong> Los registros manuales se marcarán con coordenadas predeterminadas de Oruro.</p>
+          <div class="notification is-info is-light">
+            <p><strong>Nota:</strong> Se creará un log con el motivo especificado para auditoría.</p>
           </div>
         </section>
         <footer class="modal-card-foot">
           <button 
             class="button is-primary" 
             @click="saveManualAttendance"
-            :disabled="!canSaveManual || attendanceStore.loading"
+            :disabled="!canSaveManualAttendance || attendanceStore.loading"
           >
             <span class="icon">
               <i class="mdi mdi-content-save"></i>
             </span>
             <span v-if="attendanceStore.loading">Guardando...</span>
-            <span v-else>Guardar Asistencia</span>
+            <span v-else>Registrar Asistencia</span>
           </button>
           <button class="button" @click="closeAddModal">Cancelar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div class="modal" :class="{ 'is-active': showLogsModal }">
+      <div class="modal-background" @click="showLogsModal = false"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">
+            <span class="icon-text">
+              <span class="icon">
+                <i class="mdi mdi-history"></i>
+              </span>
+              <span>Historial de Cambios</span>
+            </span>
+          </p>
+          <button class="delete" @click="showLogsModal = false"></button>
+        </header>
+        <section class="modal-card-body">
+          <div v-if="attendanceStore.logs.length === 0" class="has-text-centered py-6">
+            <p class="has-text-grey">No hay logs registrados</p>
+          </div>
+          <div v-else class="timeline">
+            <div v-for="log in attendanceStore.logs" :key="log.id" class="timeline-item">
+              <div class="timeline-marker is-icon">
+                <i class="mdi mdi-flag"></i>
+              </div>
+              <div class="timeline-content">
+                <p class="heading">{{ formatDateTime(log.created_at) }}</p>
+                <p><strong>{{ log.action }}</strong></p>
+                <p v-if="log.reason" class="has-text-grey">{{ log.reason }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button" @click="showLogsModal = false">Cerrar</button>
         </footer>
       </div>
     </div>
@@ -421,41 +425,14 @@
         </footer>
       </div>
     </div>
-
-    <div class="modal" :class="{ 'is-active': showNotesModal }">
-      <div class="modal-background" @click="showNotesModal = false"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">
-            <span class="icon-text">
-              <span class="icon">
-                <i class="mdi mdi-note-text"></i>
-              </span>
-              <span>Notas del Registro</span>
-            </span>
-          </p>
-          <button class="delete" @click="showNotesModal = false"></button>
-        </header>
-        <section class="modal-card-body">
-          <div class="content">
-            <div class="box has-background-light">
-              {{ currentNotes }}
-            </div>
-          </div>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" @click="showNotesModal = false">Cerrar</button>
-        </footer>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import { useAttendancePeriodStore } from '~/stores/attendancePeriod'
 import { useAttendanceStore } from '~/stores/attendance'
+import { useAttendancePeriodStore } from '~/stores/attendancePeriod'
 import { useCooperativistasStore } from '~/stores/cooperativistas'
 
 dayjs.locale('es')
@@ -467,81 +444,102 @@ definePageMeta({
 
 const router = useRouter()
 const route = useRoute()
-const periodStore = useAttendancePeriodStore()
 const attendanceStore = useAttendanceStore()
+const periodStore = useAttendancePeriodStore()
 const cooperativistaStore = useCooperativistasStore()
 
-const periodId = parseInt(route.params.id)
+const periodId = computed(() => parseInt(route.params.id))
 
 const showAddModal = ref(false)
+const showLogsModal = ref(false)
 const showDeleteModal = ref(false)
-const showNotesModal = ref(false)
 const attendanceToDelete = ref(null)
-const currentNotes = ref('')
-const ciFilter = ref('')
+const searchFilter = ref('')
 
-const manualForm = ref({
-  ci: '',
-  hora: '',
-  motivo: '',
-  motivoOtro: ''
+const manualAttendanceForm = ref({
+  cooperativista_id: null,
+  tipo: 'entrada',
+  reason: '',
+  customReason: ''
 })
 
-const selectedCooperativista = ref(null)
+const activeCooperativistas = computed(() => {
+  return cooperativistaStore.cooperativistas.filter(c => c.is_active)
+})
 
 const filteredAttendances = computed(() => {
-  if (!ciFilter.value) {
-    return attendanceStore.attendances
-  }
+  if (!searchFilter.value) return attendanceStore.attendances
   
+  const query = searchFilter.value.toLowerCase()
   return attendanceStore.attendances.filter(attendance => {
-    const cooperativista = getCooperativistaById(attendance.cooperativista_id)
-    return cooperativista?.ci?.includes(ciFilter.value) || false
+    const coop = getCooperativistaById(attendance.cooperativista_id)
+    if (!coop) return false
+    
+    return (
+      coop.ci.toLowerCase().includes(query) ||
+      coop.nombres.toLowerCase().includes(query) ||
+      coop.apellidos.toLowerCase().includes(query)
+    )
   })
 })
 
-const canSaveManual = computed(() => {
-  return selectedCooperativista.value && 
-         manualForm.value.hora && 
-         manualForm.value.motivo &&
-         (manualForm.value.motivo !== 'otro' || manualForm.value.motivoOtro)
+const canSaveManualAttendance = computed(() => {
+  const hasReason = manualAttendanceForm.value.reason && 
+    (manualAttendanceForm.value.reason !== 'Otro' || manualAttendanceForm.value.customReason)
+  
+  return !!manualAttendanceForm.value.cooperativista_id && hasReason
 })
+
+const getCooperativistaById = (id) => {
+  return cooperativistaStore.cooperativistas.find(c => c.id === id)
+}
 
 const formatDate = (dateString) => {
   const date = dayjs(`${dateString}T00:00:00`)
   return date.locale('es').format('dddd, D [de] MMMM [de] YYYY')
 }
 
-const getCooperativistaById = (id) => {
-  return cooperativistaStore.cooperativistas.find(c => c.id === id)
-}
-
-const onCiInput = () => {
-  const cooperativista = cooperativistaStore.cooperativistas.find(c => c.ci === manualForm.value.ci)
-  selectedCooperativista.value = cooperativista || null
+const formatDateTime = (dateTimeString) => {
+  return dayjs(dateTimeString).locale('es').format('D [de] MMMM [de] YYYY, HH:mm:ss')
 }
 
 const loadData = async () => {
   try {
-    await Promise.all([
-      periodStore.fetchPeriod(periodId),
-      attendanceStore.fetchAttendancesByPeriod(periodId),
-      cooperativistaStore.cargarCooperativistas()
-    ])
+    await periodStore.fetchPeriod(periodId.value)
+    await attendanceStore.fetchByPeriod(periodId.value)
+    await cooperativistaStore.cargarCooperativistas()
   } catch (error) {
     console.error('Error al cargar datos:', error)
   }
 }
 
-const clearErrors = () => {
-  attendanceStore.error = null
-  periodStore.error = null
-  cooperativistaStore.error = null
+const saveManualAttendance = async () => {
+  try {
+    const reason = manualAttendanceForm.value.reason === 'Otro' 
+      ? manualAttendanceForm.value.customReason 
+      : manualAttendanceForm.value.reason
+
+    await attendanceStore.registerManualAttendance(
+      manualAttendanceForm.value.cooperativista_id,
+      periodId.value,
+      manualAttendanceForm.value.tipo,
+      reason
+    )
+
+    closeAddModal()
+    await loadData()
+  } catch (error) {
+    console.error('Error al registrar asistencia manual:', error)
+  }
 }
 
-const showNotes = (notes) => {
-  currentNotes.value = notes
-  showNotesModal.value = true
+const viewLogs = async (attendanceId) => {
+  try {
+    await attendanceStore.fetchLogs(attendanceId)
+    showLogsModal.value = true
+  } catch (error) {
+    console.error('Error al obtener logs:', error)
+  }
 }
 
 const confirmDelete = (attendanceId) => {
@@ -551,7 +549,7 @@ const confirmDelete = (attendanceId) => {
 
 const deleteAttendance = async () => {
   try {
-    await attendanceStore.deleteAttendance(attendanceToDelete.value)
+    await attendanceStore.deleteAttendance(attendanceToDelete.value, 'DELETE_PERMANENTLY')
     showDeleteModal.value = false
     attendanceToDelete.value = null
     await loadData()
@@ -560,53 +558,20 @@ const deleteAttendance = async () => {
   }
 }
 
-const saveManualAttendance = async () => {
-  if (!selectedCooperativista.value || !periodStore.selectedPeriod) return
-
-  const notes = manualForm.value.motivo === 'otro' 
-    ? manualForm.value.motivoOtro 
-    : getMotivoDescription(manualForm.value.motivo)
-
-  const attendanceData = {
-    cooperativista_id: selectedCooperativista.value.id,
-    period_id: periodId,
-    device_id: 'ADMIN_MANUAL',
-    fecha: periodStore.selectedPeriod.fecha_asistencia,
-    hora: manualForm.value.hora + ':00',
-    location_lat: -17.9833,
-    location_lon: -67.1167,
-    notes: `REGISTRO MANUAL - ${notes}`
-  }
-
-  try {
-    await attendanceStore.createAttendance(attendanceData)
-    closeAddModal()
-    await loadData()
-  } catch (error) {
-    console.error('Error al guardar asistencia manual:', error)
-  }
-}
-
-const getMotivoDescription = (motivo) => {
-  const motivos = {
-    'presente_sin_registro': 'Cooperativista en reunión pero no registró asistencia',
-    'retraso_presente': 'Retraso pero estuvo en la reunión',
-    'problema_dispositivo': 'Problemas con el dispositivo',
-    'admin_ingresado': 'Ingresado por el administrador',
-    'justificacion_especial': 'Justificación especial'
-  }
-  return motivos[motivo] || motivo
-}
-
 const closeAddModal = () => {
   showAddModal.value = false
-  manualForm.value = {
-    ci: '',
-    hora: '',
-    motivo: '',
-    motivoOtro: ''
+  manualAttendanceForm.value = {
+    cooperativista_id: null,
+    tipo: 'entrada',
+    reason: '',
+    customReason: ''
   }
-  selectedCooperativista.value = null
+}
+
+const clearErrors = () => {
+  attendanceStore.error = null
+  periodStore.error = null
+  cooperativistaStore.error = null
 }
 
 onMounted(() => {
@@ -617,7 +582,51 @@ useHead({
   title: 'Detalle de Período de Asistencia'
 })
 </script>
+
 <style scoped>
+.timeline {
+  padding-left: 2rem;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+  border-left: 2px solid #dbdbdb;
+  padding-left: 2rem;
+}
+
+.timeline-item:last-child {
+  border-left: none;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -0.65rem;
+  top: 0;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: #3273dc;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-marker.is-icon {
+  background: #48c774;
+}
+
+.timeline-marker i {
+  font-size: 0.7rem;
+  color: white;
+}
+
+.timeline-content .heading {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
 .index_home-page {
   min-height: calc(100vh - 200px);
   padding: 1.5rem;

@@ -11,9 +11,6 @@ export const useAttendanceStore = defineStore('attendance', {
   }),
 
   getters: {
-    validAttendances: (state) => state.attendances.filter(a => a.is_valid),
-    invalidAttendances: (state) => state.attendances.filter(a => !a.is_valid),
-    
     getAttendancesByCooperativista: (state) => (cooperativistaId) => {
       return state.attendances.filter(a => a.cooperativista_id === cooperativistaId)
     },
@@ -24,22 +21,12 @@ export const useAttendanceStore = defineStore('attendance', {
   },
 
   actions: {
-    async fetchAttendances(filters = {}) {
+    async fetchAttendances(skip = 0, limit = 100) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const params = new URLSearchParams()
-        
-        if (filters.cooperativista_id) params.append('cooperativista_id', filters.cooperativista_id)
-        if (filters.period_id) params.append('period_id', filters.period_id)
-        if (filters.fecha_inicio) params.append('fecha_inicio', filters.fecha_inicio)
-        if (filters.fecha_fin) params.append('fecha_fin', filters.fecha_fin)
-        if (filters.tipo) params.append('tipo', filters.tipo)
-        if (filters.device_id) params.append('device_id', filters.device_id)
-        if (filters.is_valid !== undefined) params.append('is_valid', filters.is_valid)
-        if (filters.skip) params.append('skip', filters.skip)
-        if (filters.limit) params.append('limit', filters.limit)
+        const params = new URLSearchParams({ skip, limit })
         
         const response = await fetch(`${authStore.apiUrl}/api/attendance/?${params}`, {
           headers: {
@@ -57,10 +44,6 @@ export const useAttendanceStore = defineStore('attendance', {
       } finally {
         this.loading = false
       }
-    },
-
-    async fetchAttendancesByPeriod(periodId) {
-      return await this.fetchAttendances({ period_id: periodId, limit: 500 })
     },
 
     async fetchAttendance(attendanceId) {
@@ -86,41 +69,18 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async fetchCooperativistaPeriodAttendance(cooperativistaId, periodId) {
+    async fetchByCooperativista(cooperativistaId) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/cooperativista/${cooperativistaId}/period/${periodId}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/cooperativista/${cooperativistaId}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
         
-        if (!response.ok) throw new Error('Error al verificar asistencia')
-        
-        const attendance = await response.json()
-        return attendance
-      } catch (error) {
-        this.error = error.message
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async fetchTodayAttendance(cooperativistaId) {
-      this.loading = true
-      this.error = null
-      try {
-        const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/cooperativista/${cooperativistaId}/today`, {
-          headers: {
-            'Authorization': `Bearer ${authStore.token}`
-          }
-        })
-        
-        if (!response.ok) throw new Error('Error al obtener asistencias de hoy')
+        if (!response.ok) throw new Error('Error al obtener asistencias')
         
         const attendances = await response.json()
         return attendances
@@ -132,23 +92,41 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async fetchAttendanceRange(cooperativistaId, fechaInicio, fechaFin) {
+    async fetchByPeriod(periodId) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const params = new URLSearchParams({
-          fecha_inicio: fechaInicio,
-          fecha_fin: fechaFin
-        })
-        
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/cooperativista/${cooperativistaId}/range?${params}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/period/${periodId}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
         
-        if (!response.ok) throw new Error('Error al obtener asistencias del rango')
+        if (!response.ok) throw new Error('Error al obtener asistencias del período')
+        
+        this.attendances = await response.json()
+        return this.attendances
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchByDate(fecha) {
+      this.loading = true
+      this.error = null
+      try {
+        const authStore = useAuthStore()
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/date/${fecha}`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (!response.ok) throw new Error('Error al obtener asistencias de la fecha')
         
         const attendances = await response.json()
         return attendances
@@ -160,24 +138,27 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async createAttendance(attendanceData) {
+    async registerAttendance(qrCode, periodId = null, tipo = 'entrada') {
       this.loading = true
       this.error = null
-      console.log('Creating attendance with data:', attendanceData)
       try {
         const authStore = useAuthStore()
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/scan`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(attendanceData)
+          body: JSON.stringify({
+            qr_code: qrCode,
+            period_id: periodId,
+            tipo: tipo
+          })
         })
         
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.detail || 'Error al crear asistencia')
+          throw new Error(error.detail || 'Error al registrar asistencia')
         }
         
         const newAttendance = await response.json()
@@ -191,16 +172,48 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async updateAttendance(attendanceId, updateData, changedBy = null, reason = null) {
+    async registerManualAttendance(cooperativistaId, periodId = null, tipo = 'entrada', reason = null) {
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const params = new URLSearchParams()
-        if (changedBy) params.append('changed_by', changedBy)
-        if (reason) params.append('reason', reason)
         
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/${attendanceId}?${params}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/manual`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            cooperativista_id: cooperativistaId,
+            period_id: periodId,
+            tipo: tipo,
+            reason: reason
+          })
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.detail || 'Error al registrar asistencia manual')
+        }
+        
+        const newAttendance = await response.json()
+        this.attendances.unshift(newAttendance)
+        return newAttendance
+      } catch (error) {
+        this.error = error.message
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateAttendance(attendanceId, updateData) {
+      this.loading = true
+      this.error = null
+      try {
+        const authStore = useAuthStore()
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/${attendanceId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${authStore.token}`,
@@ -228,16 +241,18 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async deleteAttendance(attendanceId, changedBy = null, reason = null) {
+    async deleteAttendance(attendanceId, confirm = '') {
+      if (confirm !== 'DELETE_PERMANENTLY') {
+        throw new Error('Debe confirmar la eliminación')
+      }
+      
       this.loading = true
       this.error = null
       try {
         const authStore = useAuthStore()
-        const params = new URLSearchParams()
-        if (changedBy) params.append('changed_by', changedBy)
-        if (reason) params.append('reason', reason)
+        const params = new URLSearchParams({ confirm })
         
-        const response = await fetch(`${authStore.apiUrl}/api/attendance/${attendanceId}?${params}`, {
+        const response = await fetch(`${authStore.apiUrl}/api/attendance/${attendanceId}/hard-delete?${params}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${authStore.token}`
@@ -259,7 +274,7 @@ export const useAttendanceStore = defineStore('attendance', {
       }
     },
 
-    async fetchAttendanceLogs(attendanceId) {
+    async fetchLogs(attendanceId) {
       this.loading = true
       this.error = null
       try {
@@ -270,7 +285,7 @@ export const useAttendanceStore = defineStore('attendance', {
           }
         })
         
-        if (!response.ok) throw new Error('Error al obtener logs de asistencia')
+        if (!response.ok) throw new Error('Error al obtener logs')
         
         this.logs = await response.json()
         return this.logs

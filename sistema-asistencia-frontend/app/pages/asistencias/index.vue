@@ -34,7 +34,7 @@
             <div class="control has-icons-left">
               <div class="select is-fullwidth">
                 <select v-model="filters.mes">
-                  <option :value="undefined">Todos los meses</option>
+                  <option :value="null">Todos los meses</option>
                   <option v-for="m in 12" :key="m" :value="m">{{ getMonthName(m) }}</option>
                 </select>
               </div>
@@ -50,7 +50,7 @@
             <div class="control has-icons-left">
               <div class="select is-fullwidth">
                 <select v-model="filters.anio">
-                  <option :value="undefined">Todos los años</option>
+                  <option :value="null">Todos los años</option>
                   <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
                 </select>
               </div>
@@ -65,10 +65,9 @@
             <label class="label">Estado</label>
             <div class="control has-icons-left">
               <div class="select is-fullwidth">
-                <select v-model="filters.is_open">
-                  <option :value="undefined">Todos</option>
-                  <option :value="true">Abiertos</option>
-                  <option :value="false">Cerrados</option>
+                <select v-model="filters.activeOnly">
+                  <option :value="false">Todos</option>
+                  <option :value="true">Solo activos</option>
                 </select>
               </div>
               <span class="icon is-left">
@@ -99,7 +98,7 @@
         <p class="mt-3">Cargando períodos...</p>
       </div>
 
-      <div v-else-if="periodStore.periods.length === 0" class="has-text-centered py-6">
+      <div v-else-if="filteredPeriods.length === 0" class="has-text-centered py-6">
         <span class="icon is-large has-text-grey-light">
           <i class="mdi mdi-calendar-blank mdi-48px"></i>
         </span>
@@ -120,7 +119,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="period in periodStore.periods" :key="period.id">
+            <tr v-for="period in filteredPeriods" :key="period.id">
               <td>
                 <strong>{{ period.nombre }}</strong>
                 <br>
@@ -143,35 +142,7 @@
                 </span>
               </td>
               <td class="has-text-centered">
-                <div v-if="!period.is_open" class="dropdown is-hoverable">
-                  <div class="dropdown-trigger">
-                    <button class="button is-small is-light">
-                      <span class="icon">
-                        <i class="mdi mdi-timer"></i>
-                      </span>
-                      <span>{{ calculateDuration(period.hora_inicio, period.hora_fin) }}</span>
-                      <span class="icon is-small">
-                        <i class="mdi mdi-chevron-down"></i>
-                      </span>
-                    </button>
-                  </div>
-                  <div class="dropdown-menu">
-                    <div class="dropdown-content">
-                      <a 
-                        v-for="shortcut in periodStore.durationShortcuts" 
-                        :key="shortcut.label"
-                        class="dropdown-item"
-                        @click="extendDuration(period.id, shortcut.minutes)"
-                      >
-                        <span class="icon">
-                          <i class="mdi mdi-plus"></i>
-                        </span>
-                        {{ shortcut.label }}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <span v-else class="tag is-medium">
+                <span class="tag is-medium">
                   <span class="icon">
                     <i class="mdi mdi-timer"></i>
                   </span>
@@ -179,23 +150,17 @@
                 </span>
               </td>
               <td class="has-text-centered">
-                <span v-if="periodStore.shouldBeOpen(period)" class="tag is-warning is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-lock-open-variant"></i>
-                  </span>
-                  <span>Apertura automática</span>
-                </span>
-                <span v-else-if="period.is_open && periodStore.isOpenOutOfTime(period)" class="tag is-warning is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-alert-circle"></i>
-                  </span>
-                  <span>Abierto fuera de tiempo</span>
-                </span>
-                <span v-else-if="period.is_open" class="tag is-success is-medium">
+                <span v-if="period.is_open" class="tag is-success is-medium">
                   <span class="icon">
                     <i class="mdi mdi-lock-open"></i>
                   </span>
                   <span>Abierto</span>
+                </span>
+                <span v-else-if="periodStore.getPeriodStatus(period) === 'en_curso'" class="tag is-warning is-medium">
+                  <span class="icon">
+                    <i class="mdi mdi-alert"></i>
+                  </span>
+                  <span>En Curso (Cerrado)</span>
                 </span>
                 <span v-else-if="periodStore.getPeriodStatus(period) === 'programado'" class="tag is-info is-medium">
                   <span class="icon">
@@ -203,23 +168,17 @@
                   </span>
                   <span>Programado</span>
                 </span>
-                <span v-else-if="periodStore.getPeriodStatus(period) === 'en_curso'" class="tag is-primary is-medium">
-                  <span class="icon">
-                    <i class="mdi mdi-clock"></i>
-                  </span>
-                  <span>En Curso</span>
-                </span>
                 <span v-else-if="periodStore.getPeriodStatus(period) === 'finalizado'" class="tag is-dark is-medium">
                   <span class="icon">
                     <i class="mdi mdi-check-circle"></i>
                   </span>
                   <span>Finalizado</span>
                 </span>
-                <span v-else class="tag is-danger is-medium">
+                <span v-else class="tag is-light is-medium">
                   <span class="icon">
-                    <i class="mdi mdi-close-circle"></i>
+                    <i class="mdi mdi-help-circle"></i>
                   </span>
-                  <span>Inactivo</span>
+                  <span>Cerrado</span>
                 </span>
               </td>
               <td class="has-text-centered">
@@ -259,17 +218,7 @@
                   </button>
                   
                   <button 
-                    class="button is-info"
-                    @click="viewStats(period.id)"
-                    title="Estadísticas"
-                  >
-                    <span class="icon">
-                      <i class="mdi mdi-chart-bar"></i>
-                    </span>
-                  </button>
-                  
-                  <button 
-                    v-if="!period.is_open && period.is_active" 
+                    v-if="!period.is_open"
                     class="button is-success"
                     @click="openPeriod(period.id)"
                     :disabled="periodStore.loading"
@@ -305,12 +254,12 @@
                   
                   <button 
                     class="button is-danger"
-                    @click="confirmDelete(period.id)"
+                    @click="confirmDeactivate(period.id)"
                     :disabled="periodStore.loading || period.is_open"
-                    title="Eliminar"
+                    title="Desactivar"
                   >
                     <span class="icon">
-                      <i class="mdi mdi-delete"></i>
+                      <i class="mdi mdi-cancel"></i>
                     </span>
                   </button>
                 </div>
@@ -403,15 +352,11 @@
                 class="input" 
                 type="date" 
                 v-model="formData.fecha_asistencia"
-                :min="minDate"
               >
               <span class="icon is-left">
                 <i class="mdi mdi-calendar-today"></i>
               </span>
             </div>
-            <p v-if="isDateInPast" class="help is-danger">
-              La fecha seleccionada está en el pasado
-            </p>
           </div>
 
           <div class="columns">
@@ -423,15 +368,11 @@
                     class="input" 
                     type="time" 
                     v-model="formData.hora_inicio"
-                    :min="isToday ? minTime : undefined"
                   >
                   <span class="icon is-left">
                     <i class="mdi mdi-clock-start"></i>
                   </span>
                 </div>
-                <p v-if="isTimeInPast" class="help is-danger">
-                  La hora seleccionada ya pasó
-                </p>
               </div>
             </div>
             <div class="column is-6">
@@ -452,7 +393,7 @@
           </div>
 
           <div class="notification is-info is-light">
-            <p><strong>Nota:</strong> Los períodos en curso se abrirán automáticamente para registro de asistencia.</p>
+            <p><strong>Nota:</strong> El período se abrirá automáticamente cuando llegue la hora de inicio.</p>
           </div>
         </section>
         <footer class="modal-card-foot">
@@ -472,89 +413,41 @@
       </div>
     </div>
 
-    <div class="modal" :class="{ 'is-active': showStatsModal }">
-      <div class="modal-background" @click="showStatsModal = false"></div>
+    <div class="modal" :class="{ 'is-active': showDeactivateModal }">
+      <div class="modal-background" @click="showDeactivateModal = false"></div>
       <div class="modal-card">
-        <header class="modal-card-head">
+        <header class="modal-card-head has-background-warning">
           <p class="modal-card-title">
-            <span class="icon-text">
-              <span class="icon">
-                <i class="mdi mdi-chart-line"></i>
-              </span>
-              <span>Estadísticas del Período</span>
-            </span>
-          </p>
-          <button class="delete" @click="showStatsModal = false"></button>
-        </header>
-        <section class="modal-card-body" v-if="periodStore.periodStats">
-          <div class="columns is-multiline">
-            <div class="column is-6">
-              <div class="box has-background-success-light">
-                <p class="heading">Asistencias Válidas</p>
-                <p class="title">{{ periodStore.periodStats.valid_attendances }}</p>
-              </div>
-            </div>
-            <div class="column is-6">
-              <div class="box has-background-warning-light">
-                <p class="heading">Asistencias Inválidas</p>
-                <p class="title">{{ periodStore.periodStats.invalid_attendances }}</p>
-              </div>
-            </div>
-            <div class="column is-6">
-              <div class="box has-background-info-light">
-                <p class="heading">Total Registrado</p>
-                <p class="title">{{ periodStore.periodStats.total_marked }}</p>
-              </div>
-            </div>
-            <div class="column is-6">
-              <div class="box has-background-light">
-                <p class="heading">Total Esperado</p>
-                <p class="title">{{ periodStore.periodStats.total_expected }}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        <footer class="modal-card-foot">
-          <button class="button" @click="showStatsModal = false">Cerrar</button>
-        </footer>
-      </div>
-    </div>
-
-    <div class="modal" :class="{ 'is-active': showDeleteModal }">
-      <div class="modal-background" @click="showDeleteModal = false"></div>
-      <div class="modal-card">
-        <header class="modal-card-head has-background-danger">
-          <p class="modal-card-title has-text-white">
             <span class="icon-text">
               <span class="icon">
                 <i class="mdi mdi-alert-circle"></i>
               </span>
-              <span>Confirmar Eliminación</span>
+              <span>Confirmar Desactivación</span>
             </span>
           </p>
-          <button class="delete" @click="showDeleteModal = false"></button>
+          <button class="delete" @click="showDeactivateModal = false"></button>
         </header>
         <section class="modal-card-body">
-          <article class="message is-danger">
+          <article class="message is-warning">
             <div class="message-body">
-              <p class="mb-3">¿Está seguro de que desea eliminar este período?</p>
-              <p><strong>Esta acción no se puede deshacer.</strong></p>
+              <p class="mb-3">¿Está seguro de que desea desactivar este período?</p>
+              <p>El período será marcado como inactivo pero no se eliminará permanentemente.</p>
             </div>
           </article>
         </section>
         <footer class="modal-card-foot">
           <button 
-            class="button is-danger" 
-            @click="deletePeriod"
+            class="button is-warning" 
+            @click="deactivatePeriod"
             :disabled="periodStore.loading"
           >
             <span class="icon">
-              <i class="mdi mdi-delete"></i>
+              <i class="mdi mdi-cancel"></i>
             </span>
-            <span v-if="periodStore.loading">Eliminando...</span>
-            <span v-else>Eliminar</span>
+            <span v-if="periodStore.loading">Desactivando...</span>
+            <span v-else>Desactivar</span>
           </button>
-          <button class="button" @click="showDeleteModal = false">Cancelar</button>
+          <button class="button" @click="showDeactivateModal = false">Cancelar</button>
         </footer>
       </div>
     </div>
@@ -578,15 +471,14 @@ const periodStore = useAttendancePeriodStore()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
-const showStatsModal = ref(false)
-const showDeleteModal = ref(false)
-const periodToDelete = ref(null)
+const showDeactivateModal = ref(false)
+const periodToDeactivate = ref(null)
 const editingPeriodId = ref(null)
 
 const filters = ref({
   mes: null,
-  anio: new Date().getFullYear(),
-  is_open: undefined
+  anio: null,
+  activeOnly: true
 })
 
 const formData = ref({
@@ -596,8 +488,7 @@ const formData = ref({
   anio: new Date().getFullYear(),
   fecha_asistencia: '',
   hora_inicio: '07:00',
-  hora_fin: '19:00',
-  is_active: true
+  hora_fin: '19:00'
 })
 
 const years = computed(() => {
@@ -605,32 +496,18 @@ const years = computed(() => {
   return [currentYear - 1, currentYear, currentYear + 1]
 })
 
-const minDate = computed(() => dayjs().format('YYYY-MM-DD'))
-const minTime = computed(() => dayjs().format('HH:mm'))
-
-const isToday = computed(() => {
-  if (!formData.value.fecha_asistencia) return false
-  return dayjs(formData.value.fecha_asistencia).isSame(dayjs(), 'day')
-})
-
-const isDateInPast = computed(() => {
-  if (!formData.value.fecha_asistencia) return false
-  return dayjs(formData.value.fecha_asistencia).isBefore(dayjs(), 'day')
-})
-
-const isTimeInPast = computed(() => {
-  if (!isToday.value || !formData.value.hora_inicio) return false
-  const selectedDateTime = dayjs(`${formData.value.fecha_asistencia}T${formData.value.hora_inicio}`)
-  return selectedDateTime.isBefore(dayjs())
+const filteredPeriods = computed(() => {
+  return periodStore.periods.filter(p => {
+    if (filters.value.activeOnly && !p.is_active) return false
+    return true
+  })
 })
 
 const canSavePeriod = computed(() => {
   return !!formData.value.nombre &&
          !!formData.value.fecha_asistencia &&
          !!formData.value.hora_inicio &&
-         !!formData.value.hora_fin &&
-         !isDateInPast.value &&
-         !isTimeInPast.value
+         !!formData.value.hora_fin
 })
 
 const getMonthName = (month) => {
@@ -667,7 +544,7 @@ const calculateDuration = (startTime, endTime) => {
 
 const loadPeriods = async () => {
   try {
-    await periodStore.fetchPeriods(filters.value)
+    await periodStore.fetchPeriods(0, 100, filters.value.activeOnly)
   } catch (error) {
     console.error('Error al cargar períodos:', error)
   }
@@ -699,15 +576,6 @@ const closePeriod = async (periodId) => {
   }
 }
 
-const viewStats = async (periodId) => {
-  try {
-    await periodStore.fetchPeriodStats(periodId)
-    showStatsModal.value = true
-  } catch (error) {
-    console.error('Error al obtener estadísticas:', error)
-  }
-}
-
 const viewPeriodDetails = (periodId) => {
   router.push(`/asistencias/${periodId}`)
 }
@@ -721,8 +589,7 @@ const editPeriod = (period) => {
     anio: period.anio,
     fecha_asistencia: period.fecha_asistencia,
     hora_inicio: period.hora_inicio ? period.hora_inicio.substring(0, 5) : '07:00',
-    hora_fin: period.hora_fin ? period.hora_fin.substring(0, 5) : '19:00',
-    is_active: period.is_active
+    hora_fin: period.hora_fin ? period.hora_fin.substring(0, 5) : '19:00'
   }
   showEditModal.value = true
 }
@@ -736,8 +603,7 @@ const savePeriod = async () => {
       anio: parseInt(formData.value.anio),
       fecha_asistencia: formData.value.fecha_asistencia,
       hora_inicio: formData.value.hora_inicio + ':00',
-      hora_fin: formData.value.hora_fin + ':00',
-      is_active: formData.value.is_active
+      hora_fin: formData.value.hora_fin + ':00'
     }
 
     if (showEditModal.value) {
@@ -753,28 +619,19 @@ const savePeriod = async () => {
   }
 }
 
-const confirmDelete = (periodId) => {
-  periodToDelete.value = periodId
-  showDeleteModal.value = true
+const confirmDeactivate = (periodId) => {
+  periodToDeactivate.value = periodId
+  showDeactivateModal.value = true
 }
 
-const deletePeriod = async () => {
+const deactivatePeriod = async () => {
   try {
-    await periodStore.deletePeriod(periodToDelete.value)
-    showDeleteModal.value = false
-    periodToDelete.value = null
+    await periodStore.deactivatePeriod(periodToDeactivate.value)
+    showDeactivateModal.value = false
+    periodToDeactivate.value = null
     await loadPeriods()
   } catch (error) {
-    console.error('Error al eliminar período:', error)
-  }
-}
-
-const extendDuration = async (periodId, additionalMinutes) => {
-  try {
-    await periodStore.extendPeriodDuration(periodId, additionalMinutes)
-    await loadPeriods()
-  } catch (error) {
-    console.error('Error al extender duración:', error)
+    console.error('Error al desactivar período:', error)
   }
 }
 
@@ -789,8 +646,7 @@ const closeModal = () => {
     anio: new Date().getFullYear(),
     fecha_asistencia: '',
     hora_inicio: '07:00',
-    hora_fin: '19:00',
-    is_active: true
+    hora_fin: '19:00'
   }
 }
 
@@ -802,6 +658,7 @@ useHead({
   title: 'Gestión de Períodos de Asistencia'
 })
 </script>
+
 
 <style scoped>
 .container {
