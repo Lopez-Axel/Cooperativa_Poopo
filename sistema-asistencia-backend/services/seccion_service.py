@@ -9,6 +9,8 @@ from sqlalchemy import func
 from schemas.seccion import SeccionDetailsResponse, CuadrillaInfo, DelegadoInfo
 from models.cuadrilla import Cuadrilla
 from models.cooperativista import Cooperativista
+from repositories.cuadrilla_repo import cuadrilla_repo
+from schemas.cuadrilla import CuadrillaResponse
 
 
 class SeccionService:
@@ -148,6 +150,90 @@ class SeccionService:
             total_cuadrillas=len(cuadrillas_info),
             total_cooperativistas=total_cooperativistas or 0
         )
+    
+    def create_default_cuadrilla(self, db: Session, seccion_id: int, user_id: int) -> CuadrillaResponse:
+        # Validar que la sección exista
+        seccion = seccion_repo.get_by_id(db, seccion_id)
+        if not seccion:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sección no encontrada"
+            )
+
+        # Verificar si ya existe la cuadrilla "SIN CUADRILLA" en esta sección
+        existing = (
+            db.query(Cuadrilla)
+            .filter(
+                Cuadrilla.id_seccion == seccion_id,
+                Cuadrilla.nombre == "SIN CUADRILLA"
+            )
+            .first()
+        )
+
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La sección ya tiene una cuadrilla por defecto"
+            )
+
+        # Crear la cuadrilla por defecto
+        cuadrilla = Cuadrilla(
+            nombre="SIN CUADRILLA",
+            id_seccion=seccion_id,
+            is_active=True,
+            created_by=user_id
+        )
+
+        cuadrilla = cuadrilla_repo.create(db, cuadrilla)
+        return CuadrillaResponse.model_validate(cuadrilla)
+    
+    def create_default_cuadrillas_bulk(self, db: Session, user_id: int) -> dict:
+        secciones = seccion_repo.get_active(db)
+        
+        created_count = 0
+        skipped_count = 0
+        errors = []
+        
+        for seccion in secciones:
+            try:
+                existing = (
+                    db.query(Cuadrilla)
+                    .filter(
+                        Cuadrilla.id_seccion == seccion.id,
+                        Cuadrilla.nombre == "SIN CUADRILLA"
+                    )
+                    .first()
+                )
+                
+                if existing:
+                    skipped_count += 1
+                    continue
+                
+                cuadrilla = Cuadrilla(
+                    nombre="SIN CUADRILLA",
+                    id_seccion=seccion.id,
+                    is_active=True,
+                    created_by=user_id
+                )
+                
+                cuadrilla_repo.create(db, cuadrilla)
+                created_count += 1
+                
+            except Exception as e:
+                errors.append({
+                    "seccion_id": seccion.id,
+                    "seccion_nombre": seccion.nombre,
+                    "error": str(e)
+                })
+        
+        return {
+            "message": "Proceso completado",
+            "total_secciones": len(secciones),
+            "cuadrillas_creadas": created_count,
+            "cuadrillas_existentes": skipped_count,
+            "errores": errors
+        }
+
 
 
 seccion_service = SeccionService()

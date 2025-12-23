@@ -11,13 +11,24 @@
           </h1>
           <p class="subtitle">Administra las secciones de la cooperativa</p>
         </div>
-        <button 
-          class="button is-primary"
-          @click="openCreateModal"
-        >
-          <i class="mdi mdi-plus"></i>
-          <span>Nueva Sección</span>
-        </button>
+        <div class="header-actions">
+          <button 
+            class="button is-warning"
+            @click="generarReporteGlobal"
+            :disabled="generandoPDF"
+            title="Generar reporte PDF de todas las secciones"
+          >
+            <i class="mdi mdi-file-pdf-box"></i>
+            <span>{{ generandoPDF ? 'Generando PDF...' : 'Generar PDF Global' }}</span>
+          </button>
+          <button 
+            class="button is-primary"
+            @click="openCreateModal"
+          >
+            <i class="mdi mdi-plus"></i>
+            <span>Nueva Sección</span>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -135,6 +146,14 @@
                   <i class="mdi mdi-eye"></i>
                 </button>
                 <button 
+                  class="button is-small is-warning"
+                  @click="generarReporteIndividual(seccion.id)"
+                  :disabled="generandoPDF"
+                  title="Generar PDF de esta sección"
+                >
+                  <i class="mdi mdi-file-pdf-box"></i>
+                </button>
+                <button 
                   class="button is-small is-info"
                   @click="openEditModal(seccion)"
                   title="Editar sección"
@@ -187,9 +206,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useSeccionesStore } from '~/stores/secciones'
 import { useAuthStore } from '~/stores/auth'
+import { useCuadrillasStore } from '~/stores/cuadrillas'
+import { useCooperativistasStore } from '~/stores/cooperativistas'
 import ModalVerDetalles from '~/components/secciones/ModalVerDetalles.vue'
 import ModalFormulario from '~/components/secciones/ModalFormulario.vue'
 import ModalConfirmarEliminacion from '~/components/secciones/ModalConfirmarEliminacion.vue'
+import { generarReporteSecciones, generarReporteIndividualSeccion } from '~/utils/reporteSecciones'
 
 definePageMeta({
   layout: 'dashboard',
@@ -198,6 +220,8 @@ definePageMeta({
 
 const seccionesStore = useSeccionesStore()
 const authStore = useAuthStore()
+const cuadrillasStore = useCuadrillasStore()
+const cooperativistasStore = useCooperativistasStore()
 
 // Estados de modales
 const modalVerAbierto = ref(false)
@@ -215,12 +239,15 @@ const datosFormulario = ref({
 
 const searchQuery = ref('')
 const cooperativistasActivos = ref([])
+const generandoPDF = ref(false)
 
 onMounted(async () => {
   if (!authStore.isAuthenticated) {
     await authStore.initFromStorage()
   }
   await seccionesStore.fetchSecciones()
+  await cuadrillasStore.fetchCuadrillas()
+  await cooperativistasStore.cargarCooperativistas()
   cooperativistasActivos.value = await seccionesStore.fetchCooperativistasActivos()
 })
 
@@ -235,6 +262,80 @@ const setActiveFilter = (value) => {
 const resetFilters = () => {
   searchQuery.value = ''
   seccionesStore.resetFilters()
+}
+
+// Función para cargar detalles completos de una sección con cuadrillas y cooperativistas
+const cargarDetallesCompletos = async (seccionId) => {
+  try {
+    const detalles = await seccionesStore.getSeccionDetails(seccionId)
+    
+    // Obtener cuadrillas de esta sección
+    const cuadrillasDeLaSeccion = cuadrillasStore.cuadrillas.filter(
+      c => c.id_seccion === seccionId && c.is_active
+    )
+    
+    // Para cada cuadrilla, obtener sus cooperativistas
+    const cuadrillasConCooperativistas = cuadrillasDeLaSeccion.map(cuadrilla => {
+      const cooperativistasDeCuadrilla = cooperativistasStore.cooperativistas.filter(
+        coop => coop.id_cuadrilla === cuadrilla.id && coop.is_active
+      )
+      
+      return {
+        ...cuadrilla,
+        cooperativistas: cooperativistasDeCuadrilla
+      }
+    })
+    
+    return {
+      ...detalles,
+      cuadrillas: cuadrillasConCooperativistas,
+      total_cuadrillas: cuadrillasConCooperativistas.length,
+      total_cooperativistas: cuadrillasConCooperativistas.reduce(
+        (sum, c) => sum + c.cooperativistas.length, 0
+      )
+    }
+  } catch (error) {
+    console.error('Error cargando detalles completos:', error)
+    throw error
+  }
+}
+
+// Generar reporte global de todas las secciones
+const generarReporteGlobal = async () => {
+  generandoPDF.value = true
+  try {
+    // Obtener todas las secciones activas
+    const seccionesActivas = seccionesStore.secciones.filter(s => s.is_active)
+    
+    // Cargar detalles completos de cada sección
+    const seccionesConDetalles = await Promise.all(
+      seccionesActivas.map(async (seccion) => {
+        return await cargarDetallesCompletos(seccion.id)
+      })
+    )
+    
+    // Generar el PDF
+    await generarReporteSecciones(seccionesConDetalles)
+  } catch (error) {
+    console.error('Error generando reporte global:', error)
+    alert('Error al generar el reporte PDF. Por favor, intente nuevamente.')
+  } finally {
+    generandoPDF.value = false
+  }
+}
+
+// Generar reporte individual de una sección
+const generarReporteIndividual = async (seccionId) => {
+  generandoPDF.value = true
+  try {
+    const detallesCompletos = await cargarDetallesCompletos(seccionId)
+    await generarReporteIndividualSeccion(detallesCompletos)
+  } catch (error) {
+    console.error('Error generando reporte individual:', error)
+    alert('Error al generar el reporte PDF. Por favor, intente nuevamente.')
+  } finally {
+    generandoPDF.value = false
+  }
 }
 
 // Modal Ver Detalles
@@ -324,54 +425,62 @@ const handleEliminar = async () => {
 </script>
 
 <style scoped>
-
 .secciones-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0a1f0a 0%, #0d1b0d 50%, #1a2e1a 100%);
   padding: 2rem;
-  color: #e0f2f1;
-  margin: -1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .page-header {
-  background: linear-gradient(135deg, rgba(3, 135, 48, 0.3), rgba(30, 70, 30, 0.3));
+  background: linear-gradient(135deg, rgba(3, 135, 48, 0.2), rgba(30, 70, 30, 0.3));
   border: 2px solid rgba(255, 215, 0, 0.3);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .header-text .title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
+  color: #ffd700;
+  margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+  font-weight: 800;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header-text .title i {
+  font-size: 2.5rem;
+  color: #038730;
+  text-shadow: 0 0 20px rgba(3, 135, 48, 0.6);
 }
 
 .header-text .subtitle {
   color: #c8e6c9;
-  font-size: 1rem;
-  margin: 0;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+  font-weight: 500;
 }
 
-.button.is-primary {
+.button.is-primary,
+.button.is-warning {
   background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
-  color: #0d1b0d;
   border: none;
+  color: #0d1b0d;
   font-weight: 800;
   padding: 0.75rem 1.5rem;
   display: flex;
@@ -381,10 +490,17 @@ const handleEliminar = async () => {
   transition: all 0.3s ease;
 }
 
-.button.is-primary:hover:not(:disabled) {
+.button.is-primary:hover:not(:disabled),
+.button.is-warning:hover:not(:disabled) {
   background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+}
+
+.button.is-primary:disabled,
+.button.is-warning:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .filters-section {
@@ -620,6 +736,18 @@ const handleEliminar = async () => {
   box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
 }
 
+.button.is-small.is-warning {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.3), rgba(245, 124, 0, 0.3));
+  color: #ffe0b2;
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.button.is-small.is-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.5), rgba(245, 124, 0, 0.5));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+}
+
 .button.is-small.is-info {
   background: linear-gradient(135deg, rgba(0, 188, 212, 0.3), rgba(0, 151, 167, 0.3));
   color: #b2ebf2;
@@ -668,6 +796,10 @@ const handleEliminar = async () => {
   .header-content {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .header-actions {
+    flex-direction: column;
   }
   
   .header-text .title {

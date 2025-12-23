@@ -4,6 +4,7 @@ from typing import List
 from utils.dependencies import get_db, get_current_user
 from services.seccion_service import seccion_service
 from schemas.seccion import SeccionCreate, SeccionUpdate, SeccionResponse, SeccionWithDelegadoResponse, SeccionDetailsResponse
+from schemas.cuadrilla import CuadrillaResponse
 
 router = APIRouter(prefix="/secciones", tags=["Secciones"])
 
@@ -71,3 +72,25 @@ def get_seccion_details(
     current_user = Depends(get_current_user)
 ):
     return seccion_service.get_seccion_details(db, seccion_id)
+
+@router.post("/{seccion_id}/cuadrilla-default", response_model=CuadrillaResponse)
+def create_default_cuadrilla(
+    seccion_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return seccion_service.create_default_cuadrilla(
+        db,
+        seccion_id,
+        current_user.id
+    )
+
+@router.post("/bulk/cuadrillas-default")
+def create_default_cuadrillas_bulk(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return seccion_service.create_default_cuadrillas_bulk(
+        db,
+        current_user.id
+    )

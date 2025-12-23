@@ -66,7 +66,7 @@ class AttendanceLog(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     attendance_id = Column(Integer, ForeignKey("attendance.id", ondelete="CASCADE"), nullable=False, index=True)
-    action = Column(String(20), nullable=False)
+    action = Column(String(100), nullable=False)
     changed_by = Column(Integer, ForeignKey("users.id"))
     old_values = Column(Text)
     new_values = Column(Text)

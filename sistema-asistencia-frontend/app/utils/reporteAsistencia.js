@@ -35,7 +35,7 @@ export const generarReporteAsistencia = async (
     await new Promise((resolve) => {
       reader.onloadend = () => {
         const imgData = reader.result
-        doc.addImage(imgData, 'PNG', 15, yPosition - 5, 25, 25)
+        doc.addImage(imgData, 'PNG', 10, yPosition - 5, 25, 25)
         resolve()
       }
       reader.readAsDataURL(blob)
@@ -56,25 +56,17 @@ export const generarReporteAsistencia = async (
   doc.setFont('helvetica', 'normal')
   doc.text('Fundada 26 de Diciembre de 1953', 45, yPosition)
   
-  yPosition += 15
+  yPosition += 20
   
   // Título del reporte
-  doc.setFontSize(16)
+  doc.setFontSize(20)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(...colorPrimario)
-  doc.text('Reporte de Asistencias', 15, yPosition)
-  
-  yPosition += 10
+  doc.text(` ${periodo.nombre} `, 15, yPosition)
   
   // Información del período
   doc.setFillColor(245, 245, 245)
-  doc.rect(15, yPosition, 180, 30, 'F')
-  
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
   doc.setTextColor(...colorTexto)
-  doc.text(`Período: ${periodo.nombre}`, 20, yPosition + 8)
-  
   doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
   
