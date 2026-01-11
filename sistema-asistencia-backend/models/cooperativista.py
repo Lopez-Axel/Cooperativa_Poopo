@@ -1,7 +1,19 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text
-from sqlalchemy.sql import func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
 from database import Base
+
+
 class Cooperativista(Base):
     __tablename__ = "cooperativistas"
 
@@ -13,57 +25,55 @@ class Cooperativista(Base):
         Integer,
         ForeignKey("secciones.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
 
     id_cuadrilla = Column(
         Integer,
         ForeignKey("cuadrillas.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     rol_cuadrilla = Column(String(150))
-    
+
     apellido_paterno = Column(String(150), nullable=False, index=True)
     apellido_materno = Column(String(150), index=True)
     nombres = Column(String(150), nullable=False, index=True)
-    
+
     ci = Column(String(50), unique=True, index=True)
     ci_expedido = Column(String(10))
     ci_foto_url = Column(String(500))
     documento_abc_url = Column(String(500))
-    
+
     fecha_ingreso = Column(Date)
     fecha_nacimiento = Column(Date)
     codigo_asegurado = Column(String(100))
     cua = Column(String(50))
     ocupacion = Column(String(150))
     estado_asegurado = Column(String(50))
-    
+
+    usuario_gestora = Column(String(150))
+    password_gestora = Column(String(150))
+
     email = Column(String(150))
     telefono = Column(String(50))
-    
+
     is_active = Column(Boolean, default=True, index=True)
     motivo_baja = Column(Text)
     fecha_baja = Column(Date)
-    
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     created_by = Column(Integer, ForeignKey("users.id"))
- 
+
     seccion = relationship(
-        "Seccion",
-        back_populates="cooperativistas",
-        foreign_keys=[id_seccion]
+        "Seccion", back_populates="cooperativistas", foreign_keys=[id_seccion]
     )
 
-    cuadrilla = relationship(
-        "Cuadrilla",
-        back_populates="cooperativistas"
-    )
+    cuadrilla = relationship("Cuadrilla", back_populates="cooperativistas")
 
     attendances = relationship(
-        "Attendance",
-        back_populates="cooperativista",
-        cascade="all, delete-orphan"
+        "Attendance", back_populates="cooperativista", cascade="all, delete-orphan"
     )

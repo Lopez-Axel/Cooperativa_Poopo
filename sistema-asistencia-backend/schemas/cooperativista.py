@@ -1,6 +1,8 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Optional
 from datetime import date, datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
 
 class CooperativistaBase(BaseModel):
     id_cuadrilla: Optional[int] = None
@@ -18,12 +20,16 @@ class CooperativistaBase(BaseModel):
     cua: Optional[str] = None
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
+    usuario_gestora: Optional[str] = None
+    password_gestora: Optional[str] = None
     email: Optional[EmailStr] = None
     telefono: Optional[str] = None
     is_active: bool = True
 
+
 class CooperativistaCreate(CooperativistaBase):
     pass
+
 
 class CooperativistaUpdate(BaseModel):
     id_cuadrilla: Optional[int] = None
@@ -42,10 +48,13 @@ class CooperativistaUpdate(BaseModel):
     ocupacion: Optional[str] = None
     estado_asegurado: Optional[str] = None
     email: Optional[EmailStr] = None
+    usuario_gestora: Optional[str] = None
+    password_gestora: Optional[str] = None
     telefono: Optional[str] = None
     is_active: Optional[bool] = None
     motivo_baja: Optional[str] = None
     fecha_baja: Optional[date] = None
+
 
 class CooperativistaResponse(CooperativistaBase):
     id: int
@@ -55,5 +64,5 @@ class CooperativistaResponse(CooperativistaBase):
     created_at: datetime
     updated_at: datetime
     created_by: Optional[int] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
