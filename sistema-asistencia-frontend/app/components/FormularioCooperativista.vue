@@ -1,1310 +1,1865 @@
 <template>
-  <Teleport to="body">
-    <div v-if="isOpen" class="modal is-active">
-      <div class="modal-background" @click="cerrar"></div>
-      <div class="modal-card">
-        <header class="modal-card-head">
-          <p class="modal-card-title">
-            <i class="mdi" :class="esEdicion ? 'mdi-pencil' : 'mdi-plus'"></i>
-            {{ esEdicion ? 'Editar Cooperativista' : 'Nuevo Cooperativista' }}
-          </p>
-          <button class="delete" @click="cerrar"></button>
-        </header>
-        
-        <section class="modal-card-body">
-          <!-- DATOS PERSONALES -->
-          <div class="seccion-formulario">
-            <h3 class="seccion-titulo">
-              <i class="mdi mdi-account-circle"></i>
-              Datos Personales
-            </h3>
+    <Teleport to="body">
+        <div v-if="isOpen" class="modal is-active">
+            <div class="modal-background" @click="cerrar"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">
+                        <i
+                            class="mdi"
+                            :class="esEdicion ? 'mdi-pencil' : 'mdi-plus'"
+                        ></i>
+                        {{
+                            esEdicion
+                                ? "Editar Cooperativista"
+                                : "Nuevo Cooperativista"
+                        }}
+                    </p>
+                    <button class="delete" @click="cerrar"></button>
+                </header>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Nombres *</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.nombres"
-                      class="input"
-                      type="text"
-                      placeholder="Ej: Juan Carlos"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-account"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                <section class="modal-card-body">
+                    <!-- DATOS PERSONALES -->
+                    <div class="seccion-formulario">
+                        <h3 class="seccion-titulo">
+                            <i class="mdi mdi-account-circle"></i>
+                            Datos Personales
+                        </h3>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Apellido Paterno *</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.apellido_paterno"
-                      class="input"
-                      type="text"
-                      placeholder="Ej: Pérez"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-account"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Nombres *</label>
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="formulario.nombres"
+                                            class="input"
+                                            type="text"
+                                            placeholder="Ej: Juan Carlos"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-account"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-              <div class="column">
-                <div class="field">
-                  <label class="label">Apellido Materno</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.apellido_materno"
-                      class="input"
-                      type="text"
-                      placeholder="Ej: González"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-account"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label"
+                                        >Apellido Paterno *</label
+                                    >
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="
+                                                formulario.apellido_paterno
+                                            "
+                                            class="input"
+                                            type="text"
+                                            placeholder="Ej: Pérez"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-account"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">CI</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.ci"
-                      class="input"
-                      type="text"
-                      placeholder="Ej: 12345678"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-card-account-details"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label"
+                                        >Apellido Materno</label
+                                    >
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="
+                                                formulario.apellido_materno
+                                            "
+                                            class="input"
+                                            type="text"
+                                            placeholder="Ej: González"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-account"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-              <div class="column">
-                <div class="field">
-                  <label class="label">Expedido en</label>
-                  <div class="control has-icons-left">
-                    <div class="select is-fullwidth">
-                      <select v-model="formulario.ci_expedido">
-                        <option :value="null">Seleccione</option>
-                        <option value="LP">La Paz</option>
-                        <option value="OR">Oruro</option>
-                        <option value="PT">Potosí</option>
-                        <option value="CB">Cochabamba</option>
-                        <option value="SC">Santa Cruz</option>
-                        <option value="CH">Chuquisaca</option>
-                        <option value="TJ">Tarija</option>
-                        <option value="BE">Beni</option>
-                        <option value="PD">Pando</option>
-                      </select>
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">CI</label>
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="formulario.ci"
+                                            class="input"
+                                            type="text"
+                                            placeholder="Ej: 12345678"
+                                        />
+                                        <span class="icon is-left">
+                                            <i
+                                                class="mdi mdi-card-account-details"
+                                            ></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Expedido en</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            <select
+                                                v-model="formulario.ci_expedido"
+                                            >
+                                                <option :value="null">
+                                                    Seleccione
+                                                </option>
+                                                <option value="LP">
+                                                    La Paz
+                                                </option>
+                                                <option value="OR">
+                                                    Oruro
+                                                </option>
+                                                <option value="PT">
+                                                    Potosí
+                                                </option>
+                                                <option value="CB">
+                                                    Cochabamba
+                                                </option>
+                                                <option value="SC">
+                                                    Santa Cruz
+                                                </option>
+                                                <option value="CH">
+                                                    Chuquisaca
+                                                </option>
+                                                <option value="TJ">
+                                                    Tarija
+                                                </option>
+                                                <option value="BE">Beni</option>
+                                                <option value="PD">
+                                                    Pando
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-map-marker"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label"
+                                        >Fecha de Nacimiento</label
+                                    >
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="
+                                                formulario.fecha_nacimiento
+                                            "
+                                            class="input"
+                                            type="date"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-calendar"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Teléfono</label>
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="formulario.telefono"
+                                            class="input"
+                                            type="tel"
+                                            placeholder="Ej: 71234567"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-phone"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Email</label>
+                            <div class="control has-icons-left">
+                                <input
+                                    v-model="formulario.email"
+                                    class="input"
+                                    type="email"
+                                    placeholder="ejemplo@correo.com"
+                                />
+                                <span class="icon is-left">
+                                    <i class="mdi mdi-email"></i>
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <span class="icon is-left">
-                      <i class="mdi mdi-map-marker"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Fecha de Nacimiento</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.fecha_nacimiento"
-                      class="input"
-                      type="date"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-calendar"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    <!-- DATOS LABORALES -->
+                    <div class="seccion-formulario">
+                        <h3 class="seccion-titulo">
+                            <i class="mdi mdi-briefcase"></i>
+                            Información Laboral
+                        </h3>
 
-              <div class="column">
-                <div class="field">
-                  <label class="label">Teléfono</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.telefono"
-                      class="input"
-                      type="tel"
-                      placeholder="Ej: 71234567"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-phone"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Sección *</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            <select
+                                                v-model="seccionSeleccionada"
+                                                @change="onSeccionChange"
+                                            >
+                                                <option :value="null">
+                                                    Seleccione una sección
+                                                </option>
+                                                <option
+                                                    v-for="seccion in secciones"
+                                                    :key="seccion.id"
+                                                    :value="seccion.id"
+                                                >
+                                                    {{ seccion.nombre }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-sitemap"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="field">
-              <label class="label">Email</label>
-              <div class="control has-icons-left">
-                <input 
-                  v-model="formulario.email"
-                  class="input"
-                  type="email"
-                  placeholder="ejemplo@correo.com"
-                >
-                <span class="icon is-left">
-                  <i class="mdi mdi-email"></i>
-                </span>
-              </div>
-            </div>
-          </div>
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Cuadrilla *</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            <select
+                                                v-model="
+                                                    formulario.id_cuadrilla
+                                                "
+                                                :disabled="!seccionSeleccionada"
+                                            >
+                                                <option :value="null">
+                                                    Seleccione una cuadrilla
+                                                </option>
+                                                <option
+                                                    v-for="cuadrilla in cuadrillasFiltradas"
+                                                    :key="cuadrilla.id"
+                                                    :value="cuadrilla.id"
+                                                >
+                                                    {{ cuadrilla.nombre }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span class="icon is-left">
+                                            <i
+                                                class="mdi mdi-account-group"
+                                            ></i>
+                                        </span>
+                                    </div>
+                                    <p v-if="!seccionSeleccionada" class="help">
+                                        Primero seleccione una sección
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
-          <!-- DATOS LABORALES -->
-          <div class="seccion-formulario">
-            <h3 class="seccion-titulo">
-              <i class="mdi mdi-briefcase"></i>
-              Información Laboral
-            </h3>
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label"
+                                        >Rol en Cuadrilla</label
+                                    >
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            <select
+                                                v-model="
+                                                    formulario.rol_cuadrilla
+                                                "
+                                            >
+                                                <option :value="null">
+                                                    Sin rol especial
+                                                </option>
+                                                <option
+                                                    value="JEFE DE CUADRILLA"
+                                                >
+                                                    JEFE DE CUADRILLA
+                                                </option>
+                                                <option
+                                                    value="SUB JEFE DE CUADRILLA"
+                                                >
+                                                    SUB JEFE DE CUADRILLA
+                                                </option>
+                                                <option
+                                                    value="TESORERO DE CUADRILLA"
+                                                >
+                                                    TESORERO DE CUADRILLA
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-star"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Sección *</label>
-                  <div class="control has-icons-left">
-                    <div class="select is-fullwidth">
-                      <select v-model="seccionSeleccionada" @change="onSeccionChange">
-                        <option :value="null">Seleccione una sección</option>
-                        <option 
-                          v-for="seccion in secciones" 
-                          :key="seccion.id"
-                          :value="seccion.id"
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">Ocupación</label>
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="formulario.ocupacion"
+                                            class="input"
+                                            type="text"
+                                            list="ocupaciones-list"
+                                            placeholder="Ej: Minero, Perforista"
+                                        />
+                                        <datalist id="ocupaciones-list">
+                                            <option
+                                                v-for="ocupacion in ocupaciones"
+                                                :key="ocupacion"
+                                                :value="ocupacion"
+                                            />
+                                        </datalist>
+                                        <span class="icon is-left">
+                                            <i
+                                                class="mdi mdi-hammer-wrench"
+                                            ></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Fecha de Ingreso</label>
+                            <div class="control has-icons-left">
+                                <input
+                                    v-model="formulario.fecha_ingreso"
+                                    class="input"
+                                    type="date"
+                                />
+                                <span class="icon is-left">
+                                    <i class="mdi mdi-calendar-check"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INFORMACIÓN DE SEGURO -->
+                    <div class="seccion-formulario">
+                        <h3 class="seccion-titulo">
+                            <i class="mdi mdi-shield-check"></i>
+                            Información de Seguro
+                        </h3>
+
+                        <div class="columns">
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label"
+                                        >Código Asegurado</label
+                                    >
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="
+                                                formulario.codigo_asegurado
+                                            "
+                                            class="input"
+                                            type="text"
+                                            placeholder="Código de asegurado"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-identifier"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="column">
+                                <div class="field">
+                                    <label class="label">CUA</label>
+                                    <div class="control has-icons-left">
+                                        <input
+                                            v-model="formulario.cua"
+                                            class="input"
+                                            type="text"
+                                            placeholder="Código Único de Asegurado"
+                                        />
+                                        <span class="icon is-left">
+                                            <i class="mdi mdi-card-text"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Estado Asegurado</label>
+                            <div class="control has-icons-left">
+                                <input
+                                    v-model="formulario.estado_asegurado"
+                                    class="input"
+                                    type="text"
+                                    list="estados-list"
+                                    placeholder="Seleccione o escriba"
+                                />
+                                <datalist id="estados-list">
+                                    <option
+                                        v-for="estado in estadosAsegurado"
+                                        :key="estado"
+                                        :value="estado"
+                                    />
+                                </datalist>
+                                <span class="icon is-left">
+                                    <i class="mdi mdi-shield-account"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GESTORA CON PROTECCIÓN -->
+                    <div class="seccion-formulario seccion-protegida">
+                        <div class="seccion-header-protegida">
+                            <h3 class="seccion-titulo">
+                                <i class="mdi mdi-shield-lock"></i>
+                                Información de Gestora
+                                <span class="tag-protegido">Protegido</span>
+                            </h3>
+                        </div>
+
+                        <!-- Verificación de Contraseña -->
+                        <div
+                            v-if="!gestoraDesbloqueada"
+                            class="bloqueo-gestora"
                         >
-                          {{ seccion.nombre }}
-                        </option>
-                      </select>
+                            <div class="icono-bloqueo">
+                                <i class="mdi mdi-lock-outline"></i>
+                            </div>
+                            <p class="texto-bloqueo">
+                                Ingresa tu contraseña actual para acceder a la
+                                información de gestora
+                            </p>
+                            <div class="field-verificacion">
+                                <div class="control has-icons-left">
+                                    <input
+                                        v-model="passwordVerificacion"
+                                        class="input input-verificacion"
+                                        type="password"
+                                        placeholder="Tu contraseña actual"
+                                        @keyup.enter="verificarPassword"
+                                    />
+                                    <span class="icon is-left">
+                                        <i class="mdi mdi-key"></i>
+                                    </span>
+                                </div>
+                                <button
+                                    class="button is-primary mt-3"
+                                    @click="verificarPassword"
+                                    :disabled="!passwordVerificacion"
+                                >
+                                    <i class="mdi mdi-lock-open-variant"></i>
+                                    Desbloquear
+                                </button>
+                                <p
+                                    v-if="errorVerificacion"
+                                    class="help is-danger mt-2"
+                                >
+                                    {{ errorVerificacion }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Campos de Gestora (visibles solo si está desbloqueado) -->
+                        <div v-else class="campos-gestora-desbloqueados">
+                            <div class="estado-desbloqueado">
+                                <i class="mdi mdi-lock-open-check-outline"></i>
+                                <span>Acceso autorizado</span>
+                                <button
+                                    class="button is-small bloquear-button"
+                                    @click="bloquearGestora"
+                                >
+                                    <i class="mdi mdi-lock"></i>
+                                    Bloquear
+                                </button>
+                            </div>
+
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">
+                                            <i class="mdi mdi-account-key"></i>
+                                            Usuario Gestora
+                                        </label>
+                                        <div class="control has-icons-left">
+                                            <input
+                                                v-model="
+                                                    formulario.usuario_gestora
+                                                "
+                                                class="input input-gestora"
+                                                type="text"
+                                                placeholder="Usuario para acceso a gestora"
+                                            />
+                                            <span class="icon is-left">
+                                                <i
+                                                    class="mdi mdi-account-circle"
+                                                ></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">
+                                            <i
+                                                class="mdi mdi-form-textbox-password"
+                                            ></i>
+                                            Contraseña Gestora
+                                        </label>
+                                        <div
+                                            class="control has-icons-left has-icons-right"
+                                        >
+                                            <input
+                                                v-model="
+                                                    formulario.password_gestora
+                                                "
+                                                class="input input-gestora"
+                                                :type="
+                                                    mostrarPasswordGestora
+                                                        ? 'text'
+                                                        : 'password'
+                                                "
+                                                placeholder="Contraseña para acceso a gestora"
+                                            />
+                                            <span class="icon is-left">
+                                                <i class="mdi mdi-lock"></i>
+                                            </span>
+                                            <span
+                                                class="icon is-right icon-clickable"
+                                                @click="
+                                                    mostrarPasswordGestora =
+                                                        !mostrarPasswordGestora
+                                                "
+                                            >
+                                                <i
+                                                    class="mdi"
+                                                    :class="
+                                                        mostrarPasswordGestora
+                                                            ? 'mdi-eye-off'
+                                                            : 'mdi-eye'
+                                                    "
+                                                ></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="nota-seguridad">
+                                <i class="mdi mdi-information-outline"></i>
+                                <span
+                                    >Estas credenciales son independientes del
+                                    sistema y solo serán visibles para usuarios
+                                    autorizados</span
+                                >
+                            </div>
+                        </div>
                     </div>
-                    <span class="icon is-left">
-                      <i class="mdi mdi-sitemap"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              <div class="column">
-                <div class="field">
-                  <label class="label">Cuadrilla *</label>
-                  <div class="control has-icons-left">
-                    <div class="select is-fullwidth">
-                      <select 
-                        v-model="formulario.id_cuadrilla"
-                        :disabled="!seccionSeleccionada"
-                      >
-                        <option :value="null">Seleccione una cuadrilla</option>
-                        <option 
-                          v-for="cuadrilla in cuadrillasFiltradas" 
-                          :key="cuadrilla.id"
-                          :value="cuadrilla.id"
-                        >
-                          {{ cuadrilla.nombre }}
-                        </option>
-                      </select>
+                    <!-- DOCUMENTOS -->
+                    <div class="seccion-formulario">
+                        <h3 class="seccion-titulo">
+                            <i class="mdi mdi-file-document"></i>
+                            Documentos
+                        </h3>
+
+                        <!-- Foto CI -->
+                        <div class="field">
+                            <label class="label">Foto de CI</label>
+
+                            <!-- Preview de imagen actual (si existe) -->
+                            <div
+                                v-if="formulario.ci_foto_url && !previewCiFoto"
+                                class="preview-container"
+                            >
+                                <img
+                                    :src="formulario.ci_foto_url"
+                                    alt="Foto CI Actual"
+                                    class="preview-image"
+                                />
+                                <p class="help">Imagen actual</p>
+                            </div>
+
+                            <!-- Preview de nueva imagen -->
+                            <div v-if="previewCiFoto" class="preview-container">
+                                <img
+                                    :src="previewCiFoto"
+                                    alt="Vista previa"
+                                    class="preview-image"
+                                />
+                                <button
+                                    type="button"
+                                    class="button is-small is-danger"
+                                    @click="cancelarCiFoto"
+                                >
+                                    <i class="mdi mdi-close"></i>
+                                    Cancelar
+                                </button>
+                            </div>
+
+                            <!-- Input de archivo -->
+                            <div class="file has-name is-fullwidth">
+                                <label class="file-label">
+                                    <input
+                                        class="file-input"
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                                        @change="onCiFotoChange"
+                                        ref="ciFotoInput"
+                                    />
+                                    <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="mdi mdi-upload"></i>
+                                        </span>
+                                        <span class="file-label">
+                                            {{
+                                                ciFotoFile
+                                                    ? "Cambiar imagen"
+                                                    : "Seleccionar imagen"
+                                            }}
+                                        </span>
+                                    </span>
+                                    <span v-if="ciFotoFile" class="file-name">
+                                        {{ ciFotoFile.name }}
+                                    </span>
+                                </label>
+                            </div>
+                            <p class="help">JPG, PNG, WEBP - Máx 10MB</p>
+                        </div>
+
+                        <!-- Documento ABC -->
+                        <div class="field">
+                            <label class="label">Documento ABC</label>
+
+                            <!-- Link a documento actual -->
+                            <div
+                                v-if="
+                                    formulario.documento_abc_url &&
+                                    !documentoAbcFile
+                                "
+                                class="documento-actual"
+                            >
+                                <a
+                                    :href="formulario.documento_abc_url"
+                                    target="_blank"
+                                    class="button is-small is-info"
+                                >
+                                    <i class="mdi mdi-file-pdf-box"></i>
+                                    Ver documento actual
+                                </a>
+                            </div>
+
+                            <!-- Input de archivo -->
+                            <div class="file has-name is-fullwidth">
+                                <label class="file-label">
+                                    <input
+                                        class="file-input"
+                                        type="file"
+                                        accept="application/pdf,image/jpeg,image/jpg,image/png"
+                                        @change="onDocumentoAbcChange"
+                                        ref="documentoAbcInput"
+                                    />
+                                    <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="mdi mdi-upload"></i>
+                                        </span>
+                                        <span class="file-label">
+                                            {{
+                                                documentoAbcFile
+                                                    ? "Cambiar documento"
+                                                    : "Seleccionar documento"
+                                            }}
+                                        </span>
+                                    </span>
+                                    <span
+                                        v-if="documentoAbcFile"
+                                        class="file-name"
+                                    >
+                                        {{ documentoAbcFile.name }}
+                                    </span>
+                                </label>
+                            </div>
+                            <p class="help">PDF o imagen - Máx 20MB</p>
+
+                            <button
+                                v-if="documentoAbcFile"
+                                type="button"
+                                class="button is-small is-danger mt-2"
+                                @click="cancelarDocumentoAbc"
+                            >
+                                <i class="mdi mdi-close"></i>
+                                Cancelar
+                            </button>
+                        </div>
                     </div>
-                    <span class="icon is-left">
-                      <i class="mdi mdi-account-group"></i>
-                    </span>
-                  </div>
-                  <p v-if="!seccionSeleccionada" class="help">Primero seleccione una sección</p>
-                </div>
-              </div>
-            </div>
 
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Rol en Cuadrilla</label>
-                  <div class="control has-icons-left">
-                    <div class="select is-fullwidth">
-                      <select v-model="formulario.rol_cuadrilla">
-                        <option :value="null">Sin rol especial</option>
-                        <option value="JEFE DE CUADRILLA">JEFE DE CUADRILLA</option>
-                        <option value="SUB JEFE DE CUADRILLA">SUB JEFE DE CUADRILLA</option>
-                        <option value="TESORERO DE CUADRILLA">TESORERO DE CUADRILLA</option>
-                      </select>
+                    <!-- ESTADO -->
+                    <div class="seccion-formulario">
+                        <div class="field">
+                            <label class="checkbox-container">
+                                <input
+                                    v-model="formulario.is_active"
+                                    type="checkbox"
+                                />
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label"
+                                    >Cooperativista Activo</span
+                                >
+                            </label>
+                        </div>
                     </div>
-                    <span class="icon is-left">
-                      <i class="mdi mdi-star"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </section>
 
-              <div class="column">
-                <div class="field">
-                  <label class="label">Ocupación</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.ocupacion"
-                      class="input"
-                      type="text"
-                      list="ocupaciones-list"
-                      placeholder="Ej: Minero, Perforista"
+                <footer class="modal-card-foot">
+                    <button
+                        class="button is-primary"
+                        @click="guardar"
+                        :disabled="!formularioValido"
+                        :class="{ 'is-loading': cargando || subiendoArchivos }"
                     >
-                    <datalist id="ocupaciones-list">
-                      <option v-for="ocupacion in ocupaciones" :key="ocupacion" :value="ocupacion"/>
-                    </datalist>
-                    <span class="icon is-left">
-                      <i class="mdi mdi-hammer-wrench"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                        <i class="mdi mdi-check"></i>
+                        {{ esEdicion ? "Actualizar" : "Crear" }}
+                    </button>
+                    <button class="button" @click="cerrar">
+                        <i class="mdi mdi-close"></i>
+                        Cancelar
+                    </button>
+                </footer>
             </div>
-
-            <div class="field">
-              <label class="label">Fecha de Ingreso</label>
-              <div class="control has-icons-left">
-                <input 
-                  v-model="formulario.fecha_ingreso"
-                  class="input"
-                  type="date"
-                >
-                <span class="icon is-left">
-                  <i class="mdi mdi-calendar-check"></i>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- INFORMACIÓN DE SEGURO -->
-          <div class="seccion-formulario">
-            <h3 class="seccion-titulo">
-              <i class="mdi mdi-shield-check"></i>
-              Información de Seguro
-            </h3>
-
-            <div class="columns">
-              <div class="column">
-                <div class="field">
-                  <label class="label">Código Asegurado</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.codigo_asegurado"
-                      class="input"
-                      type="text"
-                      placeholder="Código de asegurado"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-identifier"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="column">
-                <div class="field">
-                  <label class="label">CUA</label>
-                  <div class="control has-icons-left">
-                    <input 
-                      v-model="formulario.cua"
-                      class="input"
-                      type="text"
-                      placeholder="Código Único de Asegurado"
-                    >
-                    <span class="icon is-left">
-                      <i class="mdi mdi-card-text"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="field">
-              <label class="label">Estado Asegurado</label>
-              <div class="control has-icons-left">
-                <input 
-                  v-model="formulario.estado_asegurado"
-                  class="input"
-                  type="text"
-                  list="estados-list"
-                  placeholder="Seleccione o escriba"
-                >
-                <datalist id="estados-list">
-                  <option v-for="estado in estadosAsegurado" :key="estado" :value="estado"/>
-                </datalist>
-                <span class="icon is-left">
-                  <i class="mdi mdi-shield-account"></i>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- DOCUMENTOS -->
-          <div class="seccion-formulario">
-            <h3 class="seccion-titulo">
-              <i class="mdi mdi-file-document"></i>
-              Documentos
-            </h3>
-
-            <!-- Foto CI -->
-            <div class="field">
-              <label class="label">Foto de CI</label>
-              
-              <!-- Preview de imagen actual (si existe) -->
-              <div v-if="formulario.ci_foto_url && !previewCiFoto" class="preview-container">
-                <img :src="formulario.ci_foto_url" alt="Foto CI Actual" class="preview-image">
-                <p class="help">Imagen actual</p>
-              </div>
-              
-              <!-- Preview de nueva imagen -->
-              <div v-if="previewCiFoto" class="preview-container">
-                <img :src="previewCiFoto" alt="Vista previa" class="preview-image">
-                <button type="button" class="button is-small is-danger" @click="cancelarCiFoto">
-                  <i class="mdi mdi-close"></i>
-                  Cancelar
-                </button>
-              </div>
-
-              <!-- Input de archivo -->
-              <div class="file has-name is-fullwidth">
-                <label class="file-label">
-                  <input 
-                    class="file-input" 
-                    type="file" 
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    @change="onCiFotoChange"
-                    ref="ciFotoInput"
-                  >
-                  <span class="file-cta">
-                    <span class="file-icon">
-                      <i class="mdi mdi-upload"></i>
-                    </span>
-                    <span class="file-label">
-                      {{ ciFotoFile ? 'Cambiar imagen' : 'Seleccionar imagen' }}
-                    </span>
-                  </span>
-                  <span v-if="ciFotoFile" class="file-name">
-                    {{ ciFotoFile.name }}
-                  </span>
-                </label>
-              </div>
-              <p class="help">JPG, PNG, WEBP - Máx 10MB</p>
-            </div>
-
-            <!-- Documento ABC -->
-            <div class="field">
-              <label class="label">Documento ABC</label>
-              
-              <!-- Link a documento actual -->
-              <div v-if="formulario.documento_abc_url && !documentoAbcFile" class="documento-actual">
-                <a :href="formulario.documento_abc_url" target="_blank" class="button is-small is-info">
-                  <i class="mdi mdi-file-pdf-box"></i>
-                  Ver documento actual
-                </a>
-              </div>
-
-              <!-- Input de archivo -->
-              <div class="file has-name is-fullwidth">
-                <label class="file-label">
-                  <input 
-                    class="file-input" 
-                    type="file" 
-                    accept="application/pdf,image/jpeg,image/jpg,image/png"
-                    @change="onDocumentoAbcChange"
-                    ref="documentoAbcInput"
-                  >
-                  <span class="file-cta">
-                    <span class="file-icon">
-                      <i class="mdi mdi-upload"></i>
-                    </span>
-                    <span class="file-label">
-                      {{ documentoAbcFile ? 'Cambiar documento' : 'Seleccionar documento' }}
-                    </span>
-                  </span>
-                  <span v-if="documentoAbcFile" class="file-name">
-                    {{ documentoAbcFile.name }}
-                  </span>
-                </label>
-              </div>
-              <p class="help">PDF o imagen - Máx 20MB</p>
-              
-              <button 
-                v-if="documentoAbcFile" 
-                type="button" 
-                class="button is-small is-danger mt-2" 
-                @click="cancelarDocumentoAbc"
-              >
-                <i class="mdi mdi-close"></i>
-                Cancelar
-              </button>
-            </div>
-          </div>
-
-          <!-- ESTADO -->
-          <div class="seccion-formulario">
-            <div class="field">
-              <label class="checkbox-container">
-                <input 
-                  v-model="formulario.is_active"
-                  type="checkbox"
-                >
-                <span class="checkmark"></span>
-                <span class="checkbox-label">Cooperativista Activo</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        <footer class="modal-card-foot">
-          <button 
-            class="button is-primary"
-            @click="guardar"
-            :disabled="!formularioValido"
-            :class="{ 'is-loading': cargando || subiendoArchivos }"
-          >
-            <i class="mdi mdi-check"></i>
-            {{ esEdicion ? 'Actualizar' : 'Crear' }}
-          </button>
-          <button class="button" @click="cerrar">
-            <i class="mdi mdi-close"></i>
-            Cancelar
-          </button>
-        </footer>
-      </div>
-    </div>
-  </Teleport>
+        </div>
+    </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useAuthStore } from '~/stores/auth'
+import { ref, computed, watch } from "vue";
+import { useAuthStore } from "~/stores/auth";
 
 const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    required: true
-  },
-  esEdicion: {
-    type: Boolean,
-    default: false
-  },
-  datosIniciales: {
-    type: Object,
-    default: () => ({
-      nombres: '',
-      apellido_paterno: '',
-      apellido_materno: '',
-      ci: '',
-      ci_expedido: null,
-      ci_foto_url: '',
-      fecha_nacimiento: '',
-      email: '',
-      telefono: '',
-      id_cuadrilla: null,
-      rol_cuadrilla: null,
-      ocupacion: '',
-      fecha_ingreso: '',
-      codigo_asegurado: '',
-      cua: '',
-      estado_asegurado: null,
-      documento_abc_url: '',
-      is_active: true
-    })
-  },
-  secciones: {
-    type: Array,
-    default: () => []
-  },
-  cuadrillas: {
-    type: Array,
-    default: () => []
-  },
-  ocupaciones: {
-    type: Array,
-    default: () => []
-  },
-  estadosAsegurado: {
-    type: Array,
-    default: () => []
-  },
-  cooperativistaId: {
-    type: Number,
-    default: null
-  },
-  cargando: {
-    type: Boolean,
-    default: false
-  }
-})
+    isOpen: {
+        type: Boolean,
+        required: true,
+    },
+    esEdicion: {
+        type: Boolean,
+        default: false,
+    },
+    datosIniciales: {
+        type: Object,
+        default: () => ({
+            nombres: "",
+            apellido_paterno: "",
+            apellido_materno: "",
+            ci: "",
+            ci_expedido: null,
+            ci_foto_url: "",
+            fecha_nacimiento: "",
+            email: "",
+            telefono: "",
+            id_cuadrilla: null,
+            rol_cuadrilla: null,
+            ocupacion: "",
+            fecha_ingreso: "",
+            codigo_asegurado: "",
+            cua: "",
+            estado_asegurado: null,
+            documento_abc_url: "",
+            is_active: true,
+        }),
+    },
+    secciones: {
+        type: Array,
+        default: () => [],
+    },
+    cuadrillas: {
+        type: Array,
+        default: () => [],
+    },
+    ocupaciones: {
+        type: Array,
+        default: () => [],
+    },
+    estadosAsegurado: {
+        type: Array,
+        default: () => [],
+    },
+    cooperativistaId: {
+        type: Number,
+        default: null,
+    },
+    cargando: {
+        type: Boolean,
+        default: false,
+    },
+});
 
-const emit = defineEmits(['close', 'guardar'])
+const emit = defineEmits(["close", "guardar"]);
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 const formulario = ref({
-  nombres: '',
-  apellido_paterno: '',
-  apellido_materno: '',
-  ci: '',
-  ci_expedido: null,
-  ci_foto_url: '',
-  fecha_nacimiento: '',
-  email: '',
-  telefono: '',
-  id_cuadrilla: null,
-  rol_cuadrilla: null,
-  ocupacion: '',
-  fecha_ingreso: '',
-  codigo_asegurado: '',
-  cua: '',
-  estado_asegurado: null,
-  documento_abc_url: '',
-  is_active: true
-})
+    nombres: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    ci: "",
+    ci_expedido: null,
+    ci_foto_url: "",
+    fecha_nacimiento: "",
+    email: "",
+    telefono: "",
+    id_cuadrilla: null,
+    rol_cuadrilla: null,
+    ocupacion: "",
+    fecha_ingreso: "",
+    codigo_asegurado: "",
+    cua: "",
+    estado_asegurado: null,
+    documento_abc_url: "",
+    is_active: true,
+    usuario_gestora: "",
+    password_gestora: "",
+});
 
-const seccionSeleccionada = ref(null)
+const seccionSeleccionada = ref(null);
 
 // Estado para archivos
-const ciFotoFile = ref(null)
-const documentoAbcFile = ref(null)
-const previewCiFoto = ref(null)
-const subiendoArchivos = ref(false)
+const ciFotoFile = ref(null);
+const documentoAbcFile = ref(null);
+const previewCiFoto = ref(null);
+const subiendoArchivos = ref(false);
 
 // Refs para inputs
-const ciFotoInput = ref(null)
-const documentoAbcInput = ref(null)
+const ciFotoInput = ref(null);
+const documentoAbcInput = ref(null);
+
+// Estados para gestora protegida
+const gestoraDesbloqueada = ref(false);
+const passwordVerificacion = ref("");
+const errorVerificacion = ref("");
+const mostrarPasswordGestora = ref(false);
 
 // Filtrar cuadrillas por sección seleccionada
 const cuadrillasFiltradas = computed(() => {
-  if (!seccionSeleccionada.value) return []
-  return props.cuadrillas.filter(c => c.id_seccion === seccionSeleccionada.value && c.is_active)
-})
+    if (!seccionSeleccionada.value) return [];
+    return props.cuadrillas.filter(
+        (c) => c.id_seccion === seccionSeleccionada.value && c.is_active,
+    );
+});
 
 // Validación del formulario
 const formularioValido = computed(() => {
-  return formulario.value.nombres.trim() !== '' &&
-         formulario.value.apellido_paterno.trim() !== '' &&
-         formulario.value.id_cuadrilla !== null
-})
+    return (
+        formulario.value.nombres.trim() !== "" &&
+        formulario.value.apellido_paterno.trim() !== "" &&
+        formulario.value.id_cuadrilla !== null
+    );
+});
 
 // Watch para datos iniciales
-watch(() => props.datosIniciales, (nuevosDatos) => {
-  if (!nuevosDatos) return
-  
-  formulario.value = { ...nuevosDatos }
-  
-  // Si es edición, encontrar la sección de la cuadrilla
-  if (props.esEdicion && nuevosDatos.id_cuadrilla) {
-    const cuadrilla = props.cuadrillas.find(c => c.id === nuevosDatos.id_cuadrilla)
-    if (cuadrilla) {
-      seccionSeleccionada.value = cuadrilla.id_seccion
-    }
-  }
-}, { immediate: true, deep: true })
+watch(
+    () => props.datosIniciales,
+    (nuevosDatos) => {
+        if (!nuevosDatos) return;
+
+        formulario.value = { ...nuevosDatos };
+
+        // Si es edición, encontrar la sección de la cuadrilla
+        if (props.esEdicion && nuevosDatos.id_cuadrilla) {
+            const cuadrilla = props.cuadrillas.find(
+                (c) => c.id === nuevosDatos.id_cuadrilla,
+            );
+            if (cuadrilla) {
+                seccionSeleccionada.value = cuadrilla.id_seccion;
+            }
+        }
+    },
+    { immediate: true, deep: true },
+);
 
 // Bloquear scroll del body cuando el modal está abierto
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
+watch(
+    () => props.isOpen,
+    (newVal) => {
+        if (newVal) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+    },
+);
 
 const onSeccionChange = () => {
-  // Limpiar cuadrilla seleccionada cuando cambia la sección
-  formulario.value.id_cuadrilla = null
-}
+    // Limpiar cuadrilla seleccionada cuando cambia la sección
+    formulario.value.id_cuadrilla = null;
+};
 
 const onCiFotoChange = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-  
-  // Validar tamaño (10MB)
-  if (file.size > 10 * 1024 * 1024) {
-    alert('La imagen es muy pesada. Máximo 10MB.')
-    event.target.value = ''
-    return
-  }
-  
-  // Validar tipo
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-  if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten imágenes JPG, PNG, WEBP')
-    event.target.value = ''
-    return
-  }
-  
-  ciFotoFile.value = file
-  
-  // Crear preview
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewCiFoto.value = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tamaño (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert("La imagen es muy pesada. Máximo 10MB.");
+        event.target.value = "";
+        return;
+    }
+
+    // Validar tipo
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+        alert("Solo se permiten imágenes JPG, PNG, WEBP");
+        event.target.value = "";
+        return;
+    }
+
+    ciFotoFile.value = file;
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewCiFoto.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
 const cancelarCiFoto = () => {
-  ciFotoFile.value = null
-  previewCiFoto.value = null
-  if (ciFotoInput.value) {
-    ciFotoInput.value.value = ''
-  }
-}
+    ciFotoFile.value = null;
+    previewCiFoto.value = null;
+    if (ciFotoInput.value) {
+        ciFotoInput.value.value = "";
+    }
+};
 
 const onDocumentoAbcChange = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-  
-  // Validar tamaño (20MB)
-  if (file.size > 20 * 1024 * 1024) {
-    alert('El archivo es muy pesado. Máximo 20MB.')
-    event.target.value = ''
-    return
-  }
-  
-  // Validar tipo
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    alert('Solo se permiten PDF o imágenes')
-    event.target.value = ''
-    return
-  }
-  
-  documentoAbcFile.value = file
-}
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tamaño (20MB)
+    if (file.size > 20 * 1024 * 1024) {
+        alert("El archivo es muy pesado. Máximo 20MB.");
+        event.target.value = "";
+        return;
+    }
+
+    // Validar tipo
+    const allowedTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+        alert("Solo se permiten PDF o imágenes");
+        event.target.value = "";
+        return;
+    }
+
+    documentoAbcFile.value = file;
+};
 
 const cancelarDocumentoAbc = () => {
-  documentoAbcFile.value = null
-  if (documentoAbcInput.value) {
-    documentoAbcInput.value.value = ''
-  }
-}
+    documentoAbcFile.value = null;
+    if (documentoAbcInput.value) {
+        documentoAbcInput.value.value = "";
+    }
+};
 
 const subirArchivos = async (cooperativistaId) => {
-  const uploads = []
-  
-  // Subir foto CI
-  if (ciFotoFile.value) {
-    const formData = new FormData()
-    formData.append('file', ciFotoFile.value)
-    
-    uploads.push(
-      $fetch(`${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/ci-foto`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authStore.token}`
-        },
-        body: formData
-      }).then(response => {
-        // Actualizar URL en el formulario
-        if (response.url) {
-          formulario.value.ci_foto_url = response.url
+    const uploads = [];
+
+    // Subir foto CI
+    if (ciFotoFile.value) {
+        const formData = new FormData();
+        formData.append("file", ciFotoFile.value);
+
+        uploads.push(
+            $fetch(
+                `${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/ci-foto`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${authStore.token}`,
+                    },
+                    body: formData,
+                },
+            ).then((response) => {
+                // Actualizar URL en el formulario
+                if (response.url) {
+                    formulario.value.ci_foto_url = response.url;
+                }
+                return response;
+            }),
+        );
+    }
+
+    // Subir documento ABC
+    if (documentoAbcFile.value) {
+        const formData = new FormData();
+        formData.append("file", documentoAbcFile.value);
+
+        uploads.push(
+            $fetch(
+                `${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/documento-abc`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${authStore.token}`,
+                    },
+                    body: formData,
+                },
+            ).then((response) => {
+                // Actualizar URL en el formulario
+                if (response.url) {
+                    formulario.value.documento_abc_url = response.url;
+                }
+                return response;
+            }),
+        );
+    }
+
+    if (uploads.length > 0) {
+        await Promise.all(uploads);
+    }
+};
+
+// Funciones para gestora protegida
+const verificarPassword = async () => {
+    errorVerificacion.value = "";
+
+    if (!passwordVerificacion.value) {
+        errorVerificacion.value = "Ingresa tu contraseña";
+        return;
+    }
+
+    try {
+        const response = await $fetch(`${authStore.apiUrl}/api/auth/login`, {
+            method: "POST",
+            body: {
+                username: authStore.user.username,
+                password: passwordVerificacion.value,
+            },
+        });
+
+        if (response.access_token) {
+            gestoraDesbloqueada.value = true;
+            passwordVerificacion.value = "";
+            errorVerificacion.value = "";
         }
-        return response
-      })
-    )
-  }
-  
-  // Subir documento ABC
-  if (documentoAbcFile.value) {
-    const formData = new FormData()
-    formData.append('file', documentoAbcFile.value)
-    
-    uploads.push(
-      $fetch(`${authStore.apiUrl}/api/uploads/cooperativistas/${cooperativistaId}/documento-abc`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authStore.token}`
-        },
-        body: formData
-      }).then(response => {
-        // Actualizar URL en el formulario
-        if (response.url) {
-          formulario.value.documento_abc_url = response.url
-        }
-        return response
-      })
-    )
-  }
-  
-  if (uploads.length > 0) {
-    await Promise.all(uploads)
-  }
-}
+    } catch (error) {
+        errorVerificacion.value = "Contraseña incorrecta";
+    }
+};
+
+const bloquearGestora = () => {
+    gestoraDesbloqueada.value = false;
+    passwordVerificacion.value = "";
+    errorVerificacion.value = "";
+    mostrarPasswordGestora.value = false;
+};
 
 const cerrar = () => {
-  emit('close')
-  // Resetear estado
-  seccionSeleccionada.value = null
-  ciFotoFile.value = null
-  documentoAbcFile.value = null
-  previewCiFoto.value = null
-}
+    emit("close");
+    // Resetear estado
+    seccionSeleccionada.value = null;
+    ciFotoFile.value = null;
+    documentoAbcFile.value = null;
+    previewCiFoto.value = null;
+    // Resetear gestora
+    gestoraDesbloqueada.value = false;
+    passwordVerificacion.value = "";
+    errorVerificacion.value = "";
+    mostrarPasswordGestora.value = false;
+};
 
 const guardar = async () => {
-  if (!formularioValido.value) return
-  
-  try {
-    // EN EDICIÓN: Subir archivos PRIMERO (actualiza URLs en formulario.value)
-    if (props.esEdicion && props.cooperativistaId && (ciFotoFile.value || documentoAbcFile.value)) {
-      subiendoArchivos.value = true
-      await subirArchivos(props.cooperativistaId)
-      subiendoArchivos.value = false
+    if (!formularioValido.value) return;
+
+    try {
+        // EN EDICIÓN: Subir archivos PRIMERO (actualiza URLs en formulario.value)
+        if (
+            props.esEdicion &&
+            props.cooperativistaId &&
+            (ciFotoFile.value || documentoAbcFile.value)
+        ) {
+            subiendoArchivos.value = true;
+            await subirArchivos(props.cooperativistaId);
+            subiendoArchivos.value = false;
+        }
+
+        // Limpiar campos vacíos (convertir strings vacíos a null)
+        // DESPUÉS de subir archivos para incluir las URLs actualizadas
+        const datosLimpios = { ...formulario.value };
+
+        Object.keys(datosLimpios).forEach((key) => {
+            if (datosLimpios[key] === "") {
+                datosLimpios[key] = null;
+            }
+        });
+
+        // Emitir evento de guardar con URLs actualizadas
+        emit("guardar", datosLimpios);
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        alert("Error al guardar: " + error.message);
+        throw error;
     }
-    
-    // Limpiar campos vacíos (convertir strings vacíos a null)
-    // DESPUÉS de subir archivos para incluir las URLs actualizadas
-    const datosLimpios = { ...formulario.value }
-    
-    Object.keys(datosLimpios).forEach(key => {
-      if (datosLimpios[key] === '') {
-        datosLimpios[key] = null
-      }
-    })
-    
-    // Emitir evento de guardar con URLs actualizadas
-    emit('guardar', datosLimpios)
-    
-  } catch (error) {
-    console.error('Error al guardar:', error)
-    alert('Error al guardar: ' + error.message)
-    throw error
-  }
-}
+};
 
 // Exponer función para subir archivos después de crear (se llama desde el padre)
 defineExpose({
-  subirArchivos
-})
+    subirArchivos,
+});
 </script>
 
 <style scoped>
 .modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
 }
 
 .modal-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
 }
 
 .modal-card {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  border-radius: 12px;
-  max-width: 800px;
-  width: 95%;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 1;
-  animation: modal-slideIn 0.3s ease-out;
+    background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    border-radius: 12px;
+    max-width: 800px;
+    width: 95%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    animation: modal-slideIn 0.3s ease-out;
 }
 
 .modal-card-head {
-  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
-  border: none;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
+    background: linear-gradient(135deg, #1a2e1a 0%, #0f1f0f 50%, #1e461e 100%);
+    border: none;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .modal-card-title {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-size: 1.25rem;
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 1.25rem;
 }
 
 .modal-card-title i {
-  font-size: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .delete {
-  background: rgba(255, 215, 0, 0.3);
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+    background: rgba(255, 215, 0, 0.3);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
-.delete::before, .delete::after {
-  background: #ffd700;
-  content: '';
-  height: 2px;
-  left: 25%;
-  position: absolute;
-  top: 50%;
-  width: 50%;
-  transition: all 0.3s ease;
+.delete::before,
+.delete::after {
+    background: #ffd700;
+    content: "";
+    height: 2px;
+    left: 25%;
+    position: absolute;
+    top: 50%;
+    width: 50%;
+    transition: all 0.3s ease;
 }
 
 .delete::before {
-  transform: translateY(-50%) rotate(45deg);
+    transform: translateY(-50%) rotate(45deg);
 }
 
 .delete::after {
-  transform: translateY(-50%) rotate(-45deg);
+    transform: translateY(-50%) rotate(-45deg);
 }
 
 .delete:hover {
-  background: rgba(255, 215, 0, 0.5);
-  transform: scale(1.1);
+    background: rgba(255, 215, 0, 0.5);
+    transform: scale(1.1);
 }
 
-.delete:hover::before, .delete:hover::after {
-  background: #ff6f00;
+.delete:hover::before,
+.delete:hover::after {
+    background: #ff6f00;
 }
 
 .modal-card-body {
-  padding: 1.5rem 2rem;
-  overflow-y: auto;
-  flex-grow: 1;
-  background: transparent;
+    padding: 1.5rem 2rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    background: transparent;
 }
 
 .modal-card-foot {
-  background: rgba(15, 31, 15, 0.9);
-  border: none;
-  padding: 1.5rem;
-  gap: 0.75rem;
-  display: flex;
-  justify-content: flex-end;
-  flex-shrink: 0;
+    background: rgba(15, 31, 15, 0.9);
+    border: none;
+    padding: 1.5rem;
+    gap: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 .seccion-formulario {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
 }
 
 .seccion-formulario:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .seccion-titulo {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 800;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #9e9d24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .seccion-titulo i {
-  font-size: 1.3rem;
+    font-size: 1.3rem;
 }
 
 .columns {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0;
 }
 
 .column {
-  flex: 1;
+    flex: 1;
 }
 
 .field {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .label {
-  color: #e0f2f1;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  display: block;
-  font-size: 0.9rem;
+    color: #e0f2f1;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.9rem;
 }
 
 .control {
-  position: relative;
+    position: relative;
 }
 
-.input, .select select {
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  padding: 0.75rem;
-  transition: all 0.3s ease;
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
-  width: 100%;
-  box-sizing: border-box;
-  height: 2.75rem;
-  font-size: 0.95rem;
+.input,
+.select select {
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+    background: rgba(15, 31, 15, 0.7);
+    color: #e0f2f1;
+    width: 100%;
+    box-sizing: border-box;
+    height: 2.75rem;
+    font-size: 0.95rem;
 }
 
 .control.has-icons-left .input,
 .control.has-icons-left .select select {
-  padding-left: 2.75rem;
+    padding-left: 2.75rem;
 }
 
 .input::placeholder {
-  color: #90a4ae;
+    color: #90a4ae;
 }
 
-.input:focus, .select select:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: rgba(26, 46, 26, 0.9);
-  outline: none;
+.input:focus,
+.select select:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
+    background: rgba(26, 46, 26, 0.9);
+    outline: none;
 }
 
-.input:disabled, .select select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: rgba(15, 31, 15, 0.5);
+.input:disabled,
+.select select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(15, 31, 15, 0.5);
 }
 
 .icon.is-left {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9e9d24;
-  pointer-events: none;
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9e9d24;
+    pointer-events: none;
 }
 
 .select {
-  width: 100%;
+    width: 100%;
 }
 
 .select:not(.is-multiple):not(.is-loading)::after {
-  border-color: #ffd700;
-  right: 1.125em;
-  z-index: 4;
+    border-color: #ffd700;
+    right: 1.125em;
+    z-index: 4;
 }
 
 .help {
-  color: #90a4ae;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+    color: #90a4ae;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
 }
 
 .checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-  position: relative;
-  padding-left: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-left: 2rem;
 }
 
 .checkbox-container input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
 }
 
 .checkmark {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 20px;
-  width: 20px;
-  background: rgba(15, 31, 15, 0.7);
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  border-radius: 4px;
-  transition: all 0.3s ease;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    width: 20px;
+    background: rgba(15, 31, 15, 0.7);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
 .checkbox-container:hover .checkmark {
-  border-color: #ffd700;
-  background: rgba(26, 46, 26, 0.9);
+    border-color: #ffd700;
+    background: rgba(26, 46, 26, 0.9);
 }
 
 .checkbox-container input:checked ~ .checkmark {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
-  border-color: #ffd700;
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+    border-color: #ffd700;
 }
 
 .checkmark::after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 6px;
-  top: 2px;
-  width: 5px;
-  height: 10px;
-  border: solid #0d1b0d;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #0d1b0d;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .checkbox-container input:checked ~ .checkmark::after {
-  display: block;
+    display: block;
 }
 
 .checkbox-label {
-  color: #e0f2f1;
-  font-weight: 600;
+    color: #e0f2f1;
+    font-weight: 600;
 }
 
 /* File upload styles */
 .file {
-  align-items: stretch;
-  display: flex;
-  justify-content: flex-start;
-  position: relative;
+    align-items: stretch;
+    display: flex;
+    justify-content: flex-start;
+    position: relative;
 }
 
 .file.is-fullwidth .file-label {
-  width: 100%;
+    width: 100%;
 }
 
 .file.has-name .file-cta {
-  border-bottom-right-radius: 0;
-  border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
 }
 
 .file.has-name .file-name {
-  border-bottom-left-radius: 0;
-  border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
 }
 
 .file-label {
-  align-items: stretch;
-  display: flex;
-  cursor: pointer;
-  justify-content: flex-start;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
+    align-items: stretch;
+    display: flex;
+    cursor: pointer;
+    justify-content: flex-start;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
 }
 
 .file-input {
-  height: 100%;
-  left: 0;
-  opacity: 0;
-  outline: none;
-  position: absolute;
-  top: 0;
-  width: 100%;
+    height: 100%;
+    left: 0;
+    opacity: 0;
+    outline: none;
+    position: absolute;
+    top: 0;
+    width: 100%;
 }
 
-.file-cta, .file-name {
-  border-color: rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  font-size: 0.95rem;
-  padding: 0.75rem 1rem;
-  white-space: nowrap;
+.file-cta,
+.file-name {
+    border-color: rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
 }
 
 .file-cta {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(158, 157, 36, 0.1));
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  color: #ffd700;
-  transition: all 0.3s ease;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.1),
+        rgba(158, 157, 36, 0.1)
+    );
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    transition: all 0.3s ease;
 }
 
 .file-label:hover .file-cta {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(158, 157, 36, 0.2));
-  border-color: #ffd700;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.2),
+        rgba(158, 157, 36, 0.2)
+    );
+    border-color: #ffd700;
 }
 
 .file-name {
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  border-left: none;
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
-  display: block;
-  max-width: 16em;
-  overflow: hidden;
-  text-align: inherit;
-  text-overflow: ellipsis;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-left: none;
+    background: rgba(15, 31, 15, 0.7);
+    color: #e0f2f1;
+    display: block;
+    max-width: 16em;
+    overflow: hidden;
+    text-align: inherit;
+    text-overflow: ellipsis;
 }
 
 .file-icon {
-  align-items: center;
-  display: flex;
-  height: 1em;
-  justify-content: center;
-  margin-right: 0.5em;
-  width: 1em;
+    align-items: center;
+    display: flex;
+    height: 1em;
+    justify-content: center;
+    margin-right: 0.5em;
+    width: 1em;
 }
 
 .preview-container {
-  margin-bottom: 1rem;
-  text-align: center;
+    margin-bottom: 1rem;
+    text-align: center;
 }
 
 .preview-image {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  margin-bottom: 0.5rem;
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    margin-bottom: 0.5rem;
 }
 
 .documento-actual {
-  margin-bottom: 1rem;
+    margin-bottom: 1rem;
 }
 
 .button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid transparent;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
 }
 
 .button.is-primary {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
-  color: #0d1b0d;
-  border: none;
-  font-weight: 800;
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 50%, #ff6f00 100%);
+    color: #0d1b0d;
+    border: none;
+    font-weight: 800;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
 }
 
 .button.is-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 60%, #ff6f00 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
 }
 
 .button.is-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .button.is-small {
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
 }
 
 .button.is-danger {
-  background: linear-gradient(135deg, #f44336, #d32f2f);
-  color: white;
-  border: none;
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+    border: none;
 }
 
 .button.is-danger:hover {
-  background: linear-gradient(135deg, #d32f2f, #c62828);
+    background: linear-gradient(135deg, #d32f2f, #c62828);
 }
 
 .button.is-info {
-  background: linear-gradient(135deg, #2196f3, #1976d2);
-  color: white;
-  border: none;
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+    border: none;
 }
 
 .button.is-info:hover {
-  background: linear-gradient(135deg, #1976d2, #1565c0);
+    background: linear-gradient(135deg, #1976d2, #1565c0);
 }
 
 .button:not(.is-primary):not(.is-danger):not(.is-info) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #c8e6c9;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: #c8e6c9;
+    border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .button:not(.is-primary):not(.is-danger):not(.is-info):hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
 }
 
 .is-loading {
-  position: relative;
-  color: transparent !important;
+    position: relative;
+    color: transparent !important;
 }
 
 .is-loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes modal-slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 @media screen and (max-width: 768px) {
-  .modal-card {
-    max-width: 95%;
-    margin: 1rem;
-  }
-  
-  .columns {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .modal-card-body {
-    padding: 1rem;
-  }
+    .modal-card {
+        max-width: 95%;
+        margin: 1rem;
+    }
+
+    .columns {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .modal-card-body {
+        padding: 1rem;
+    }
+}
+
+/* Estilos para Sección Protegida de Gestora */
+.seccion-protegida {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 215, 0, 0.08) 0%,
+        rgba(158, 157, 36, 0.08) 100%
+    );
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+}
+
+.seccion-header-protegida {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.seccion-header-protegida .seccion-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-grow: 1;
+}
+
+.tag-protegido {
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.bloqueo-gestora {
+    text-align: center;
+    padding: 2rem;
+}
+
+.icono-bloqueo {
+    font-size: 4rem;
+    color: rgba(255, 215, 0, 0.6);
+    margin-bottom: 1rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.texto-bloqueo {
+    color: #c8e6c9;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.field-verificacion {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.input-verificacion {
+    background: rgba(15, 31, 15, 0.7);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    color: #e0f2f1;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.input-verificacion:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+}
+
+.help.is-danger {
+    color: #ff5252;
+    font-weight: 600;
+    text-align: center;
+}
+
+.campos-gestora-desbloqueados {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.estado-desbloqueado {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: linear-gradient(
+        135deg,
+        rgba(76, 175, 80, 0.15),
+        rgba(56, 142, 60, 0.15)
+    );
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    border-radius: 8px;
+    color: #81c784;
+    font-weight: 600;
+}
+
+.estado-desbloqueado i {
+    font-size: 1.5rem;
+    color: #66bb6a;
+}
+
+.bloquear-button {
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    margin-left: auto;
+}
+
+.bloquear-button:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #ffd700;
+}
+
+.input-gestora {
+    background: rgba(15, 31, 15, 0.7);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    color: #e0f2f1;
+}
+
+.input-gestora:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+}
+
+.icon-clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.icon-clickable:hover {
+    color: #ffd700;
+    transform: scale(1.1);
+}
+
+.nota-seguridad {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(33, 150, 243, 0.1);
+    border-left: 3px solid rgba(33, 150, 243, 0.5);
+    border-radius: 4px;
+    color: #90caf9;
+    font-size: 0.875rem;
+}
+
+.nota-seguridad i {
+    font-size: 1.25rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mt-3 {
+    margin-top: 0.75rem;
 }
 </style>
