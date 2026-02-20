@@ -491,7 +491,7 @@
 </template>
 
 <script setup>
-import QRCodeVue3 from "qrcode-vue3";
+import { defineAsyncComponent } from "vue";
 import { generarPerfilCooperativista } from "../../utils/reporteCooperativista";
 import FormularioCooperativista from "~/components/FormularioCooperativista.vue";
 
@@ -521,6 +521,8 @@ const mostrarPasswordGestora = ref(false);
 
 const cooperativistaId = computed(() => parseInt(route.params.id));
 const guardando = ref(false);
+
+const QRCodeVue3 = defineAsyncComponent(() => import("qrcode-vue3"));
 
 onMounted(async () => {
     try {
