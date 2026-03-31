@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                <div class="actions">
+                <div class="actions" v-if="!authStore.isVisitor">
                     <button @click="editarDispositivo" class="btn-primary">Editar</button>
                     <button @click="eliminarDispositivo" class="btn-danger">Eliminar</button>
                 </div>
@@ -47,6 +47,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const dispositivo = ref(null);
 const loading = ref(true);
 

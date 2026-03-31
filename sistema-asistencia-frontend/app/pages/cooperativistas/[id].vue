@@ -429,6 +429,7 @@
                 <h3 class="panel-titulo">Acciones</h3>
 
                 <button
+                    v-if="!authStore.isVisitor"
                     class="action-button editar"
                     @click="editarCooperativista"
                 >
@@ -445,18 +446,18 @@
                 </button>
 
                 <button
+                    v-if="!authStore.isVisitor && cooperativista.is_active"
                     class="action-button desactivar"
                     @click="toggleEstado"
-                    v-if="cooperativista.is_active"
                 >
                     <i class="mdi mdi-account-off"></i>
                     <span>Desactivar Cooperativista</span>
                 </button>
 
                 <button
+                    v-if="!authStore.isVisitor && !cooperativista.is_active"
                     class="action-button activar"
                     @click="toggleEstado"
-                    v-else
                 >
                     <i class="mdi mdi-account-check"></i>
                     <span>Activar Cooperativista</span>

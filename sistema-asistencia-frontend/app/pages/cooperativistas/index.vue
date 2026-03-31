@@ -16,7 +16,7 @@
           <i class="mdi mdi-account-group"></i>
           <span>Ver por Cuadrillas</span>
         </NuxtLink>
-        <button class="button is-warning" @click="abrirModalCrear">
+        <button v-if="!authStore.isVisitor" class="button is-warning" @click="abrirModalCrear">
           <i class="mdi mdi-plus-circle"></i>
           <span>Nuevo Cooperativista</span>
         </button>
@@ -238,6 +238,7 @@
 
         <div class="card-footer-custom">
           <button 
+            v-if="!authStore.isVisitor"
             class="button is-small action-btn" 
             :class="coop.is_active ? 'is-warning' : 'is-success'"
             @click.stop="toggleActivacion(coop)"
@@ -292,6 +293,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import FormularioCooperativista from '~/components/FormularioCooperativista.vue'
+import { useAuthStore } from '~/stores/auth'
 import { useCooperativistasStore } from '~/stores/cooperativistas'
 import { useCuadrillasStore } from '~/stores/cuadrillas'
 import { useSeccionesStore } from '~/stores/secciones'
@@ -303,6 +305,7 @@ definePageMeta({
 })
 
 const store = useCooperativistasStore()
+const authStore = useAuthStore()
 const cuadrillasStore = useCuadrillasStore()
 const seccionesStore = useSeccionesStore()
 const router = useRouter()

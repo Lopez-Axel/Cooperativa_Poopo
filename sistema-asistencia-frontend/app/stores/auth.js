@@ -86,7 +86,9 @@ export const useAuthStore = defineStore('auth', {
   },
   
   getters: {
-    isSuperuser: (state) => state.user?.is_superuser || false,
+    isSuperuser: (state) => state.user?.is_superuser === true,
+    isAdmin: (state) => state.user?.username === 'admin' && state.user?.is_superuser === true,
+    isVisitor: (state) => state.user?.is_superuser !== true,
     username: (state) => state.user?.username || '',
     fullName: (state) => state.user?.full_name || ''
   }

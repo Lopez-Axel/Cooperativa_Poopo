@@ -79,10 +79,10 @@
                         <span>Secciones</span>
                     </NuxtLink>
 
-                    <!-- Solo para superadmin: se renderiza solo en cliente para evitar mismatch SSR -->
+                    <!-- Solo para admin: se renderiza solo en cliente para evitar mismatch SSR -->
                     <ClientOnly>
                         <NuxtLink
-                            v-if="authStore.isSuperuser"
+                            v-if="authStore.isAdmin"
                             to="/users"
                             class="navbar-item nav-link"
                         >
@@ -132,7 +132,7 @@
                                             </span>
                                         </p>
                                         <p
-                                            v-if="authStore.isSuperuser"
+                                            v-if="authStore.isAdmin"
                                             class="is-size-7"
                                         >
                                             <span
@@ -143,7 +143,37 @@
                                                         class="mdi mdi-shield-crown"
                                                     ></i>
                                                 </span>
-                                                <span>Superadministrador</span>
+                                                <span>Administrador</span>
+                                            </span>
+                                        </p>
+                                        <p
+                                            v-else-if="authStore.isSuperuser"
+                                            class="is-size-7"
+                                        >
+                                            <span
+                                                class="tag is-info is-light"
+                                            >
+                                                <span class="icon">
+                                                    <i
+                                                        class="mdi mdi-shield-account"
+                                                    ></i>
+                                                </span>
+                                                <span>Operador</span>
+                                            </span>
+                                        </p>
+                                        <p
+                                            v-else-if="authStore.isVisitor"
+                                            class="is-size-7"
+                                        >
+                                            <span
+                                                class="tag is-warning is-light"
+                                            >
+                                                <span class="icon">
+                                                    <i
+                                                        class="mdi mdi-eye"
+                                                    ></i>
+                                                </span>
+                                                <span>Visitante</span>
                                             </span>
                                         </p>
                                     </div>

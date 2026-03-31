@@ -12,7 +12,7 @@
           <p class="subtitle">Administra los usuarios del sistema</p>
         </div>
         <button 
-          v-if="authStore.isSuperuser"
+          v-if="authStore.isAdmin"
           class="button is-primary"
           @click="openCreateModal"
         >
@@ -120,7 +120,7 @@
             <th>Rol</th>
             <th>Estado</th>
             <th>Último Acceso</th>
-            <th v-if="authStore.isSuperuser" class="has-text-centered">Acciones</th>
+            <th v-if="authStore.isAdmin" class="has-text-centered">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -153,7 +153,7 @@
               </span>
             </td>
             <td>{{ formatDate(user.last_login) }}</td>
-            <td v-if="authStore.isSuperuser" class="has-text-centered">
+            <td v-if="authStore.isAdmin" class="has-text-centered">
               <div class="action-buttons">
                 <button 
                   class="button is-small is-info"

@@ -22,6 +22,7 @@
             <span>Generar PDF</span>
           </button>
           <button 
+            v-if="!authStore.isVisitor"
             class="button is-primary"
             @click="openCreateModal"
           >
@@ -179,6 +180,7 @@
                       <i class="mdi mdi-file-pdf-box"></i>
                     </button>
                     <button 
+                      v-if="!authStore.isVisitor"
                       class="button is-small is-info"
                       @click="openEditModal(cuadrilla)"
                       title="Editar cuadrilla"
@@ -186,7 +188,7 @@
                       <i class="mdi mdi-pencil"></i>
                     </button>
                     <button 
-                      v-if="cuadrilla.is_active"
+                      v-if="!authStore.isVisitor && cuadrilla.is_active"
                       class="button is-small is-danger"
                       @click="confirmDelete(cuadrilla)"
                       title="Desactivar cuadrilla"
@@ -238,6 +240,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 import { useCuadrillasStore } from '~/stores/cuadrillas'
 import ModalVerDetalles from '~/components/cuadrillas/ModalVerDetalles.vue'
 import ModalFormulario from '~/components/cuadrillas/ModalFormulario.vue'
@@ -250,6 +253,7 @@ definePageMeta({
 })
 
 const cuadrillasStore = useCuadrillasStore()
+const authStore = useAuthStore()
 
 // Estados de modales
 const modalVerAbierto = ref(false)

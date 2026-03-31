@@ -6,7 +6,7 @@
       <h1 class="title is-2">Gestión de Dispositivos</h1>
       <p class="subtitle is-5">Administración de dispositivos móviles por cuadrilla</p>
       <div class="header-actions">
-        <button class="button is-primary is-medium" @click="mostrarModalGenerar = true">
+        <button v-if="!authStore.isVisitor" class="button is-primary is-medium" @click="mostrarModalGenerar = true">
           <span class="icon">
             <i class="mdi mdi-plus"></i>
           </span>
@@ -243,7 +243,7 @@
               <td class="has-text-centered">
                 <div class="buttons is-centered">
                   <button 
-                    v-if="!device.is_blocked" 
+                    v-if="!authStore.isVisitor && !device.is_blocked" 
                     class="button is-small is-danger is-light"
                     @click="bloquearDispositivo(device)"
                     title="Bloquear"
@@ -251,7 +251,7 @@
                     <i class="mdi mdi-block-helper"></i>
                   </button>
                   <button 
-                    v-else
+                    v-if="!authStore.isVisitor && device.is_blocked"
                     class="button is-small is-success is-light"
                     @click="desbloquearDispositivo(device.id)"
                     title="Desbloquear"
@@ -259,6 +259,7 @@
                     <i class="mdi mdi-check-circle"></i>
                   </button>
                   <button 
+                    v-if="!authStore.isVisitor"
                     class="button is-small is-danger is-outlined"
                     @click="confirmarEliminar(device)"
                     title="Eliminar"
@@ -501,6 +502,7 @@ definePageMeta({
 
 const devicesStore = useDevicesStore()
 const cooperativistasStore = useCooperativistasStore()
+const authStore = useAuthStore()
 
 const mostrarModalGenerar = ref(false)
 const mostrarResultado = ref(false)

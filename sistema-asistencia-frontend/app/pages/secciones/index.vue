@@ -22,6 +22,7 @@
             <span>{{ generandoPDF ? 'Generando PDF...' : 'Generar PDF Global' }}</span>
           </button>
           <button 
+            v-if="!authStore.isVisitor"
             class="button is-primary"
             @click="openCreateModal"
           >
@@ -154,6 +155,7 @@
                   <i class="mdi mdi-file-pdf-box"></i>
                 </button>
                 <button 
+                  v-if="!authStore.isVisitor"
                   class="button is-small is-info"
                   @click="openEditModal(seccion)"
                   title="Editar sección"
@@ -161,7 +163,7 @@
                   <i class="mdi mdi-pencil"></i>
                 </button>
                 <button 
-                  v-if="seccion.is_active"
+                  v-if="!authStore.isVisitor && seccion.is_active"
                   class="button is-small is-danger"
                   @click="confirmDelete(seccion)"
                   title="Desactivar sección"

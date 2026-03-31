@@ -18,6 +18,7 @@
             <div class="column">
                 <div class="box">
                     <button
+                        v-if="!authStore.isVisitor"
                         class="button is-primary is-medium"
                         @click="showCreateModal = true"
                     >
@@ -315,7 +316,7 @@
                                     </button>
 
                                     <button
-                                        v-if="!period.is_open"
+                                        v-if="!authStore.isVisitor && !period.is_open"
                                         class="button is-success"
                                         @click="openPeriod(period.id)"
                                         :disabled="periodStore.loading"
@@ -327,7 +328,7 @@
                                     </button>
 
                                     <button
-                                        v-if="period.is_open"
+                                        v-if="!authStore.isVisitor && period.is_open"
                                         class="button is-warning"
                                         @click="closePeriod(period.id)"
                                         :disabled="periodStore.loading"
@@ -339,8 +340,7 @@
                                     </button>
 
                                     <button
-                                        v-if="
-                                            periodStore.getPeriodStatus(
+                                        v-if="!authStore.isVisitor && periodStore.getPeriodStatus(
                                                 period,
                                             ) !== 'en_curso'
                                         "
@@ -354,6 +354,7 @@
                                     </button>
 
                                     <button
+                                        v-if="!authStore.isVisitor"
                                         class="button is-danger"
                                         @click="confirmDeactivate(period.id)"
                                         :disabled="
@@ -600,6 +601,7 @@
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import { useAttendancePeriodStore } from "~/stores/attendancePeriod";
+import { useAuthStore } from "~/stores/auth";
 
 dayjs.locale("es");
 
@@ -610,6 +612,7 @@ definePageMeta({
 
 const router = useRouter();
 const periodStore = useAttendancePeriodStore();
+const authStore = useAuthStore();
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);

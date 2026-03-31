@@ -315,6 +315,7 @@
                                     <i class="mdi mdi-history"></i>
                                 </button>
                                 <button
+                                    v-if="!authStore.isVisitor"
                                     class="button is-small is-danger"
                                     @click="confirmDelete(attendance.id)"
                                     title="Eliminar registro"
@@ -592,6 +593,7 @@ import { useAttendancePeriodStore } from "~/stores/attendancePeriod";
 import { useCooperativistasStore } from "~/stores/cooperativistas";
 import { useCuadrillasStore } from "~/stores/cuadrillas";
 import { useSeccionesStore } from "~/stores/secciones";
+import { useAuthStore } from "~/stores/auth";
 import { generarReporteAsistencia } from "~/utils/reporteAsistencia";
 
 dayjs.locale("es");
@@ -606,6 +608,7 @@ const route = useRoute();
 const attendanceStore = useAttendanceStore();
 const periodStore = useAttendancePeriodStore();
 const cooperativistaStore = useCooperativistasStore();
+const authStore = useAuthStore();
 const cuadrillasStore = useCuadrillasStore();
 const seccionesStore = useSeccionesStore();
 
