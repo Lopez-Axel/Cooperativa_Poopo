@@ -1,291 +1,54 @@
-# AGENTS.md - Guidelines for Agentic Coding
+# AGENTS.md
 
-This project is a **Sistema de Asistencia** (Attendance System) for Cooperativa Minera Poopó R.L., consisting of:
-- **Backend**: FastAPI (Python) with SQLAlchemy ORM
-- **Frontend**: Nuxt.js 4 (Vue 3) with Pinia state management
+Sistema de Asistencia for Cooperativa Minera Poopó R.L. Two projects in one repo.
 
-## Project Structure
-
-```
-Cooperativa_Poopo/
-├── sistema-asistencia-backend/     # FastAPI backend
-│   ├── main.py                     # FastAPI app entry point
-│   ├── config.py                   # Configuration
-│   ├── database.py                 # SQLAlchemy setup
-│   ├── models/                     # SQLAlchemy models
-│   ├── schemas/                    # Pydantic schemas
-│   ├── services/                   # Business logic (service layer)
-│   ├── repositories/               # Data access layer
-│   ├── routes/                     # API endpoints
-│   ├── utils/                      # Utilities (security, JWT, QR)
-│   └── requirements.txt
-└── sistema-asistencia-frontend/   # Nuxt.js frontend
-    ├── app/
-    │   ├── pages/                  # Vue page components
-    │   ├── stores/                 # Pinia stores
-    │   ├── plugins/                # Nuxt plugins
-    │   └── assets/                 # Static assets
-    ├── nuxt.config.js
-    └── package.json
-```
-
----
-
-## Build & Development Commands
-
-### Backend (FastAPI)
+## Run commands
 
 ```bash
-# Navigate to backend
+# Backend (port 8000)
 cd sistema-asistencia-backend
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run development server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Run with specific settings
-uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level debug
-```
-
-### Frontend (Nuxt.js)
-
-```bash
-# Navigate to frontend
+# Frontend (port 3000)
 cd sistema-asistencia-frontend
-
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
 
-# Build for production
-npm run build
-
-# Generate static site
-npm run generate
+# Deploy: Dockerfile at root builds backend only; Railway deploys via railway.toml
 ```
 
-### Running a Single Test
+No test frameworks configured. If adding: backend `pytest + pytest-asyncio`, frontend `vitest`.
 
-**No test framework is currently configured.** To add tests:
-- Backend: Use `pytest` with `pytest-asyncio`
-- Frontend: Use `vitest` or `nuxt/test`
+## Backend quirks
 
----
+- **No migrations.** `Base.metadata.create_all(bind=engine)` runs at import time in `main.py:6`. Production risk with PostgreSQL.
+- **`redirect_slashes=False`** (`main.py:12`). Routes inconsistently use trailing slashes: `/api/secciones` (no slash) vs `/api/cuadrillas/` (slash). Frontend must match exactly.
+- **Old-style `declarative_base()`** in `database.py`, not SQLAlchemy 2.0 `mapped_column`/`DeclarativeMeta`.
+- **SQLite by default** (`sqlite:///./cooperativa.db`). Set `DATABASE_URL` env var for PostgreSQL. `check_same_thread` auto-handled in `database.py`.
+- **Config required at startup:** `SECRET_KEY` (min 32 chars), `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — raises `ValueError` if missing (`config.py:22-28`).
+- **Service/repo singletons** exported from `__init__.py` (e.g., `auth_service = AuthService()`). Services receive `db: Session` as first param. Repos manage `db.add/commit/refresh`. All raise `HTTPException` directly.
+- **Protected dependencies** in `utils/dependencies.py`: `get_current_user` (any auth), `get_current_superuser` (admin). `get_current_active_user` defined but never used.
+- **JWT**: `python-jose` (not `PyJWT`), HS256, 8h expiry (`ACCESS_TOKEN_EXPIRE_HOURS`). Payload: `sub`, `username`, `is_superuser`, `exp`, `iat`.
+- **Password hashing**: `passlib` + `bcrypt`.
+- **Upload routes** (`upload.py`) use `async def` (for `UploadFile`); all other routes are sync `def`.
+- **Seed data**: `python init_db.py` creates admin user (`admin`/`admin123`) and optionally imports `lista_cooperativistas_agosto.xlsx` (pandas). `python init_coop.py` does incremental import with duplicate checking.
 
-## Code Style Guidelines
+## Frontend quirks
 
-### Backend (Python)
+- **`runtimeConfig.apiBaseUrl` (`nuxt.config.js:12`) is defined but ignored.** All stores hardcode the URL from `authStore.apiUrl` which points to `'https://cooperativapoopo-production-450b.up.railway.app'`.
+- **`sessionStorage`** for auth tokens, not `localStorage`. Cleared on tab close.
+- **Two inconsistent HTTP clients** across stores: `$fetch` (Nuxt built-in) in `auth.js`, `cooperativistas.js`, `users.js`, `devices.js`; native `fetch()` in `attendance.js`, `attendancePeriod.js`, `cuadrillas.js`. `secciones.js` mixes both. Error response reading differs between them.
+- **Trailing slashes are required** in API calls (`/api/users/` not `/api/users`). Multiple store comments confirm this.
+- **All Pinia stores** use Options API (`state/getters/actions`). No Setup stores.
+- **Layout pattern**: `login.vue` uses `layout: false`; dashboard pages use `layout: 'dashboard'` + `middleware: 'auth'`. Admin pages additionally use `middleware: 'admin'`.
+- **Soft vs hard DELETE**: `secciones.js` and `cuadrillas.js` use `PUT { is_active: false }`; `attendance.js` and `attendancePeriod.js` hard-delete with confirmation string `'DELETE_PERMANENTLY'`.
+- **`Fuse.js` imported** in `cuadrillas.js`/`secciones.js` for fuzzy search but NOT in `package.json` (transitive dependency).
+- **Auth plugin**: `app/plugins/auth.client.js` calls `authStore.initFromStorage()` on client boot.
+- **All UI text, comments, variable names** in Spanish. Locale: `es-BO`.
 
-#### Imports
-- Standard library first, then third-party, then local
-- Use absolute imports (e.g., `from routes import api_router`)
-- Group: stdlib → external → internal with blank lines between
+## Project conventions
 
-```python
-# Correct order
-from fastapi import FastAPI, HTTPException
-from sqlalchemy.orm import Session
-from datetime import datetime
-
-from models.user import User
-from schemas.user import UserCreate
-from services.auth_service import auth_service
-```
-
-#### Naming Conventions
-- **Variables/functions**: `snake_case` (e.g., `user_repo`, `get_by_username`)
-- **Classes**: `PascalCase` (e.g., `AuthService`, `UserResponse`)
-- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_LOGIN_ATTEMPTS`)
-- **Database tables**: `snake_case` plural (e.g., `users`, `devices`)
-
-#### Types & Type Hints
-- Always use type hints for function parameters and return values
-- Use `Optional[X]` instead of `X | None` for compatibility
-- Use Pydantic models for request/response schemas
-
-```python
-def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
-    """Get user by ID with type hints."""
-    return db.query(User).filter(User.id == user_id).first()
-```
-
-#### Error Handling
-- Use FastAPI's `HTTPException` for API errors
-- Return appropriate HTTP status codes:
-  - `200` - Success
-  - `201` - Created
-  - `400` - Bad Request
-  - `401` - Unauthorized
-  - `403` - Forbidden
-  - `404` - Not Found
-  - `500` - Internal Server Error
-
-```python
-from fastapi import HTTPException, status
-
-if not user:
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Usuario no encontrado"
-    )
-```
-
-#### Database Models
-- Use SQLAlchemy with proper relationships
-- Always define `__tablename__` explicitly in lowercase plural
-- Use `autoincrement=True` for primary keys
-- Add indexes for frequently queried columns
-
-```python
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    username = Column(String(50), unique=True, nullable=False, index=True)
-```
-
-#### Pydantic Schemas
-- Use `BaseModel` for request/response
-- Use `ConfigDict(from_attributes=True)` for ORM compatibility
-- Separate `*Base`, `*Create`, `*Update`, `*Response` schemas
-
-```python
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
-```
-
-#### Service Layer Pattern
-- Business logic goes in `services/`
-- Use singleton pattern for services: `auth_service = AuthService()`
-- Services receive `db: Session` as first parameter
-
----
-
-### Frontend (Vue/Nuxt)
-
-#### Composition API
-- Use `<script setup>` syntax
-- Use composables for reusable logic
-
-```vue
-<script setup>
-const authStore = useAuthStore()
-const router = useRouter()
-
-const loading = ref(false)
-const error = ref(null)
-</script>
-```
-
-#### State Management (Pinia)
-- Use Pinia stores in `app/stores/`
-- Follow naming: `useXxxStore` for store exports
-- Use actions for async operations, getters for computed state
-
-```javascript
-// stores/users.js
-export const useUsersStore = defineStore('users', {
-  state: () => ({
-    users: [],
-    loading: false
-  }),
-  actions: {
-    async fetchUsers() {
-      // async logic
-    }
-  }
-})
-```
-
-#### API Calls
-- Use `$fetch` from Nuxt (or `useFetch`)
-- Include `Authorization: Bearer` header for authenticated requests
-- Handle errors consistently
-
-```javascript
-const response = await $fetch(`${authStore.apiUrl}/api/users/`, {
-  headers: {
-    Authorization: `Bearer ${authStore.token}`
-  }
-})
-```
-
-#### Template Structure
-- Use semantic HTML elements
-- Follow Bulma CSS class conventions (already configured)
-- Group related functionality in template sections
-
-#### Styling
-- Use scoped styles in Vue components
-- Follow Bulma's class naming patterns
-- Keep custom SCSS in `assets/styles/`
-
----
-
-## API Endpoints Pattern
-
-The backend follows REST conventions:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users/` | List users (with pagination) |
-| POST | `/api/users/` | Create user |
-| GET | `/api/users/{id}` | Get single user |
-| PUT | `/api/users/{id}` | Update user |
-| DELETE | `/api/users/{id}` | Delete user |
-
-**Note**: Always include trailing slash in frontend API calls (`/api/users/` not `/api/users`)
-
----
-
-## Common Patterns
-
-### Repository Pattern
-```python
-# repositories/user_repo.py
-user_repo = UserRepo()
-
-class UserRepo:
-    def get_by_username(self, db: Session, username: str):
-        return db.query(User).filter(User.username == username).first()
-```
-
-### Dependency Injection
-```python
-# In routes
-@router.get("/users/")
-def get_users(db: Session = Depends(get_db)):
-    return user_repo.get_all(db)
-```
-
----
-
-## Environment Variables
-
-Create `.env` files as needed (do not commit secrets):
-
-```env
-# Backend
-DATABASE_URL=postgresql://user:pass@localhost/dbname
-SECRET_KEY=your-secret-key
-JWT_SECRET=your-jwt-secret
-CLOUDINARY_API_KEY=xxx
-CLOUDINARY_API_SECRET=xxx
-```
-
----
-
-## Additional Notes
-
-- The backend uses PostgreSQL with SQLAlchemy
-- Authentication uses JWT tokens
-- QR code generation for device registration
-- Cloudinary for image uploads
-- CORS is configured to allow all origins (adjust for production)
+- **File naming**: `snake_case` everywhere (both Python and Vue files).
+- **Spanish/English mix**: Models use Spanish (`Seccion`, `Cuadrilla`, `Cooperativista`). Some route/services are English (`attendance`, `auth`, `users`), others Spanish (`secciones`, `cuadrillas`).
+- **Code style**: Backend uses old-style `Column`/`Integer`/`String` SQLAlchemy, not `mapped_column`. Pydantic v2 `ConfigDict(from_attributes=True)`. Frontend uses `<script setup>` Composition API with Bulma CSS.

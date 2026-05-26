@@ -20,6 +20,10 @@
           <i class="mdi mdi-plus-circle"></i>
           <span>Nuevo Cooperativista</span>
         </button>
+        <button class="button" :class="vistaActual === 'analitica' ? 'is-info' : 'is-light'" @click="toggleVista">
+          <i class="mdi" :class="vistaActual === 'analitica' ? 'mdi-view-grid' : 'mdi-chart-bar'"></i>
+          <span>{{ vistaActual === 'analitica' ? 'Vista Tarjetas' : 'Vista Analítica' }}</span>
+        </button>
       </div>
     </div>
 
@@ -131,6 +135,34 @@
           </div>
         </div>
 
+        <!-- Filtro Edad Mínima -->
+        <div class="field">
+          <label class="label">Edad Mínima</label>
+          <div class="control">
+            <input 
+              class="input" 
+              type="number" 
+              min="0" max="120"
+              placeholder="Ej: 18"
+              v-model.number="filtros.edad_min"
+            />
+          </div>
+        </div>
+
+        <!-- Filtro Edad Máxima -->
+        <div class="field">
+          <label class="label">Edad Máxima</label>
+          <div class="control">
+            <input 
+              class="input" 
+              type="number" 
+              min="0" max="120"
+              placeholder="Ej: 65"
+              v-model.number="filtros.edad_max"
+            />
+          </div>
+        </div>
+
       </div>
       
       <div class="filtros-actions">
@@ -151,113 +183,281 @@
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-bar">
-      <div class="stat-item">
-        <span class="stat-label">Total:</span>
-        <span class="stat-value">{{ cooperativistasFiltrados.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Secciones:</span>
-        <span class="stat-value">{{ seccionesStore.secciones.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Cuadrillas:</span>
-        <span class="stat-value">{{ cuadrillasStore.cuadrillas.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Jefes:</span>
-        <span class="stat-value">{{ contarPorCargo('jefe') }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Sub Jefes:</span>
-        <span class="stat-value">{{ contarPorCargo('sub') }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Tesoreros:</span>
-        <span class="stat-value">{{ contarPorCargo('tesorero') }}</span>
-      </div>
-    </div>
-
-    <!-- Lista de Cooperativistas -->
-    <div class="cooperativistas-grid" v-if="!store.loading">
-      <div 
-        v-for="coop in cooperativistasFiltrados" 
-        :key="coop.id"
-        class="cooperativista-card"
-        :class="[obtenerClasesCargo(coop), { 'is-inactive': !coop.is_active }]"
-      >
-        <div class="card-header-custom">
-          <div class="status-badge" :class="{ 'active': coop.is_active }">
-            {{ coop.is_active ? 'ACTIVO' : 'INACTIVO' }}
-          </div>
+    <!-- Vista Tarjetas -->
+    <template v-if="vistaActual === 'tarjetas'">
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">Total:</span>
+          <span class="stat-value">{{ cooperativistasFiltrados.length }}</span>
         </div>
-        
-        <div class="card-body">
-          <h3 class="cooperativista-nombre">
-            {{ coop.nombres }} {{ coop.apellido_paterno }} {{ coop.apellido_materno }}
-          </h3>
+        <div class="stat-item">
+          <span class="stat-label">Secciones:</span>
+          <span class="stat-value">{{ seccionesStore.secciones.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Cuadrillas:</span>
+          <span class="stat-value">{{ cuadrillasStore.cuadrillas.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Jefes:</span>
+          <span class="stat-value">{{ contarPorCargo('jefe') }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Sub Jefes:</span>
+          <span class="stat-value">{{ contarPorCargo('sub') }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Tesoreros:</span>
+          <span class="stat-value">{{ contarPorCargo('tesorero') }}</span>
+        </div>
+      </div>
+
+      <!-- Lista de Cooperativistas -->
+      <div class="cooperativistas-grid" v-if="!store.loading">
+        <div 
+          v-for="coop in cooperativistasFiltrados" 
+          :key="coop.id"
+          class="cooperativista-card"
+          :class="[obtenerClasesCargo(coop), { 'is-inactive': !coop.is_active }]"
+        >
+          <div class="card-header-custom">
+            <div class="status-badge" :class="{ 'active': coop.is_active }">
+              {{ coop.is_active ? 'ACTIVO' : 'INACTIVO' }}
+            </div>
+          </div>
           
-          <div class="cooperativista-info">
-            <div class="info-row">
-              <i class="mdi mdi-card-account-details"></i>
-              <span>{{ coop.ci || 'Sin CI' }} {{ coop.ci_expedido ? `- ${coop.ci_expedido}` : '' }}</span>
-            </div>
-                        
-            <div class="info-row">
-              <i class="mdi mdi-office-building"></i>
-              <span>{{ getSeccionName(coop.id_cuadrilla) }}</span>
-            </div>
+          <div class="card-body">
+            <h3 class="cooperativista-nombre">
+              {{ coop.nombres }} {{ coop.apellido_paterno }} {{ coop.apellido_materno }}
+            </h3>
             
-            <div class="info-row">
-              <i class="mdi mdi-account-group"></i>
-              <span>{{ getCuadrillaName(coop.id_cuadrilla) }}</span>
-            </div>
-            
-            <div class="info-row-rol" v-if="coop.rol_cuadrilla">
-              <i class="mdi mdi-star-circle"></i>
-              <span>{{ coop.rol_cuadrilla }}</span>
-            </div>
+            <div class="cooperativista-info">
+              <div class="info-row">
+                <i class="mdi mdi-card-account-details"></i>
+                <span>{{ coop.ci || 'Sin CI' }} {{ coop.ci_expedido ? `- ${coop.ci_expedido}` : '' }}</span>
+              </div>
+                          
+              <div class="info-row">
+                <i class="mdi mdi-office-building"></i>
+                <span>{{ getSeccionName(coop.id_cuadrilla) }}</span>
+              </div>
+              
+              <div class="info-row">
+                <i class="mdi mdi-account-group"></i>
+                <span>{{ getCuadrillaName(coop.id_cuadrilla) }}</span>
+              </div>
+              
+              <div class="info-row-rol" v-if="coop.rol_cuadrilla">
+                <i class="mdi mdi-star-circle"></i>
+                <span>{{ coop.rol_cuadrilla }}</span>
+              </div>
 
-            <div class="info-row" v-if="coop.ocupacion">
-              <i class="mdi mdi-briefcase"></i>
-              <span>{{ coop.ocupacion }}</span>
-            </div>
+              <div class="info-row" v-if="coop.ocupacion">
+                <i class="mdi mdi-briefcase"></i>
+                <span>{{ coop.ocupacion }}</span>
+              </div>
 
-            <div class="info-row" v-if="coop.estado_asegurado">
-              <i class="mdi mdi-shield-check"></i>
-              <span>{{ coop.estado_asegurado }}</span>
-            </div>
+              <div class="info-row" v-if="coop.estado_asegurado">
+                <i class="mdi mdi-shield-check"></i>
+                <span>{{ coop.estado_asegurado }}</span>
+              </div>
 
-            <div class="info-row" v-if="coop.fecha_ingreso">
-              <i class="mdi mdi-calendar"></i>
-              <span>{{ formatearFecha(coop.fecha_ingreso) }}</span>
+              <div class="info-row" v-if="coop.fecha_ingreso">
+                <i class="mdi mdi-calendar"></i>
+                <span>{{ formatearFecha(coop.fecha_ingreso) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer-custom">
+            <button 
+              v-if="!authStore.isVisitor"
+              class="button is-small action-btn" 
+              :class="coop.is_active ? 'is-warning' : 'is-success'"
+              @click.stop="toggleActivacion(coop)"
+              :title="coop.is_active ? 'Desactivar' : 'Activar'"
+            >
+              <i class="mdi" :class="coop.is_active ? 'mdi-cancel' : 'mdi-check-circle'"></i>
+              <span>{{ coop.is_active ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+            <button 
+              class="button is-small is-info action-btn" 
+              @click.stop="verDetalle(coop.id)"
+              title="Ver Detalles"
+            >
+              <i class="mdi mdi-eye"></i>
+              <span>Detalles</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="store.loading" class="loading-container">
+        <div class="loader"></div>
+        <p>Cargando cooperativistas...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!store.loading && cooperativistasFiltrados.length === 0" class="empty-state">
+        <i class="mdi mdi-account-search"></i>
+        <h3>No se encontraron cooperativistas</h3>
+        <p>Intenta ajustar los filtros de búsqueda</p>
+      </div>
+    </template>
+
+    <!-- Vista Analítica -->
+    <template v-if="vistaActual === 'analitica'">
+      <div class="analytics-section">
+        <!-- Resumen General -->
+        <div class="analytics-summary">
+          <div class="summary-card">
+            <div class="summary-icon"><i class="mdi mdi-account-multiple"></i></div>
+            <div class="summary-data">
+              <span class="summary-value">{{ statsGenerales.total }}</span>
+              <span class="summary-label">Total Activos</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="mdi mdi-calendar-clock"></i></div>
+            <div class="summary-data">
+              <span class="summary-value">{{ statsGenerales.edadPromedio }}</span>
+              <span class="summary-label">Edad Promedio</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="mdi mdi-clock-outline"></i></div>
+            <div class="summary-data">
+              <span class="summary-value">{{ statsGenerales.antiguedadPromedio }}</span>
+              <span class="summary-label">Antigüedad Prom.</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="mdi mdi-human-greeting"></i></div>
+            <div class="summary-data">
+              <span class="summary-value">{{ statsGenerales.edadMin }} - {{ statsGenerales.edadMax }}</span>
+              <span class="summary-label">Rango Edades</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="mdi mdi-trophy"></i></div>
+            <div class="summary-data">
+              <span class="summary-value">{{ statsGenerales.antiguedadMax }}</span>
+              <span class="summary-label">Máx. Antigüedad (años)</span>
             </div>
           </div>
         </div>
 
-        <div class="card-footer-custom">
-          <button 
-            v-if="!authStore.isVisitor"
-            class="button is-small action-btn" 
-            :class="coop.is_active ? 'is-warning' : 'is-success'"
-            @click.stop="toggleActivacion(coop)"
-            :title="coop.is_active ? 'Desactivar' : 'Activar'"
-          >
-            <i class="mdi" :class="coop.is_active ? 'mdi-cancel' : 'mdi-check-circle'"></i>
-            <span>{{ coop.is_active ? 'Desactivar' : 'Activar' }}</span>
-          </button>
-          <button 
-            class="button is-small is-info action-btn" 
-            @click.stop="verDetalle(coop.id)"
-            title="Ver Detalles"
-          >
-            <i class="mdi mdi-eye"></i>
-            <span>Detalles</span>
-          </button>
+        <!-- Distribución por Rangos -->
+        <div class="analytics-tables-grid">
+          <div class="analytics-table-card">
+            <h3 class="table-card-title"><i class="mdi mdi-chart-pie"></i> Distribución por Edad</h3>
+            <table class="table analytics-table">
+              <thead>
+                <tr>
+                  <th>Rango</th>
+                  <th>Cantidad</th>
+                  <th>Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(cant, rango) in statsGenerales.rangosEdad" :key="rango">
+                  <td><span class="range-badge">{{ rango }} años</span></td>
+                  <td class="td-number">{{ cant }}</td>
+                  <td class="td-number">{{ statsGenerales.total ? ((cant / statsGenerales.total) * 100).toFixed(1) : 0 }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="analytics-table-card">
+            <h3 class="table-card-title"><i class="mdi mdi-clock-outline"></i> Distribución por Antigüedad</h3>
+            <table class="table analytics-table">
+              <thead>
+                <tr>
+                  <th>Rango</th>
+                  <th>Cantidad</th>
+                  <th>Porcentaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(cant, rango) in statsGenerales.rangosAntiguedad" :key="rango">
+                  <td><span class="range-badge range-badge-tenure">{{ rango }} años</span></td>
+                  <td class="td-number">{{ cant }}</td>
+                  <td class="td-number">{{ statsGenerales.total ? ((cant / statsGenerales.total) * 100).toFixed(1) : 0 }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Analítica por Sección -->
+        <div class="analytics-table-card full-width">
+          <h3 class="table-card-title"><i class="mdi mdi-office-building"></i> Analítica por Sección</h3>
+          <div class="table-wrapper">
+            <table class="table analytics-table">
+              <thead>
+                <tr>
+                  <th>Sección</th>
+                  <th>Total</th>
+                  <th>Edad Prom.</th>
+                  <th>Antig. Prom.</th>
+                  <th>Edad Mín</th>
+                  <th>Edad Máx</th>
+                  <th>Máx Antig.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="sec in analisisSeccion" :key="sec.seccion?.id">
+                  <td>{{ sec.seccion?.nombre || 'Sin nombre' }}</td>
+                  <td class="td-number">{{ sec.total }}</td>
+                  <td class="td-number">{{ sec.edadPromedio }}</td>
+                  <td class="td-number">{{ sec.antiguedadPromedio }}</td>
+                  <td class="td-number">{{ sec.edadMin ?? '-' }}</td>
+                  <td class="td-number">{{ sec.edadMax ?? '-' }}</td>
+                  <td class="td-number">{{ sec.antiguedadMax ?? '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Analítica por Cuadrilla -->
+        <div class="analytics-table-card full-width">
+          <h3 class="table-card-title"><i class="mdi mdi-account-group"></i> Analítica por Cuadrilla</h3>
+          <div class="table-wrapper">
+            <table class="table analytics-table">
+              <thead>
+                <tr>
+                  <th>Cuadrilla</th>
+                  <th>Sección</th>
+                  <th>Total</th>
+                  <th>Edad Prom.</th>
+                  <th>Antig. Prom.</th>
+                  <th>Edad Mín</th>
+                  <th>Edad Máx</th>
+                  <th>Persona + Vieja</th>
+                  <th>Persona + Antigua</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="cuad in analisisCuadrilla" :key="cuad.cuadrilla?.id">
+                  <td>{{ cuad.cuadrilla?.nombre || 'Sin nombre' }}</td>
+                  <td>{{ cuad.seccion?.nombre || '-' }}</td>
+                  <td class="td-number">{{ cuad.total }}</td>
+                  <td class="td-number">{{ cuad.edadPromedio }}</td>
+                  <td class="td-number">{{ cuad.antiguedadPromedio }}</td>
+                  <td class="td-number">{{ cuad.edadMin ?? '-' }}</td>
+                  <td class="td-number">{{ cuad.edadMax ?? '-' }}</td>
+                  <td>{{ cuad.personaMasVieja ? `${cuad.personaMasVieja.nombres} ${cuad.personaMasVieja.apellido_paterno} (${calcularEdad(cuad.personaMasVieja.fecha_nacimiento)} años)` : '-' }}</td>
+                  <td>{{ cuad.personaMasAntigua ? `${cuad.personaMasAntigua.nombres} ${cuad.personaMasAntigua.apellido_paterno} (${calcularAntiguedad(cuad.personaMasAntigua.fecha_ingreso)} años)` : '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- Modal de Creación -->
     <FormularioCooperativista
@@ -274,19 +474,6 @@
       @close="cerrarModalCrear"
       @guardar="handleGuardarCreacion"
     />
-
-    <!-- Loading State -->
-    <div v-if="store.loading" class="loading-container">
-      <div class="loader"></div>
-      <p>Cargando cooperativistas...</p>
-    </div>
-
-    <!-- Empty State -->
-    <div v-if="!store.loading && cooperativistasFiltrados.length === 0" class="empty-state">
-      <i class="mdi mdi-account-search"></i>
-      <h3>No se encontraron cooperativistas</h3>
-      <p>Intenta ajustar los filtros de búsqueda</p>
-    </div>
   </div>
 </template>
 
@@ -309,6 +496,33 @@ const authStore = useAuthStore()
 const cuadrillasStore = useCuadrillasStore()
 const seccionesStore = useSeccionesStore()
 const router = useRouter()
+
+// Vista actual: 'tarjetas' o 'analitica'
+const vistaActual = ref('tarjetas')
+
+const toggleVista = () => {
+  vistaActual.value = vistaActual.value === 'tarjetas' ? 'analitica' : 'tarjetas'
+}
+
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return null
+  const hoy = new Date()
+  const nac = new Date(fechaNacimiento)
+  let edad = hoy.getFullYear() - nac.getFullYear()
+  const mes = hoy.getMonth() - nac.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) edad--
+  return edad
+}
+
+function calcularAntiguedad(fechaIngreso) {
+  if (!fechaIngreso) return null
+  const hoy = new Date()
+  const ing = new Date(fechaIngreso)
+  let anios = hoy.getFullYear() - ing.getFullYear()
+  const mes = hoy.getMonth() - ing.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < ing.getDate())) anios--
+  return anios
+}
 
 // Estado del modal de creación
 const mostrarFormularioCreacion = ref(false)
@@ -347,7 +561,9 @@ const filtros = ref({
   estado_asegurado: null,
   fecha_ingreso_desde: null,
   fecha_ingreso_hasta: null,
-  solo_cargos_especiales: false
+  solo_cargos_especiales: false,
+  edad_min: null,
+  edad_max: null
 })
 
 onMounted(async () => {
@@ -530,6 +746,19 @@ const cooperativistasFiltrados = computed(() => {
     })
   }
 
+  // Filtrar por rango de edad
+  const edadMin = filtros.value.edad_min
+  const edadMax = filtros.value.edad_max
+  if ((edadMin !== null && edadMin !== '') || (edadMax !== null && edadMax !== '')) {
+    resultado = resultado.filter(c => {
+      const edad = calcularEdad(c.fecha_nacimiento)
+      if (edad === null) return false
+      if (edadMin !== null && edadMin !== '' && edad < edadMin) return false
+      if (edadMax !== null && edadMax !== '' && edad > edadMax) return false
+      return true
+    })
+  }
+
   return resultado
 })
 
@@ -575,6 +804,14 @@ const contarPorCargo = (cargo) => {
   }).length
 }
 
+// ---- Analíticas de Edad ----
+
+const statsGenerales = computed(() => store.estadisticasEdad)
+
+const analisisSeccion = computed(() => store.analisisEdadPorSeccion)
+
+const analisisCuadrilla = computed(() => store.analisisEdadPorCuadrilla)
+
 const formatearFecha = (fecha) => {
   if (!fecha) return ''
   return new Date(fecha).toLocaleDateString('es-BO', {
@@ -594,7 +831,9 @@ const limpiarFiltros = () => {
     estado_asegurado: null,
     fecha_ingreso_desde: null,
     fecha_ingreso_hasta: null,
-    solo_cargos_especiales: false
+    solo_cargos_especiales: false,
+    edad_min: null,
+    edad_max: null
   }
 }
 
@@ -729,22 +968,35 @@ useHead({
   text-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
 }
 
-.control.has-icons-left .input {
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  background: rgba(15, 31, 15, 0.7);
-  color: #e0f2f1;
-  transition: all 0.3s ease;
+.input {
+  border: 2px solid rgba(255, 215, 0, 0.3) !important;
+  border-radius: 8px !important;
+  background: rgba(15, 31, 15, 0.7) !important;
+  color: #e0f2f1 !important;
+  transition: all 0.3s ease !important;
+  height: 2.5em !important;
+  box-shadow: none !important;
 }
 
-.control.has-icons-left .input:focus {
-  border-color: #ffd700;
-  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25);
-  background: rgba(26, 46, 26, 0.9);
+.input:focus {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 0 0.125em rgba(255, 215, 0, 0.25) !important;
+  background: rgba(26, 46, 26, 0.9) !important;
 }
 
-.control.has-icons-left .input::placeholder {
-  color: #90a4ae;
+.input::placeholder {
+  color: #90a4ae !important;
+}
+
+/* Ocultar spinners de input number */
+.input[type="number"]::-webkit-inner-spin-button,
+.input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+.input[type="number"] {
+  -moz-appearance: textfield !important;
 }
 
 .icon.is-left {
@@ -1611,6 +1863,185 @@ useHead({
   
   .action-btn span {
     font-size: 0.875rem;
+  }
+}
+
+/* ---- Estilos Vista Analítica ---- */
+
+.analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.9), rgba(15, 31, 15, 0.9));
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15);
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 152, 0, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.summary-icon i {
+  font-size: 1.5rem;
+  color: #ffd700;
+}
+
+.summary-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700, #ff9800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.summary-label {
+  color: #a5d6a7;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.analytics-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.analytics-table-card {
+  background: linear-gradient(135deg, rgba(26, 46, 26, 0.8), rgba(15, 31, 15, 0.8));
+  border-radius: 12px;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  overflow: hidden;
+  padding: 1.25rem;
+}
+
+.analytics-table-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.table-card-title {
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-card-title i {
+  font-size: 1.3rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  background: transparent !important;
+  color: #e0f2f1;
+  border-collapse: collapse;
+}
+
+.analytics-table thead th {
+  background: rgba(15, 31, 15, 0.9);
+  color: #ffd700;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.analytics-table tbody td {
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  font-size: 0.9rem;
+  color: #e0f2f1;
+  white-space: nowrap;
+}
+
+.analytics-table tbody td:first-child {
+  color: #ffd700;
+}
+
+.analytics-table tbody tr:hover td {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.analytics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.td-number {
+  text-align: center;
+  font-weight: 600;
+}
+
+.range-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+}
+
+.range-badge-tenure {
+  background: rgba(76, 175, 80, 0.15);
+  color: #81c784;
+}
+
+/* Responsive analítica */
+@media screen and (max-width: 1023px) {
+  .analytics-tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .analytics-summary {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

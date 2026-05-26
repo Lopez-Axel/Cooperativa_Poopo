@@ -4,6 +4,26 @@ import { useAuthStore } from './auth'
 import { useCuadrillasStore } from './cuadrillas'
 import { useSeccionesStore } from './secciones'
 
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return null
+  const hoy = new Date()
+  const nac = new Date(fechaNacimiento)
+  let edad = hoy.getFullYear() - nac.getFullYear()
+  const mes = hoy.getMonth() - nac.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) edad--
+  return edad
+}
+
+function calcularAntiguedad(fechaIngreso) {
+  if (!fechaIngreso) return null
+  const hoy = new Date()
+  const ing = new Date(fechaIngreso)
+  let anios = hoy.getFullYear() - ing.getFullYear()
+  const mes = hoy.getMonth() - ing.getMonth()
+  if (mes < 0 || (mes === 0 && hoy.getDate() < ing.getDate())) anios--
+  return anios
+}
+
 export const useCooperativistasStore = defineStore('cooperativistas', {
   state: () => ({
     cooperativistas: [],
@@ -18,7 +38,9 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
       estado_asegurado: null,
       fecha_ingreso_desde: null,
       fecha_ingreso_hasta: null,
-      solo_cargos_especiales: false
+      solo_cargos_especiales: false,
+      edad_min: null,
+      edad_max: null
     }
   }),
 
@@ -151,6 +173,19 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         })
       }
 
+      // Filtrar por rango de edad
+      const edadMin = state.filtros.edad_min
+      const edadMax = state.filtros.edad_max
+      if ((edadMin !== null && edadMin !== '') || (edadMax !== null && edadMax !== '')) {
+        resultado = resultado.filter(c => {
+          const edad = calcularEdad(c.fecha_nacimiento)
+          if (edad === null) return false
+          if (edadMin !== null && edadMin !== '' && edad < edadMin) return false
+          if (edadMax !== null && edadMax !== '' && edad > edadMax) return false
+          return true
+        })
+      }
+
       // Filtrar por búsqueda
       if (state.filtros.search) {
         const searchLower = state.filtros.search.toLowerCase()
@@ -219,6 +254,180 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         const rol = c.rol_cuadrilla ? c.rol_cuadrilla.toLowerCase() : ''
         return rol.includes('jefe') || rol.includes('tesorero')
       })
+    },
+
+    // ---- Analíticas de Edad ----
+
+    // Estadísticas generales de edad
+    estadisticasEdad: (state) => {
+      const cuadrillasStore = useCuadrillasStore()
+      const seccionesStore = useSeccionesStore()
+
+      const activos = state.cooperativistas.filter(c => c.is_active && c.id_cuadrilla)
+      const conEdad = activos.map(c => ({
+        ...c,
+        edad: calcularEdad(c.fecha_nacimiento),
+        antiguedad: calcularAntiguedad(c.fecha_ingreso),
+        seccion: (() => {
+          const cuadrilla = cuadrillasStore.cuadrillas.find(cu => cu.id === c.id_cuadrilla)
+          if (!cuadrilla) return null
+          return seccionesStore.secciones.find(s => s.id === cuadrilla.id_seccion)
+        })(),
+        cuadrilla: cuadrillasStore.cuadrillas.find(cu => cu.id === c.id_cuadrilla)
+      }))
+
+      const edades = conEdad.map(c => c.edad).filter(e => e !== null)
+      const antiguedades = conEdad.map(c => c.antiguedad).filter(a => a !== null)
+
+      const rangosEdad = { '18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56-65': 0, '65+': 0 }
+      const rangosAntiguedad = { '0-5': 0, '6-10': 0, '11-20': 0, '20+': 0 }
+
+      conEdad.forEach(c => {
+        if (c.edad !== null) {
+          if (c.edad <= 25) rangosEdad['18-25']++
+          else if (c.edad <= 35) rangosEdad['26-35']++
+          else if (c.edad <= 45) rangosEdad['36-45']++
+          else if (c.edad <= 55) rangosEdad['46-55']++
+          else if (c.edad <= 65) rangosEdad['56-65']++
+          else rangosEdad['65+']++
+        }
+        if (c.antiguedad !== null) {
+          if (c.antiguedad <= 5) rangosAntiguedad['0-5']++
+          else if (c.antiguedad <= 10) rangosAntiguedad['6-10']++
+          else if (c.antiguedad <= 20) rangosAntiguedad['11-20']++
+          else rangosAntiguedad['20+']++
+        }
+      })
+
+      const edadPromedio = edades.length ? (edades.reduce((a, b) => a + b, 0) / edades.length) : 0
+      const antiguedadPromedio = antiguedades.length ? (antiguedades.reduce((a, b) => a + b, 0) / antiguedades.length) : 0
+
+      const masViejo = edades.length ? Math.max(...edades) : null
+      const masJoven = edades.length ? Math.min(...edades) : null
+      const masAntiguo = antiguedades.length ? Math.max(...antiguedades) : null
+
+      return {
+        total: activos.length,
+        conEdad: edades.length,
+        conAntiguedad: antiguedades.length,
+        edadPromedio: Math.round(edadPromedio * 10) / 10,
+        antiguedadPromedio: Math.round(antiguedadPromedio * 10) / 10,
+        edadMin: masJoven,
+        edadMax: masViejo,
+        antiguedadMax: masAntiguo,
+        rangosEdad,
+        rangosAntiguedad
+      }
+    },
+
+    // Analítica por sección
+    analisisEdadPorSeccion: (state) => {
+      const cuadrillasStore = useCuadrillasStore()
+      const seccionesStore = useSeccionesStore()
+
+      const activos = state.cooperativistas.filter(c => c.is_active && c.id_cuadrilla)
+      const grupos = {}
+
+      activos.forEach(c => {
+        const cuadrilla = cuadrillasStore.cuadrillas.find(cu => cu.id === c.id_cuadrilla)
+        if (!cuadrilla || !cuadrilla.id_seccion) return
+
+        const seccionId = cuadrilla.id_seccion
+        if (!grupos[seccionId]) {
+          grupos[seccionId] = {
+            seccion: seccionesStore.secciones.find(s => s.id === seccionId),
+            cooperativistas: [],
+            edades: [],
+            antiguedades: []
+          }
+        }
+        const edad = calcularEdad(c.fecha_nacimiento)
+        const antiguedad = calcularAntiguedad(c.fecha_ingreso)
+        grupos[seccionId].cooperativistas.push(c)
+        if (edad !== null) grupos[seccionId].edades.push(edad)
+        if (antiguedad !== null) grupos[seccionId].antiguedades.push(antiguedad)
+      })
+
+      return Object.values(grupos)
+        .map(g => {
+          const ed = g.edades
+          const ant = g.antiguedades
+          return {
+            seccion: g.seccion,
+            total: g.cooperativistas.length,
+            conEdad: ed.length,
+            conAntiguedad: ant.length,
+            edadPromedio: ed.length ? Math.round((ed.reduce((a, b) => a + b, 0) / ed.length) * 10) / 10 : 0,
+            antiguedadPromedio: ant.length ? Math.round((ant.reduce((a, b) => a + b, 0) / ant.length) * 10) / 10 : 0,
+            edadMin: ed.length ? Math.min(...ed) : null,
+            edadMax: ed.length ? Math.max(...ed) : null,
+            antiguedadMax: ant.length ? Math.max(...ant) : null
+          }
+        })
+        .sort((a, b) => (a.seccion?.nombre || '').localeCompare(b.seccion?.nombre || ''))
+    },
+
+    // Analítica por cuadrilla
+    analisisEdadPorCuadrilla: (state) => {
+      const cuadrillasStore = useCuadrillasStore()
+      const seccionesStore = useSeccionesStore()
+
+      const activos = state.cooperativistas.filter(c => c.is_active && c.id_cuadrilla)
+      const grupos = {}
+
+      activos.forEach(c => {
+        const cuadrillaId = c.id_cuadrilla
+        if (!grupos[cuadrillaId]) {
+          const cuadrilla = cuadrillasStore.cuadrillas.find(cu => cu.id === cuadrillaId)
+          grupos[cuadrillaId] = {
+            cuadrilla,
+            seccion: (() => {
+              if (!cuadrilla || !cuadrilla.id_seccion) return null
+              return seccionesStore.secciones.find(s => s.id === cuadrilla.id_seccion)
+            })(),
+            cooperativistas: [],
+            edades: [],
+            antiguedades: []
+          }
+        }
+        const edad = calcularEdad(c.fecha_nacimiento)
+        const antiguedad = calcularAntiguedad(c.fecha_ingreso)
+        grupos[cuadrillaId].cooperativistas.push(c)
+        if (edad !== null) grupos[cuadrillaId].edades.push(edad)
+        if (antiguedad !== null) grupos[cuadrillaId].antiguedades.push(antiguedad)
+      })
+
+      return Object.values(grupos)
+        .map(g => {
+          const ed = g.edades
+          const ant = g.antiguedades
+          const masViejo = g.cooperativistas.reduce((prev, curr) => {
+            const ePrev = calcularEdad(prev.fecha_nacimiento) || 0
+            const eCurr = calcularEdad(curr.fecha_nacimiento) || 0
+            return eCurr > ePrev ? curr : prev
+          }, g.cooperativistas[0])
+          const masAntiguo = g.cooperativistas.reduce((prev, curr) => {
+            const aPrev = calcularAntiguedad(prev.fecha_ingreso) || 0
+            const aCurr = calcularAntiguedad(curr.fecha_ingreso) || 0
+            return aCurr > aPrev ? curr : prev
+          }, g.cooperativistas[0])
+
+          return {
+            cuadrilla: g.cuadrilla,
+            seccion: g.seccion,
+            total: g.cooperativistas.length,
+            conEdad: ed.length,
+            conAntiguedad: ant.length,
+            edadPromedio: ed.length ? Math.round((ed.reduce((a, b) => a + b, 0) / ed.length) * 10) / 10 : 0,
+            antiguedadPromedio: ant.length ? Math.round((ant.reduce((a, b) => a + b, 0) / ant.length) * 10) / 10 : 0,
+            edadMin: ed.length ? Math.min(...ed) : null,
+            edadMax: ed.length ? Math.max(...ed) : null,
+            antiguedadMax: ant.length ? Math.max(...ant) : null,
+            personaMasVieja: masViejo,
+            personaMasAntigua: masAntiguo
+          }
+        })
+        .sort((a, b) => (a.cuadrilla?.nombre || '').localeCompare(b.cuadrilla?.nombre || ''))
     }
   },
 
@@ -430,7 +639,9 @@ export const useCooperativistasStore = defineStore('cooperativistas', {
         estado_asegurado: null,
         fecha_ingreso_desde: null,
         fecha_ingreso_hasta: null,
-        solo_cargos_especiales: false
+        solo_cargos_especiales: false,
+        edad_min: null,
+        edad_max: null
       }
     }
   }
